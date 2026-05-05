@@ -49,37 +49,6 @@ ce-skills/
 
 ***
 
-## 🛠️ Skills Capabilities In Detail
-
-### 1. Gmail Remote Cloudtop Bridge (`_agents/skills/send-email/`)
-A **generic, reusable email dispatcher** that bridges your local Mac and your remote gLinux Cloudtop workstation.
-*   **Single Key-Touch Execution**: Encodes the body locally as Base64 and executes all actions in **exactly one secure SSH session**, requiring you to touch your hardware security key **exactly once**!
-*   **Zero Local Dependencies**: Written in standard Python 3 with **no package installations, no virtualenvs, and no local credentials stored**.
-*   **High-Fidelity Markdown-to-HTML Compiler**: Dynamically parses standard Markdown headers (`##`), bold (`**`), lists, dividers (`---`), and tables into a gorgeous Google Material Card email featuring alternating row zebra-striping and Google Blue (`#1a73e8`) header styles.
-*   **Environment-Aware**: Automatically detects if it is running on a Mac (routes via SSH) or natively on Cloudtop (runs directly via local subprocess, bypassing SSH and Base64 completely).
-
-### 2. Sales Opportunity Expert Request Management (`_agents/skills/expert-request-management/`)
-Queries Google's corporate Standard SQL Opportunities streaming database to segment sales demands.
-*   **VPC-SC Perimeter Bypass**: Automatically routes execution and billing queries directly through the **`concord-prod`** project itself, natively bypassing organization VPC-SC exfiltration blocks.
-*   **Sheets-styled Pivot Matrix**: Pivots flat BQ rows into a gorgeous 9-row grid showing products horizontally intersected chronologically by sales stages.
-*   **Clean Data Styling**: Replaces empty cells with standard Sheets null indicators (`∅`) and sorts rows by volume.
-
-### 3. MTD GCP Billing Export Reports (`_agents/skills/gcp-billing-reports/`)
-Connects to your GCP BigQuery detailed billing export database to audit spends.
-*   **VPC-SC Compliant Queries**: Partition-limits queries to date boundaries (`_PARTITIONTIME >= DATE_TRUNC(CURRENT_DATE(), MONTH)`) to keep scans highly performant.
-*   **Penny Cost Formatter**: Formats values dynamically (rounds whole dollars as integers, fractional cents to 2-decimals, and preserves sub-cents details for ultra-small micro-services).
-*   **Cost Control Workflow**: Automatically prepends Project IDs as the first column so leaked sandbox spends can be identified and cleaned up immediately.
-
-### 4. Deployed Sandbox Pricing Auditor (`_agents/skills/codelab-pricing-estimator/`)
-Performs **100% deterministic post-build audits** of active sandboxes.
-*   Queries GCP Asset Inventory to discover GCE VMs (machine sizes, running states), Persistent Disks (capacity and storage types), GKE Clusters (node pools), and Cloud SQL instances.
-*   Cross-references resources against the GCP pricing catalog to output precise hourly spend estimates.
-
-### 5. Cost-Containment Cleanup (`_agents/skills/codelab-cleanup/`)
-Lists and terminates sandbox projects instantly to prevent forgotten resources from generating leaked spends.
-
-***
-
 ## 🌐 Prerequisites
 
 To run these skills, your local terminal session must meet these requirements:
