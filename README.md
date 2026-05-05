@@ -86,47 +86,5 @@ cloudtop_host=YOUR_CLOUDTOP_WORKSTATION_HOST (e.g., username-dev-glinux.c.google
 
 ***
 
-## 🚀 CLI Usage Examples
-
-### 1. Query Sales Opportunities Pivot Dashboard
-Run the 2026 expert requests pivot report and save it to a local Markdown file:
-
-```bash
-python3 _agents/skills/expert-request-management/scripts/get_expert_requests.py \
-  --year 2026 \
-  --save-artifact "artifacts/expert_requests_mtd.md"
-```
-
-### 2. Send styled HTML reports directly to your corporate inbox
-Use the Remote Cloudtop Bridge to compile the Markdown report into a gorgeous HTML card and email it to `shacharb@google.com` with exactly **one security key touch**:
-
-```bash
-python3 _agents/skills/send-email/scripts/send_email.py \
-  --to "shacharb@google.com" \
-  --subject "Service CloudBI: Expert Requests Pivot Dashboard" \
-  --body "artifacts/expert_requests_mtd.md" \
-  --html
-```
-
-### 3. Audit Sandbox Spends MTD
-Aggregate Month-To-Date billing spends by project or category:
-
-```bash
-python3 _agents/skills/gcp-billing-reports/scripts/get_billing_reports.py \
-  --report all \
-  --save-artifact "artifacts/mtd_billing_audit.md"
-```
-
-### 4. Delete leaked Sandboxes immediately
-Use the cost-containment script to terminate any high-spenders found in your report:
-
-```bash
-python3 _agents/skills/codelab-cleanup/scripts/cleanup_projects.py \
-  --delete PROJECT_ID_HERE \
-  --force
-```
-
-***
-
 ## 🤝 Contributions & Support
 For bugs, feature requests, or new operational skills contributions, please search existing issues or file a report at [CE Skills Hub CLI](https://github.com/cloud-gtm/ce-skills/issues).
