@@ -4,6 +4,17 @@ Welcome to the **CE Agentic Automation Skills** repository! This repository cont
 
 All skills are structured inside the **`_agents/skills/`** directory, making them fully compatible with the agentic orchestrator framework.
 
+### 🚀 TL;DR Skills Catalog
+
+| Skill Folder | Scope / Capability | TL;DR (What it does) |
+| :--- | :--- | :--- |
+| [send-email/](file:///_agents/skills/send-email/SKILL.md) | Gmail secure relay | **Remote Cloudtop SSH Gmail bridge** that securely dispatches styled GSuite HTML reports and attachments natively from your corp email with exactly **one security key touch**. |
+| [expert-request-management/](file:///_agents/skills/expert-request-management/SKILL.md) | Sales BI pivot | Queries opportunites streaming BQ tables under **`concord-prod`**, automatically **bypassing VPC Service Controls**, and rendering a beautiful Sheets-styled pivot matrix dashboard. |
+| [gcp-billing-reports/](file:///_agents/skills/gcp-billing-reports/SKILL.md) | Billing spends audit | Queries GCP detailed billing exports using **optimized partition filters**, formatting cost lists with **dynamic 2-decimal penny rounding** (dollars as clean integers). |
+| [gcp-release-notes/](file:///_agents/skills/gcp-release-notes/SKILL.md) | Release notes tracker | Connects to BQ GCP public release notes since `2024-01-01` using a **30-day local performance cache** for instant sub-second terminal listings. |
+| [codelab-pricing-estimator/](file:///_agents/skills/codelab-pricing-estimator/SKILL.md) | Active sandbox pricing | Performs **100% deterministic post-build pricing audits** of active VMs, PDs, GKE node pools, and SQL sizes, cross-referencing live hourly pricing. |
+| [codelab-cleanup/](file:///_agents/skills/codelab-cleanup/SKILL.md) | Cost containment | **Day 2 cost-containment CLI** to list, force-delete, and terminate leaked GCP sandbox projects instantly. |
+
 ***
 
 ## 📂 Repository Catalog Structure
