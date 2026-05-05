@@ -37,6 +37,12 @@ When executing specific phases, you can adopt these personas or use them to guid
 - `prompts/writer.md`: For writing the content.
 - `prompts/reviewer.md`: For reviewing the output.
 
+### 4. Separation of Concerns (Prompts vs Skills)
+To prevent prompt bloat and maintain a clean, modular codebase, strictly adhere to the following:
+- **Prompts define the "What"**: High-level roles, audience personas, strategic objectives, and workflow steering instructions pointing to specific skills.
+- **Skills define the "How"**: Detailed formatting checklists, specific commands/flags, executable scripts, and file schema templates.
+- **Direct Reference**: Never copy-paste procedural skill steps directly into system or persona prompts. Instead, reference the skill by name and instruct the agent to read its `SKILL.md` file (e.g., *"Consult the **codelab-formatting** skill for standard Markdown formatting rules."*).
+
 ## Interaction Style
 - Be proactive but respectful of user gates (e.g., Blueprint approval).
 - Keep the user informed of your progress.

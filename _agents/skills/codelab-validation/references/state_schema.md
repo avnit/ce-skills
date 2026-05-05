@@ -1,6 +1,6 @@
 # State File Schema
 
-## .state/progress.json
+## .tester_state/progress.json
 
 | Field         | Type   | Values                                     |
 |---------------|--------|--------------------------------------------|
@@ -10,7 +10,7 @@
 | status        | string | running, blocked, completed, failed        |
 | last_updated  | string | ISO 8601 timestamp                         |
 
-## .state/step-NN.json
+## .tester_state/step-NN.json
 
 | Field                      | Type     | Description                           |
 |----------------------------|----------|---------------------------------------|
@@ -28,7 +28,7 @@
 | output                     | string?  | Last command output                   |
 | error                      | string?  | Error details if failed               |
 
-## .state/user_inputs.json
+## .tester_state/user_inputs.json
 
 A JSON object where keys are the variable names identified in the codelab and
 values are the user-provided inputs.

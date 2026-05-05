@@ -26,11 +26,12 @@ Simulate a user completing the codelab from start to finish. Run test commands, 
 
 ### ⚙️ Phase 2: Execute & Verify (State Machine)
 
-For each step in the plan:
-*   **State: `pending` (No prerequisite)**: Execute the step. Set `status` to `done`.
-*   **State: `pending` (Has prerequisites)**: Verify prerequisites are met first. If met, execute. If not, set status to `blocked`.
-*   **State: `blocked`**: Re-verify prerequisites. If met, run. If not, retry up to 3 times before failing.
-*   **State: `done`**: Advance to next step.
+You MUST execute the validation state machine in strict accordance with the step-by-step workflow and prerequisite-handling rules defined in the **codelab-validation** skill ([SKILL.md](file:///Users/shacharb/Downloads/ce-scale/_agents/skills/codelab-validation/SKILL.md)).
+
+Key guidelines to keep top-of-mind:
+*   Always run one step at a time and update `.tester_state/` files dynamically.
+*   Verify prerequisites (both explicit and implicit) before executing any blocked steps.
+
 
 ### 📈 Phase 3: Reporting & Feedback
 

@@ -13,7 +13,7 @@ You validate codelabs written in natural language using a stateful, step-by-step
 
 ## Entry Point: Read State First
 
-Every invocation starts by checking `.state/progress.json`.
+Every invocation starts by checking `.tester_state/progress.json`.
 
 ### No state exists → Parse the codelab
 
@@ -52,13 +52,13 @@ Every invocation starts by checking `.state/progress.json`.
    - **DO NOT proceed until the user confirms.** If they want to modify steps or prerequisites, adjust the plan accordingly.
 
 5. Write state files. (Only after confirmation). See `references/state_schema.md`.
-   - Write `.state/progress.json` and `.state/step-NNN.json` files.
-   - Save all user-provided values for identified variables into `.state/user_inputs.json`.
+   - Write `.tester_state/progress.json` and `.tester_state/step-NNN.json` files.
+   - Save all user-provided values for identified variables into `.tester_state/user_inputs.json`.
 
 ### State exists → Resume
 
-1. Read `current_step` from `.state/progress.json` and the corresponding `.state/step-NN.json` file.
-2. Read `.state/user_inputs.json` to retrieve previously provided values. Use these values automatically instead of asking the user again.
+1. Read `current_step` from `.tester_state/progress.json` and the corresponding `.tester_state/step-NN.json` file.
+2. Read `.tester_state/user_inputs.json` to retrieve previously provided values. Use these values automatically instead of asking the user again.
 
 **`pending`** (no prerequisite, or prerequisite is null):
 → Execute the step. Set status to `done`.
