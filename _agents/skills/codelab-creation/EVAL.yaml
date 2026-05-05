@@ -1,0 +1,29 @@
+suite_name: codelab-creation
+timeout_seconds: 300
+max_tool_calls: 50
+
+cases:
+  - name: create_blueprint
+    prompt: >
+      I want to create a codelab about 'Hello World on Cloud Run'.
+      What is the first step according to the master workflow?
+    skills: [codelab-creation]
+    rubric: |
+      The agent must:
+      - State that the first step (after research) is creating a blueprint.
+      - Explain what should be in the blueprint (steps, topology, key commands).
+    expect_keywords:
+      - "blueprint"
+      - "steps"
+
+  - name: run_validation
+    prompt: >
+      I have written the content for my codelab. How do I validate the commands in it?
+    skills: [codelab-creation]
+    rubric: |
+      The agent must:
+      - Point to the codelab-testing skill or the deterministic_runner.py script.
+      - Explain that it extracts and runs commands to verify them.
+    expect_keywords:
+      - "validate"
+      - "deterministic_runner.py"

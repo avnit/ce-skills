@@ -1,0 +1,31 @@
+suite_name: gcp-provisioning
+timeout_seconds: 300
+max_tool_calls: 50
+
+cases:
+  - name: create_project
+    prompt: >
+      I need to create a new GCP project for a codelab named 'my-test-lab'.
+      How do I use the provided scripts to do this?
+    skills: [gcp-provisioning]
+    rubric: |
+      The agent must:
+      - Point to the create_project.py script.
+      - Show the correct command syntax: python3 path/to/create_project.py my-test-lab.
+      - Mention that it requires gcp_config.txt.
+    expect_keywords:
+      - "create_project.py"
+      - "my-test-lab"
+
+  - name: disable_org_policies
+    prompt: >
+      My codelab deployment failed because of org policies in project 'my-project-123'.
+      How do I disable them?
+    skills: [gcp-provisioning]
+    rubric: |
+      The agent must:
+      - Point to the disable_org_policies.sh script.
+      - Show the correct command syntax: bash path/to/disable_org_policies.sh my-project-123.
+    expect_keywords:
+      - "disable_org_policies.sh"
+      - "my-project-123"
