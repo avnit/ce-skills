@@ -1,0 +1,77 @@
+---
+name: customer-one-pager
+description: >-
+  Analyzes discovery call transcripts to create a comprehensive One-Pager summarizing the customer context, pain points, and the suggested design/plan.
+---
+
+# Customer One-Pager Generation
+
+This skill outlines the methodology for creating a concise "One-Pager" summary from a customer discovery call transcript. The One-Pager captures the essential business and technical context and the proposed path forward.
+
+## Workflow
+
+Follow these steps when applying this skill:
+- [ ] Step 1: Review the discovery call notes or transcript.
+- [ ] Step 2: Extract key information:
+    - Customer business goals and drivers.
+    - Technical pain points and constraints.
+    - Agreed or proposed solution direction.
+- [ ] Step 3: Synthesize the information into the **One-Pager Template**.
+- [ ] Step 3.5: Embed a design or architecture diagram if applicable and available.
+- [ ] Step 4: Present the One-Pager artifact to the user.
+
+---
+
+## Analysis Prompt
+
+Use this prompt to perform the analysis:
+
+```text
+Act as an expert Solution Architect. Analyze the following discovery call transcript to create a One-Pager. Focus on:
+1. The customer's core business problem and goals.
+2. The technical challenges they are facing.
+3. The suggested design, architecture, or action plan discussed or proposed.
+Output the results using the One-Pager Template defined in the skill.
+```
+
+---
+
+## One-Pager Template
+
+Use this exact structure to output the analysis to the user:
+
+```markdown
+# Customer One-Pager: [Customer Name] - [Project Name]
+
+## 1. Executive Summary
+[A concise 3-4 sentence summary of the customer's situation, the core problem, and the proposed solution].
+
+## 2. Context & Pain Points
+- **Business Driver**: [Why are they doing this now? e.g., cost reduction, scaling issues]
+- **Technical Challenges**:
+    - [Point 1: e.g., Stuck CSI driver pods causing downtime]
+    - [Point 2: e.g., Lack of automated GPU error handling]
+
+## 3. Proposed Solution & Architecture
+- **High-Level Design**: [Description of the suggested solution, e.g., Auto-healing script + Whitepaper guidance]
+- **Key Components**:
+    - **Component 1**: [e.g., GKE with GCSfuse]
+    - **Component 2**: [e.g., Monitoring CronJob]
+
+### 🖼️ Architecture Diagram (If Applicable)
+![Architecture Diagram](absolute_path_to_image)
+
+## 4. Action Plan & Next Steps
+- **Immediate (P0)**: [e.g., Share action plan document for 3 PM call]
+- **Short-Term (P1)**: [e.g., Implement sample auto-healing script]
+- **Long-Term (P2)**: [e.g., Deliver whitepaper on GPU error handling]
+
+## 5. Key Stakeholders & Owners
+- **Customer Lead**: [Name/Role if known]
+- **GCP Lead**: [Name/Role if known]
+```
+
+## Gotchas & Pitfalls to Avoid
+- **Too much detail**: Keep it to one page (or equivalent scrolling length). Focus on high-level summary, not deep dive.
+- **Missing the "So What?"**: Ensure the business value of the proposed solution is clear.
+- **Vague next steps**: Ensure action items have clear owners and priorities if available.
