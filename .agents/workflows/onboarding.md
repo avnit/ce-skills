@@ -4,13 +4,13 @@ description: Orchestrate developer environment onboarding tasks including automa
 
 # Workflow: Developer Environment Onboarding
 
-Steer the onboarding execution lifecycle to prepare the active workspace environment for seamless Google Cloud sandboxing, solution authoring, and verification tasks. Currently focused on capturing mandatory operational parameters to populate the `gcp_config.txt` credential file automatically, as well as binding the active developer's specific **Google Cloud Systems Engineer Persona** to steer downstream artifact focus dynamically.
+Steer the onboarding execution lifecycle to prepare the active workspace environment for seamless Google Cloud sandboxing, solution authoring, and verification tasks. Currently focused on capturing mandatory operational parameters to populate the `gcp_config.txt` credential file automatically, binding the active developer's specific **Google Cloud Systems Engineer Persona** to steer downstream artifact focus dynamically, and configuring localized Model Context Protocol (MCP) documentation server credentials.
 
 ## Lifecycle Steering Workflow
 
 ### Phase 1: Interactive Onboarding Parameters Intake
-1. Consult the `gcp_config.txt` template layout requirements (`folder_id`, `billing_account`, and optional `cloudtop_host`) alongside the Systems Engineering Persona definitions.
-2. Invoke the **`ask_question`** tool to present an interactive input intake modal for the user to supply their specific values. Present clear instructions across four structural intake questions:
+1. Consult the `gcp_config.txt` template layout requirements (`folder_id`, `billing_account`, and optional `cloudtop_host`) alongside the Systems Engineering Persona definitions and the Developer Knowledge API server instruction metadata.
+2. Invoke the **`ask_question`** tool to present an interactive input intake modal for the user to supply their specific values. Present clear instructions across five structural intake questions:
    - **Question 1 (Systems Engineer Persona Binding)**:
      - `question`: "Select your primary Google Cloud Systems Engineer role/objective to steer future artifact focus dynamically:"
      - `options`:
@@ -37,6 +37,13 @@ Steer the onboarding execution lifecycle to prepare the active workspace environ
        - "Reuse sample template: generic-dev-cloudtop.c.googlers.com"
        - "Skip / Leave empty"
      - `is_multi_select`: false
+   - **Question 5 (Developer Knowledge Quota Project ID)**:
+     - `question`: "Select or provide your target Google Cloud Project ID enabled for Developer Knowledge API access (used for MCP documentation search quota):"
+     - `options`:
+       - "(Recommended) Keep shared repository baseline default: codelab-creator-central"
+       - "Use custom write-in field below to supply personal Developer Knowledge Project ID"
+       - "Consult quickstart setup guide instructions first"
+     - `is_multi_select`: false
 
 ### Phase 2: Automated Workspace File Generation
 1. Initialize or update the live task tracking view board (`task.md`) to mark upfront intake complete and configuration authoring in progress.
@@ -61,4 +68,11 @@ Steer the onboarding execution lifecycle to prepare the active workspace environ
    billing_account=INPUT_BILLING_ACCOUNT
    cloudtop_host=INPUT_CLOUDTOP_HOST
    ```
-4. Present a friendly terminal confirmation block to the user verifying successful file creation, and mark the overall task flow as `COMPLETED` in `task.md`.
+4. **Update MCP Server Quota Headers**: Read the workspace `.gemini/mcp_config.json` configuration file. If the user supplies a custom write-in project ID during intake, parse the structural JSON and update the `google-developer-documentation-mcp` server section to pre-inject their personal namespace into the HTTP payload headers:
+   ```json
+   "headers": {
+     "X-goog-user-project": "CUSTOM_KNOWLEDGE_PROJECT_ID"
+   }
+   ```
+   If the user selects the recommended repository baseline default, keep `"codelab-creator-central"` gracefully intact. Write the configuration object cleanly back to `.gemini/mcp_config.json` with standard 2-space formatting.
+5. Present a friendly terminal confirmation block to the user verifying successful file creation and updates, and mark the overall task flow as `COMPLETED` in `task.md`.

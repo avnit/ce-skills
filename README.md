@@ -89,9 +89,6 @@ Certain utility scripts use standard module layers. Synchronize dependencies usi
 # Authenticate with corporate credentials first:
 gcert
 
-# Install base Node wrappers for Gmail relays:
-npm install @googleworkspace/cli
-
 # Python skills featuring dedicated lockfiles isolate execution automatically via:
 uv run --project _agents/skills/<skill_folder>/ scripts/<script_name>.py
 ```

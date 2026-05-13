@@ -19,7 +19,20 @@ To stage and commit only a specific file or directory:
 python3 _agents/skills/git-update/scripts/git_update.py -m "Your commit message" --path path/to/file_or_directory
 ```
 
-**Steps:**
+### Automated / Headless CI Execution (Non-Interactive Mode)
+To execute synchronizations autonomously without hanging on manual standard input confirmation barriers, pass the `--yes` flag:
+```bash
+python3 _agents/skills/git-update/scripts/git_update.py -m "Your commit message" -y
+```
+
+---
+
+## Agent Implementation Directives
+Whenever executing this skill on behalf of the user, **agents MUST initialize and maintain a standardized HTML task tracking table (`task.md`)** completely flush left without leading spaces. Update row progression states dynamically as each git cascade step resolves.
+
+---
+
+## Steps
 
 1.  **Local Changes:** Shows modified files in your current branch and asks if you want to add and commit changes in the specified path.
 2.  **Push:** Asks if you want to push the committed changes to the remote repository.
@@ -31,3 +44,4 @@ python3 _agents/skills/git-update/scripts/git_update.py -m "Your commit message"
 *   `-m`, `--message`: The commit message (required).
 *   `--main-branch`: The name of the main branch to merge from (default: `main`).
 *   `--path`: The path to stage and commit (default: `.`).
+*   `-y`, `--yes`: Automatically confirm all permission requests (non-interactive override).

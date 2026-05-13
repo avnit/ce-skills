@@ -8,6 +8,13 @@ description: >-
 
 This skill outlines the methodology for creating a concise "One-Pager" summary from a customer discovery call transcript. The One-Pager captures the essential business and technical context and the proposed path forward.
 
+## Agent Implementation Directives
+Whenever executing this skill on behalf of the user:
+1. **Task Tracking**: Agents **MUST** initialize and maintain a standardized HTML task tracking table (`task.md`) completely flush left without leading spaces. Update row progression states dynamically as execution steps resolve.
+2. **Persistent Document Saving**: Agents **MUST** save the finalized One-Pager document directly to the repository filesystem under a dedicated customer folder inside the `meeting/` directory (e.g., using `write_to_file` with `IsArtifact: false` specifying a clear project path like `meeting/<customer_name>/one_pager.md`) rather than flat chat outputs.
+
+---
+
 ## Workflow
 
 Follow these steps when applying this skill:
@@ -18,7 +25,7 @@ Follow these steps when applying this skill:
     - Agreed or proposed solution direction.
 - [ ] Step 3: Synthesize the information into the **One-Pager Template**.
 - [ ] Step 3.5: Embed a design or architecture diagram if applicable and available.
-- [ ] Step 4: Present the One-Pager artifact to the user.
+- [ ] Step 4: Save the finalized One-Pager document directly into the target customer folder under `meeting/` and share the clickable file link with the user.
 
 ---
 

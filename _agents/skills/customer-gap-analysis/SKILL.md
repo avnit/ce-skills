@@ -8,6 +8,13 @@ description: >-
 
 This skill outlines the systematic methodology for analyzing customer discovery calls and workshops to identify gaps in architecture, security, processes, and reliability, and framing those gaps into prioritized recommendations mapping to Google Cloud solutions. 
 
+## Agent Implementation Directives
+Whenever executing this skill on behalf of the user:
+1. **Task Tracking**: Agents **MUST** initialize and maintain a standardized HTML task tracking table (`task.md`) completely flush left without leading spaces. Update row progression states dynamically as execution steps resolve.
+2. **Persistent Document Saving**: Agents **MUST** save the finalized Gap Analysis Report directly to the repository filesystem under a dedicated customer folder inside the `meeting/` directory (e.g., using `write_to_file` with `IsArtifact: false` specifying a clear project path like `meeting/<customer_name>/gap_analysis.md`) rather than flat chat outputs.
+
+---
+
 ## Workflow
 
 Follow these steps when applying this skill:
@@ -16,7 +23,7 @@ Follow these steps when applying this skill:
 - [ ] Step 3: Fill out the **Gap Analysis Matrix**, scoring each gap based on severity (High, Medium, Low).
 - [ ] Step 4: Map solutions and architectural mitigations to these gaps using Google Cloud solutions.
 - [ ] Step 5: Provide a prioritized recommendation roadmap (P0 critical, P1 enhancements, P2 long-term optimizations).
-- [ ] Step 6: Present the Gap Analysis Report artifact to the user.
+- [ ] Step 6: Save the finalized Gap Analysis Report directly into the target customer folder under `meeting/` and share the clickable file link with the user.
 
 ---
 

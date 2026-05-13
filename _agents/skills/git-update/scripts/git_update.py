@@ -2,6 +2,8 @@ import argparse
 import subprocess
 import sys
 
+AUTO_YES = False
+
 def run_command(command, check=True, cwd=None):
     try:
         result = subprocess.run(command, check=check, shell=True, text=True, capture_output=True, cwd=cwd)
@@ -12,6 +14,9 @@ def run_command(command, check=True, cwd=None):
         sys.exit(1)
 
 def ask_permission(prompt):
+    if AUTO_YES:
+        print(f"{prompt} [y/N]: y (auto-confirmed)")
+        return True
     while True:
         response = input(f"{prompt} [y/N]: ").strip().lower()
         if response in ['y', 'yes']:
@@ -25,7 +30,11 @@ def main():
     parser.add_argument("-m", "--message", required=True, help="Commit message")
     parser.add_argument("--main-branch", default="main", help="Main branch name (default: main)")
     parser.add_argument("--path", default=".", help="Path to stage and commit (default: .)")
+    parser.add_argument("-y", "--yes", action="store_true", help="Automatically confirm all permission requests (non-interactive mode)")
     args = parser.parse_args()
+
+    global AUTO_YES
+    AUTO_YES = args.yes
 
     # Get current branch
     res = run_command("git branch --show-current")
