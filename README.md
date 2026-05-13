@@ -1,90 +1,99 @@
 # Customer Engineering (CE) Agentic Automation Skills
 
-Welcome to the **CE Agentic Automation Skills** repository! This repository contains a highly optimized, modular, and environment-aware suite of developer automation skills designed to handle Google Cloud sandbox cost auditing, billing reports, release aggregations, sales BI expert requests pivot dashboards, and secure corporate email relays.
-
-All skills are structured inside the **`_agents/skills/`** directory, making them fully compatible with the agentic orchestrator framework.
-
-### 🚀 TL;DR Skills Catalog
-
-| Skill Folder | Scope / Capability | TL;DR (What it does) |
-| :--- | :--- | :--- |
-| [codelab-cleanup/](file:///_agents/skills/codelab-cleanup/SKILL.md) | Cost containment | **Day 2 cost-containment CLI** to list, force-delete, and terminate leaked GCP sandbox projects instantly to prevent leaked spends. |
-| [codelab-creation/](file:///_agents/skills/codelab-creation/SKILL.md) | Codelab orchestration | **Master orchestrator workflow** for blueprinting, content writing, and statefully validating DevSite codelabs natively inside google3/CitC. |
-| [codelab-formatting/](file:///_agents/skills/codelab-formatting/SKILL.md) | Codelab standards | Strict linting and styling rules for Google Cloud Codelab Markdown (.lab.md) specifications. |
-| [codelab-markdown-submit/](file:///_agents/skills/codelab-markdown-submit/SKILL.md) | Codelab submission | Staging, local validation (claat/devsite2), ownership configuration, and submitting Markdown codelabs natively in google3. |
-| [codelab-memory/](file:///_agents/skills/codelab-memory/SKILL.md) | RAG learning cache | Connects to the centralized RAG system to store and query lessons learned from previous runs. |
-| [codelab-pricing-estimator/](file:///_agents/skills/codelab-pricing-estimator/SKILL.md) | Active sandbox pricing | Performs **100% deterministic post-build pricing audits** of active VMs, PDs, GKE node pools, and SQL sizes, cross-referencing live hourly catalog. |
-| [codelab-testing/](file:///_agents/skills/codelab-testing/SKILL.md) | Deterministic QA | QA test-runner evaluating CLI and code block outputs via deterministic shell scripts. |
-| [codelab-validation/](file:///_agents/skills/codelab-validation/SKILL.md) | Stateful QA | Validates natural language tutorial steps statefully with prerequisite gating for long-running setups. |
-| [codelab_audit_logging/](file:///_agents/skills/codelab_audit_logging/SKILL.md) | VPC audit logs | Gathers VPC/GCP audit logs to generate a clear table of evidence in the lab directories. |
-| [creating-gcp-diagrams/](file:///_agents/skills/creating-gcp-diagrams/SKILL.md) | Architecture diagrams | Converts Mermaid code into styled Google Cloud architecture diagrams and premium images. |
-| [expert-request-management/](file:///_agents/skills/expert-request-management/SKILL.md) | Sales BI pivot | Queries opportunites streaming BQ tables under **`concord-prod`**, automatically **bypassing VPC Service Controls**, and rendering a beautiful Sheets-styled pivot matrix dashboard. |
-| [extracting_requirements_from_meetings/](file:///_agents/skills/extracting_requirements_from_meetings/SKILL.md) | Requirement extraction | Parses raw meeting transcripts/notes into formal blueprints, deal drivers, and technical requirements. |
-| [gcp-billing-reports/](file:///_agents/skills/gcp-billing-reports/SKILL.md) | Billing spends audit | Queries GCP detailed billing exports using **optimized partition filters**, formatting cost lists with **dynamic 2-decimal penny rounding** (dollars as clean integers). |
-| [gcp-provisioning/](file:///_agents/skills/gcp-provisioning/SKILL.md) | Argolis provisioning | Provisions GCP sandbox test projects, binds billing accounts, and disables organizational policies. |
-| [gcp-release-notes/](file:///_agents/skills/gcp-release-notes/SKILL.md) | Release tracker | Connects to BQ GCP public release notes since `2024-01-01` using a **30-day local performance cache** for instant sub-second terminal listings. |
-| [send-email/](file:///_agents/skills/send-email/SKILL.md) | Gmail secure relay | **Remote Cloudtop SSH Gmail bridge** that securely dispatches styled GSuite HTML reports and attachments natively from your corp email with exactly **one security key touch**. |
+Welcome to the **CE Agentic Automation Skills** repository! This repository contains a highly optimized, modular, and environment-aware suite of developer automation skills, interactive UI workflows, and permanent agent rules designed to scale Google Cloud systems engineering operations.
 
 ***
 
-## 📂 Repository Catalog Structure
+## 🧭 Declarative Framework Workflows (`.agents/workflows/`)
+
+Workflows are interactive, conversational execution guides activated natively via chat slash commands. They dictate step-by-step orchestration logic and user intake sequences:
+
+| Slash Command | Configuration File | Workflow Purpose & Execution Scope |
+| :--- | :--- | :--- |
+| **`/create-codelab`** | [create-codelab.md](file:///.agents/workflows/create-codelab.md) | Orchestrates end-to-end generation, test project provisioning, hermetic validation, and delivery of premium Google Cloud Codelabs from initial user prompts. |
+| **`/onboarding`** | [onboarding.md](file:///.agents/workflows/onboarding.md) | **Master Onboarding sequence** to prepare local environments. Prompts developers via interactive write-in boxes to configure provisioning credentials (`gcp_config.txt`) and binds their primary CE Persona. |
+| **`/organize-workspace`** | [organize-workspace.md](file:///.agents/workflows/organize-workspace.md) | Performs structural layout sweeps to eliminate root-level clutter, compile decoupled markdown review tables, and relocate assets safely across defined namespaces. |
+| **`/create-project`** | [create-project.md](file:///.agents/workflows/create-project.md) | Sub-orchestration workflow used to provision clean sandboxed GCP test projects and remove restrictive organization policies dynamically. |
+| **`/run-lab-video`** | [run-lab-video.md](file:///.agents/workflows/run-lab-video.md) | Sub-orchestration workflow automating terminal interactive executions inside Chrome profiles to support screen recording setups. |
+
+***
+
+## 🛡️ Permanent Framework Rules (`.agents/rules/`)
+
+Rules represent continuous boundary constraints injected into all active models using `trigger: always_on` frontmatter headers to enforce reliable developer experiences globally:
+
+* **`tasks.md`**: Enforces the generation and continuous dynamic updates of a beautifully styled HTML table tracking board ([task.md](file:///task.md)) to guarantee native IDE visual preview tabs.
+* **`persona.md`**: Configures the active model's primary focus target based on onboarding selections:
+  1. **Practice CE**: Deep technical architecture, exact CLI flag validation, and precise topology diagrams.
+  2. **Platform CE**: Broad landing zones, cross-cloud alignment, and strategic governance guardrails.
+  3. **Outcome CE**: Speed-runs, low-latency validations, and immediate customer unblocking paths.
+
+***
+
+## 🚀 Comprehensive Programmatic Skills Catalog (`_agents/skills/`)
+
+Skills are code-backed capability layers pairing instruction manifests (`SKILL.md`) with specialized execution tools (Python/Bash):
+
+| Skill Directory | Scope / Capability | TL;DR Description |
+| :--- | :--- | :--- |
+| [codelab-cleanup/](file:///_agents/skills/codelab-cleanup/SKILL.md) | Cost containment | Day 2 operations to list, force-delete, and terminate leaked GCP sandbox test projects instantly. |
+| [codelab-creation/](file:///_agents/skills/codelab-creation/SKILL.md) | Master Codelab builder | Guides multi-phase blueprints, formatting checklists, and testing factories to author production-ready tutorials. |
+| [codelab-formatting/](file:///_agents/skills/codelab-formatting/SKILL.md) | Style syntax standards | Strict metadata parsing standards and markdown layout templates for `.lab.md` files. |
+| [codelab-markdown-submit/](file:///_agents/skills/codelab-markdown-submit/SKILL.md) | DevSite source submit | Local `claat` preview validation, directory placement structure, and source repo change-list workflows. |
+| [codelab-memory/](file:///_agents/skills/codelab-memory/SKILL.md) | Centralized RAG memory | Interacts with global Vertex AI corpora to retrieve prior art and append newly solved technical traps. |
+| [codelab-pricing-estimator/](file:///_agents/skills/codelab-pricing-estimator/SKILL.md) | Active cost estimation | Audits running cloud resources post-build against live pricing catalogs to render concrete hourly spend forecasts. |
+| [codelab-testing/](file:///_agents/skills/codelab-testing/SKILL.md) | Deterministic QA runner | Extracts fenced instruction codeblocks and evaluates subshells deterministically mapping state validation caches. |
+| [codelab-validation/](file:///_agents/skills/codelab-validation/SKILL.md) | Stateful QA routing | Interprets natural language steps statefully handling background execution gates. |
+| [codelab_audit_logging/](file:///_agents/skills/codelab_audit_logging/SKILL.md) | Evidence extraction | Extracts Cloud Audit logs compiling concrete resource lifecycle trace boards into lab outputs. |
+| [creating-gcp-diagrams/](file:///_agents/skills/creating-gcp-diagrams/SKILL.md) | Visual generation | Translates raw Mermaid blocks into stunning, high-contrast Google Cloud styled image assets. |
+| [expert-request-management/](file:///_agents/skills/expert-request-management/SKILL.md) | Sales BI dashboarding | Queries specific opportunities BQ tables rendering customized spreadsheet reporting tabs. |
+| [extracting_requirements_from_meetings/](file:///_agents/skills/extracting_requirements_from_meetings/SKILL.md) | Transcript blueprinting | Structures raw meeting notes into concrete technical requirements and solution architectures. |
+| [gcp-billing-reports/](file:///_agents/skills/gcp-billing-reports/SKILL.md) | Partitioned spend list | Aggregates detailed billing exports using penny-rounding logic for optimized executive lists. |
+| [gcp-provisioning/](file:///_agents/skills/gcp-provisioning/SKILL.md) | Project automation | Provisions test projects, validates standard billing attachments, and strips organization policies. |
+| [gcp-release-notes/](file:///_agents/skills/gcp-release-notes/SKILL.md) | Updates caching | Queries GCP release note repositories utilizing sub-second caching routines for real-time lookups. |
+| [lab-video-automation/](file:///_agents/skills/lab-video-automation/SKILL.md) | Automated UI execution | Controls visible Chrome profile execution windows using Playwright to support external screen recording setups, paired with optional Gemini self-healing recovery routines. |
+| [send-email/](file:///_agents/skills/send-email/SKILL.md) | Secure corp relay | Remote Cloudtop SSH bridge dispatching styled corporate HTML messages and file attachments securely. |
+
+***
+
+## 📂 Master Repository Topology
 
 ```text
 ce-skills/
-├── .gitignore                 # Excludes node_modules, temp caches, and gcp_config.txt
-├── README.md                  # This comprehensive guide
-├── GEMINI.md                  # System instructions and orchestrator prompt profiles
-├── package.json               # Local npm package configuration
-├── prompts/                   # Persona prompts (Architect, Writer, Reviewer)
-├── artifacts/                 # Output samples (Spend audits, pivot dashboards, billing reviews)
-└── _agents/
-    └── skills/                # Modular Customer Engineering Automation Skills
-        ├── send-email/                 # Zero-dependency Remote Cloudtop SSH Gmail relay
-        ├── expert-request-management/  # Sales opportunities BQ pivot dashboard CLI
-        ├── gcp-billing-reports/        # MTD BigQuery partition billing report aggregator
-        ├── gcp-release-notes/          # GCP release notes caching tracking CLI
-        ├── codelab-pricing-estimator/  # Sandbox real active resource pricing auditor
-        └── codelab-cleanup/            # Sandbox cost containment and cleanup CLI
+├── .gitignore                 # Excludes local temporary caches, lock files, and generated config files
+├── README.md                  # This comprehensive alignment documentation
+├── package.json               # Standard Node.js package dependencies
+├── prompts/                   # Isolated sub-agent persona definitions (Architect, Writer, Reviewer)
+├── artifacts/                 # Output samples and framework diagnostic audit reports
+├── .agents/                   # Declarative Framework Namespace
+│   ├── workflows/             # Interactive conversational slash-command execution files
+│   └── rules/                 # Permanent always-on behavioral boundary conditions
+└── _agents/                   # Programmatic Core Namespace
+    └── skills/                # Modular python/shell tools featuring isolated dependency lockfiles
 ```
 
 ***
 
-## 🌐 Prerequisites
+## ⚙️ Environment Setup & Onboarding
 
-To run these skills, your local terminal session must meet these requirements:
-1.  **gcloud CLI**: Authenticated and active on your Mac.
-2.  **Active SSO Ticket**: Run **`gcert`** periodically in your terminal to ensure passwordless SSH and BigQuery authentication.
-3.  **macOS Terminal**: Logged in under your corporate account `shacharb@google.com`.
-
-***
-
-## ⚙️ Installation & Setup
-
-### Step 1: Local `@googleworkspace/cli` Deployment
-The Gmail skill requires GMail API wrappers. Install it locally inside your workspace folder (no global sudo or root permissions required!):
-
-```bash
-# Navigate to workspace
-cd ce-skills
-
-# Install locally (creates local node_modules/.bin/gws symlink)
-npm install @googleworkspace/cli
-```
-
-### Step 2: Create `gcp_config.txt`
-To enable the scripts to discover your Cloudtop host and GCP accounts, create a file named **`gcp_config.txt`** at the root of your cloned folder.
-
-> [!CAUTION]
-> `gcp_config.txt` is excluded from Git in `.gitignore`. **Never commit this file** as it contains environment-specific details!
-
-**gcp_config.txt Template:**
+### 1. Agentic Initialization (Recommended Path)
+Rather than creating credential files manually, **launch the interactive onboarding workflow directly in your chat**:
 ```text
-folder_id=YOUR_GCP_FOLDER_ID
-billing_account=YOUR_BILLING_ACCOUNT_WITH_HYPHENS
-cloudtop_host=YOUR_CLOUDTOP_WORKSTATION_HOST (e.g., username-dev-glinux.c.googlers.com)
+/onboarding
+```
+The agent will dynamically solicit required workspace parameters (`folder_id`, `billing_account`) via secure UI input dialogues, automatically output a perfectly valid `gcp_config.txt` to disk, and mount your customized Systems Engineering Persona target instantly!
+
+### 2. Local Installation
+Certain utility scripts use standard module layers. Synchronize dependencies using modern resolvers:
+```bash
+# Install base Node wrappers for Gmail relays:
+npm install @googleworkspace/cli
+
+# Python skills featuring dedicated lockfiles isolate execution automatically via:
+uv run --project _agents/skills/<skill_folder>/ scripts/<script_name>.py
 ```
 
 ***
 
 ## 🤝 Contributions & Support
-For bugs, feature requests, or new operational skills contributions, please search existing issues or file a report at [CE Skills Hub CLI](https://github.com/cloud-gtm/ce-skills/issues).
+To submit new programmatic skills, propose workflow sequences, or flag operational bugs, please file an issue report on the [CE Skills Upstream Repository](https://github.com/cloud-gtm/ce-skills/issues).

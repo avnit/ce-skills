@@ -235,7 +235,7 @@ def markdown_to_html(md_text):
 def send_email_api(to, subject, body_or_path, is_html=False, attachment=None):
     """Generic programmatic helper function that can be imported natively by other Python skills."""
     config = load_gcp_config()
-    cloudtop_host = config.get("cloudtop_host", "shacharb-dev-glinux.c.googlers.com")
+    cloudtop_host = config.get("cloudtop_host", "your-username-dev-glinux.c.googlers.com")
     
     # Resolve body content (check if it's a local file path)
     body_content = body_or_path
@@ -341,13 +341,13 @@ def main():
         epilog="""
 Examples:
   # Send simple text email:
-  python3 send_email.py --to "shacharb@google.com" --subject "Alert" --body "Test message"
+  python3 send_email.py --to "user@example.com" --subject "Alert" --body "Test message"
 
   # Send Markdown report as beautifully styled HTML:
-  python3 send_email.py --to "shacharb@google.com" --subject "Spend Review" --body "artifacts/mtd_billing_audit.md" --html
+  python3 send_email.py --to "user@example.com" --subject "Spend Review" --body "artifacts/mtd_billing_audit.md" --html
 
   # Send email with attachment:
-  python3 send_email.py --to "shacharb@google.com" --subject "Audit" --body "Attached" --attachment "artifacts/mtd_billing_audit.md"
+  python3 send_email.py --to "user@example.com" --subject "Audit" --body "Attached" --attachment "artifacts/mtd_billing_audit.md"
 """
     )
     

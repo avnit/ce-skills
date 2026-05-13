@@ -17,14 +17,14 @@ Follow these simple steps to configure your generic emailer in less than 30 seco
 Open `/Users/shacharb/Downloads/ce-scale/gcp_config.txt` and append your Cloudtop virtual workstation host:
 
 ```text
-cloudtop_host=shacharb-dev-glinux.c.googlers.com
+cloudtop_host=your-username-dev-glinux.c.googlers.com
 ```
 
 ### Step 2: Execute natively
 Run the script natively in your terminal using your standard Mac Python 3 interpreter (no packages needed!):
 
 ```bash
-python3 _agents/skills/send-email/scripts/send_email.py --to "shacharb@google.com" --subject "YOUR_SUBJECT" --body "YOUR_BODY" [options]
+python3 _agents/skills/send-email/scripts/send_email.py --to "user@example.com" --subject "YOUR_SUBJECT" --body "YOUR_BODY" [options]
 ```
 
 ***
@@ -56,7 +56,7 @@ from send_email import send_email_api
 
 # Send email programmatically
 send_email_api(
-    to="shacharb@google.com",
+    to="user@example.com",
     subject="GKE Cluster High Cost Alert!",
     body_or_path="GKE Cluster sandbox-gke-1 has exceeded its billing thresholds.",
     is_html=False
@@ -72,7 +72,7 @@ import subprocess
 subprocess.run([
     "python3",
     "_agents/skills/send-email/scripts/send_email.py",
-    "--to", "shacharb@google.com",
+    "--to", "user@example.com",
     "--subject", "MTD Sandbox Cost Audit",
     "--body", "artifacts/mtd_billing_audit.md",
     "--html"

@@ -17,9 +17,11 @@ Follow this interactive checklist to create a codelab:
 - [ ] **Phase 1: Research & Goal Definition**
     - Understand the topic and target audience.
     - Search for existing codelabs or documentation on the topic.
-- [ ] **Phase 2: Blueprint Design**
-    - Create a `blueprint.md` outlining the steps, topology, and key commands.
-    - Present the blueprint to the user for approval.
+- [ ] **Phase 2: Blueprint Design (Pure Markdown Preview Strategy)**
+    - **Generate Preview Blueprint**: Create an ephemeral `blueprint.md` inside `<appDataDir>/brain/<conversation-id>/blueprint.md` structured using **pure standard Markdown** formatting to guarantee rock-solid multi-platform preview stability.
+    - **Instant Topology Mapping**: Embed the target system architecture directly inside the preview buffer using standard **Mermaid code blocks** to guarantee instant evaluation without rendering engine folding traps.
+    - **Obtain Sign-off**: Present the preview artifact link to the user and request design approval via interactive multiple-choice modal (`ask_question`).
+    - **Codebase Persistence**: Only upon explicit approval, copy/persist the pure Markdown `blueprint.md` design into the permanent code repository directory (`labs/dev/[lab-name]/`). Full diagram image synthesis can be scheduled asynchronously during published lab generation.
 - [ ] **Phase 3: Content Generation**
     - Follow `codelab-formatting` standards.
     - Write the content step-by-step.

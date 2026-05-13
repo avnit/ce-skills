@@ -30,9 +30,14 @@ To verify the commands in a codelab, use the `deterministic_runner.py` script. T
 
 ### How to Run
 
+When orchestrating verification tests, you **MUST** pass the active workspace artifact folder coordinates using the `--artifact-dir` directive. This routes live status dashboards into native web preview buffers during test suite processing:
 ```bash
-python3 _agents/skills/codelab-testing/scripts/deterministic_runner.py path/to/your/codelab.md
+python3 _agents/skills/codelab-testing/scripts/deterministic_runner.py path/to/your/codelab.md --artifact-dir <appDataDir>/brain/<conversation-id>
 ```
+
+### Dynamic Decoupled Parameter Evaluation
+- **CRITICAL RULE**: Master tutorial `.lab.md` guides are immutable developer assets. You **MUST NOT** modify static markdown guides to inject ephemeral sandboxed parameters (like hardcoded test project IDs).
+- Instead, the runner natively resolves runtime variable substitution in memory. Immediately prior to bash evaluation, it automatically replaces generic string placeholders (`<PROJECT_ID>` and `${PROJECT_ID}`) with the current active `gcloud` project identifier.
 
 ### State Management and Resuming
 
