@@ -86,6 +86,9 @@ The agent will dynamically solicit required workspace parameters (`folder_id`, `
 ### 2. Local Installation
 Certain utility scripts use standard module layers. Synchronize dependencies using modern resolvers:
 ```bash
+# Authenticate with corporate credentials first:
+gcert
+
 # Install base Node wrappers for Gmail relays:
 npm install @googleworkspace/cli
 
