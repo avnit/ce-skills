@@ -154,16 +154,6 @@ def main():
         sys.exit(1)
         
     print(f"\nSUCCESS: Project {project_id} setup complete.")
-    
-    # 5. Enable Standard APIs
-    print("Enabling standard APIs...")
-    apis = ["compute.googleapis.com", "networkconnectivity.googleapis.com", "logging.googleapis.com", "artifactregistry.googleapis.com", "pubsub.googleapis.com"]
-    api_cmd = f"gcloud services enable {' '.join(apis)} --project={project_id}"
-    
-    if run_command(api_cmd, args.dry_run):
-        print("Standard APIs enabled successfully.")
-    else:
-        print("Warning: Failed to enable some APIs.")
 
     print(f"\nProject {project_id} is ready for use.")
 
