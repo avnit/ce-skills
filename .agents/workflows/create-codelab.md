@@ -8,7 +8,9 @@ Required parameters from the user:
 1. Topic / Initial Request Prompt (e.g., "Application Load Balancer with proxy-only subnets")
 
 Overall Orchestration Lifecycle:
-1. **Phase 1: Research, Scope Intake & Upfront Alignment**
+1. **Phase 0: Pre-Flight Authentication & ADC Verification**
+   - Consult and enforce the global auth validation standard: [gcloud_auth.md](file:///Users/shacharb/Downloads/ce-scale/.agents/rules/gcloud_auth.md).
+2. **Phase 1: Research, Scope Intake & Upfront Alignment**
    - Consult the **[architect.md](prompts/architect.md)** persona guidelines.
    - Invoke the **`ask_question`** tool to present an interactive intake modal to the user. Include options to align target audience persona, complexity level, delivery format, and explicitly configure the **Execution Scope** question:
      - `question`: "Select the desired execution scope for this Codelab run:"

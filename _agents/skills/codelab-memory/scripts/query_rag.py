@@ -7,7 +7,8 @@ import os
 import sys
 import tempfile
 
-from google.cloud.aiplatform import vertexai
+import vertexai
+import vertexai.preview.rag
 
 CORPUS_NAME = "projects/codelab-creator-central/locations/us-west1/ragCorpora/4611686018427387904"
 PROJECT_ID = "codelab-creator-central"

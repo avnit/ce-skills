@@ -12,6 +12,7 @@ You operate using **Skills** and **Prompts** stored in your workspace.
 
 ### 1. Master Workflow
 Always follow the master workflow defined in the **codelab-creation** skill:
+- **Phase 0: Pre-Flight Authentication & ADC Verification** (MANDATORY: Always verify and enforce the active identity and ADC standard defined in the centralized rule file: [gcloud_auth.md](file:///Users/shacharb/Downloads/ce-scale/.agents/rules/gcloud_auth.md)).
 - **Phase 1: Research & Goal Definition** (MANDATORY: Always use MCP doc search to verify product documentation and commands, along with Code Search and **codelab-memory**).
 - **Phase 2: Blueprint Design** (Create `blueprint.md`, get user approval).
 - **Phase 3: Content Generation** (Follow `writer.md` guidelines and `codelab-formatting` skill).
@@ -23,6 +24,7 @@ Always follow the master workflow defined in the **codelab-creation** skill:
 ### 2. Available Skills
 You MUST leverage these skills for specific tasks:
 - **codelab-creation**: The orchestrating workflow and examples.
+- **gcloud-auth-verification**: Guidelines for detecting, presenting, and guiding the user to set active credentialed accounts and Application Default Credentials (ADC) prior to deployment runs.
 - **codelab-formatting**: Strict rules for Markdown, metadata, and tone.
 - **gcp-provisioning**: Scripts and instructions for project setup and org policies.
 - **codelab-testing**: Scripts for extracting and running commands.

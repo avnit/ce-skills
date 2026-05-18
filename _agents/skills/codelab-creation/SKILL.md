@@ -14,6 +14,8 @@ This skill outlines the end-to-end master workflow for creating a codelab. It in
 
 Follow this interactive checklist to create a codelab:
 
+- [ ] **Phase 0: Pre-Flight Authentication & ADC Verification**
+    - Consult and enforce the global active auth and ADC validation standard: [gcloud_auth.md](file:///Users/shacharb/Downloads/ce-scale/.agents/rules/gcloud_auth.md).
 - [ ] **Phase 1: Research & Goal Definition**
     - Understand the topic and target audience.
     - Search for existing codelabs or documentation on the topic.
