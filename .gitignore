@@ -14,6 +14,8 @@ labs/
 meeting/
 artifacts/
 experiment/
+user_deploy/
+
 
 # Python Caches & Virtual Environments
 __pycache__/
