@@ -30,29 +30,29 @@ Rules represent continuous boundary constraints injected into all active models 
 
 ***
 
-## 🚀 Comprehensive Programmatic Skills Catalog (`_agents/skills/`)
+## 🚀 Comprehensive Programmatic Skills Catalog (`.agents/skills/`)
 
 Skills are code-backed capability layers pairing instruction manifests (`SKILL.md`) with specialized execution tools (Python/Bash):
 
 | Skill Directory | Scope / Capability | TL;DR Description |
 | :--- | :--- | :--- |
-| [codelab-cleanup/](file:///_agents/skills/codelab-cleanup/SKILL.md) | Cost containment | Day 2 operations to list, force-delete, and terminate leaked GCP sandbox test projects instantly. |
-| [codelab-creation/](file:///_agents/skills/codelab-creation/SKILL.md) | Master Codelab builder | Guides multi-phase blueprints, formatting checklists, and testing factories to author production-ready tutorials. |
-| [codelab-formatting/](file:///_agents/skills/codelab-formatting/SKILL.md) | Style syntax standards | Strict metadata parsing standards and markdown layout templates for `.lab.md` files. |
-| [codelab-markdown-submit/](file:///_agents/skills/codelab-markdown-submit/SKILL.md) | DevSite source submit | Local `claat` preview validation, directory placement structure, and source repo change-list workflows. |
-| [codelab-memory/](file:///_agents/skills/codelab-memory/SKILL.md) | Centralized RAG memory | Interacts with global Vertex AI corpora to retrieve prior art and append newly solved technical traps. |
-| [codelab-pricing-estimator/](file:///_agents/skills/codelab-pricing-estimator/SKILL.md) | Active cost estimation | Audits running cloud resources post-build against live pricing catalogs to render concrete hourly spend forecasts. |
-| [codelab-testing/](file:///_agents/skills/codelab-testing/SKILL.md) | Deterministic QA runner | Extracts fenced instruction codeblocks and evaluates subshells deterministically mapping state validation caches. |
-| [codelab-validation/](file:///_agents/skills/codelab-validation/SKILL.md) | Stateful QA routing | Interprets natural language steps statefully handling background execution gates. |
-| [codelab_audit_logging/](file:///_agents/skills/codelab_audit_logging/SKILL.md) | Evidence extraction | Extracts Cloud Audit logs compiling concrete resource lifecycle trace boards into lab outputs. |
-| [creating-gcp-diagrams/](file:///_agents/skills/creating-gcp-diagrams/SKILL.md) | Visual generation | Translates raw Mermaid blocks into stunning, high-contrast Google Cloud styled image assets. |
-| [expert-request-management/](file:///_agents/skills/expert-request-management/SKILL.md) | Sales BI dashboarding | Queries specific opportunities BQ tables rendering customized spreadsheet reporting tabs. |
-| [extracting_requirements_from_meetings/](file:///_agents/skills/extracting_requirements_from_meetings/SKILL.md) | Transcript blueprinting | Structures raw meeting notes into concrete technical requirements and solution architectures. |
-| [gcp-billing-reports/](file:///_agents/skills/gcp-billing-reports/SKILL.md) | Partitioned spend list | Aggregates detailed billing exports using penny-rounding logic for optimized executive lists. |
-| [gcp-provisioning/](file:///_agents/skills/gcp-provisioning/SKILL.md) | Project automation | Provisions test projects, validates standard billing attachments, and strips organization policies. |
-| [gcp-release-notes/](file:///_agents/skills/gcp-release-notes/SKILL.md) | Updates caching | Queries GCP release note repositories utilizing sub-second caching routines for real-time lookups. |
-| [lab-video-automation/](file:///_agents/skills/lab-video-automation/SKILL.md) | Automated UI execution | Controls visible Chrome profile execution windows using Playwright to support external screen recording setups, paired with optional Gemini self-healing recovery routines. |
-| [send-email/](file:///_agents/skills/send-email/SKILL.md) | Secure corp relay | Remote Cloudtop SSH bridge dispatching styled corporate HTML messages and file attachments securely. |
+| [codelab-cleanup/](file:///.agents/skills/codelab-cleanup/SKILL.md) | Cost containment | Day 2 operations to list, force-delete, and terminate leaked GCP sandbox test projects instantly. |
+| [codelab-creation/](file:///.agents/skills/codelab-creation/SKILL.md) | Master Codelab builder | Guides multi-phase blueprints, formatting checklists, and testing factories to author production-ready tutorials. |
+| [codelab-formatting/](file:///.agents/skills/codelab-formatting/SKILL.md) | Style syntax standards | Strict metadata parsing standards and markdown layout templates for `.lab.md` files. |
+| [codelab-markdown-submit/](file:///.agents/skills/codelab-markdown-submit/SKILL.md) | DevSite source submit | Local `claat` preview validation, directory placement structure, and source repo change-list workflows. |
+| [codelab-memory/](file:///.agents/skills/codelab-memory/SKILL.md) | Centralized RAG memory | Interacts with global Vertex AI corpora to retrieve prior art and append newly solved technical traps. |
+| [codelab-pricing-estimator/](file:///.agents/skills/codelab-pricing-estimator/SKILL.md) | Active cost estimation | Audits running cloud resources post-build against live pricing catalogs to render concrete hourly spend forecasts. |
+| [codelab-testing/](file:///.agents/skills/codelab-testing/SKILL.md) | Deterministic QA runner | Extracts fenced instruction codeblocks and evaluates subshells deterministically mapping state validation caches. |
+| [codelab-validation/](file:///.agents/skills/codelab-validation/SKILL.md) | Stateful QA routing | Interprets natural language steps statefully handling background execution gates. |
+| [codelab_audit_logging/](file:///.agents/skills/codelab_audit_logging/SKILL.md) | Evidence extraction | Extracts Cloud Audit logs compiling concrete resource lifecycle trace boards into lab outputs. |
+| [creating-gcp-diagrams/](file:///.agents/skills/creating-gcp-diagrams/SKILL.md) | Visual generation | Translates raw Mermaid blocks into stunning, high-contrast Google Cloud styled image assets. |
+| [expert-request-management/](file:///.agents/skills/expert-request-management/SKILL.md) | Sales BI dashboarding | Queries specific opportunities BQ tables rendering customized spreadsheet reporting tabs. |
+| [extracting_requirements_from_meetings/](file:///.agents/skills/extracting_requirements_from_meetings/SKILL.md) | Transcript blueprinting | Structures raw meeting notes into concrete technical requirements and solution architectures. |
+| [gcp-billing-reports/](file:///.agents/skills/gcp-billing-reports/SKILL.md) | Partitioned spend list | Aggregates detailed billing exports using penny-rounding logic for optimized executive lists. |
+| [gcp-provisioning/](file:///.agents/skills/gcp-provisioning/SKILL.md) | Project automation | Provisions test projects, validates standard billing attachments, and strips organization policies. |
+| [gcp-release-notes/](file:///.agents/skills/gcp-release-notes/SKILL.md) | Updates caching | Queries GCP release note repositories utilizing sub-second caching routines for real-time lookups. |
+| [lab-video-automation/](file:///.agents/skills/lab-video-automation/SKILL.md) | Automated UI execution | Controls visible Chrome profile execution windows using Playwright to support external screen recording setups, paired with optional Gemini self-healing recovery routines. |
+| [send-email/](file:///.agents/skills/send-email/SKILL.md) | Secure corp relay | Remote Cloudtop SSH bridge dispatching styled corporate HTML messages and file attachments securely. |
 
 ***
 
@@ -68,7 +68,7 @@ ce-skills/
 ├── .agents/                   # Declarative Framework Namespace
 │   ├── workflows/             # Interactive conversational slash-command execution files
 │   └── rules/                 # Permanent always-on behavioral boundary conditions
-└── _agents/                   # Programmatic Core Namespace
+└── .agents/                   # Programmatic Core Namespace
     └── skills/                # Modular python/shell tools featuring isolated dependency lockfiles
 ```
 
@@ -90,7 +90,7 @@ Certain utility scripts use standard module layers. Synchronize dependencies usi
 gcert
 
 # Python skills featuring dedicated lockfiles isolate execution automatically via:
-uv run --project _agents/skills/<skill_folder>/ scripts/<script_name>.py
+uv run --project .agents/skills/<skill_folder>/ scripts/<script_name>.py
 ```
 
 ***

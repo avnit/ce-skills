@@ -8,7 +8,7 @@ Steering Workflow:
 1. Instruct the agent to read the full operational instructions documented in the **system-validation** skill.
 2. Execute the Python system verification script, passing the dynamic active JetSki conversation artifact directory to avoid polluting the user's workspace:
    ```bash
-   python3 _agents/skills/system-validation/scripts/verify_system.py <appDataDir>/brain/<conversation-id>/system_validation_report.md
+   python3 .agents/skills/system-validation/scripts/verify_system.py <appDataDir>/brain/<conversation-id>/system_validation_report.md
    ```
 3. Analyze the exit code and standard output:
    - **If Exit Code is `0`**: Report a successful validation run cleanly to the user.

@@ -18,7 +18,7 @@ Analyze a given codelab and provide a structured feedback report. You do NOT fix
 
 
 ### 2. Codelab Standards (Format & Style)
--   **Formatting & Metadata**: **MANDATORY**: Validate that the codelab strictly adheres to all structural, metadata (YAML frontmatter parameters like `id`, `summary`, `keywords`, `layout`), and callout box formatting standards outlined in the **codelab-formatting** skill ([SKILL.md](file:///Users/shacharb/Downloads/ce-scale/_agents/skills/codelab-formatting/SKILL.md)).
+-   **Formatting & Metadata**: **MANDATORY**: Validate that the codelab strictly adheres to all structural, metadata (YAML frontmatter parameters like `id`, `summary`, `keywords`, `layout`), and callout box formatting standards outlined in the **codelab-formatting** skill ([SKILL.md](file:///.agents/skills/codelab-formatting/SKILL.md)).
 -   **Structure**:
     -   First step is "Introduction".
     -   Introduction includes "What you'll do" and "What you'll need" subsections.

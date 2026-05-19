@@ -1,0 +1,58 @@
+---
+name: codelab-creation
+description: >-
+  Master workflow for creating high-quality, enterprise-standard Google Cloud Codelabs.
+  Use when designing, writing, and validating codelabs. Enforces modern patterns (MIGs, Templates),
+  stateful reliability (Maglev), negative testing, and business-problem framing.
+---
+
+# Skill: Codelab Creation
+
+This skill outlines the end-to-end master workflow for creating a codelab. It integrates research, design, writing, validation, and final delivery.
+
+## Master Workflow
+
+Follow this interactive checklist to create a codelab:
+
+- [ ] **Phase 0: Pre-Flight Authentication & ADC Verification**
+    - Consult and enforce the global active auth and ADC validation standard: [gcloud_auth.md](file:///.agents/rules/gcloud_auth.md).
+- [ ] **Phase 1: Research & Goal Definition**
+    - **Mandatory Intake Confirmation**: Present three interactive intake questions via the `ask_question` tool to define the Execution Scope (E2E vs. Artifacts Only), Target Persona / Complexity Level (Outcome CE L100, Platform CE L200/300, or Practice CE L300/400), and Delivery Format (Pure gcloud CLI vs. Terraform IaC).
+    - Understand the topic and align the design topology/task checklist dynamically to match the selected choices.
+    - **Mandatory Developer Documentation Query Gate**: Before drafting any technical designs, architectures, or deployment scripts for Google Cloud (e.g., VPC, GKE, IAM, Load Balancing), you must use the `google-developer-documentation-mcp` server (via the `search_documents` tool) to retrieve the latest official service documentation. Do not rely on your internal knowledge for commands, parameters, or configurations unless they are standard, static, and completely unambiguous. When providing your final design or configuration, include inline comments or links referencing the specific Google documentation pages you retrieved to justify your architectural choices.
+    - Search for existing codelabs or documentation on the topic.
+- [ ] **Phase 2: Blueprint Design (Pure Markdown Preview Strategy)**
+    - **Generate Preview Blueprint**: Create an ephemeral `blueprint.md` inside `<appDataDir>/brain/<conversation-id>/blueprint.md` structured using **pure standard Markdown** formatting to guarantee rock-solid multi-platform preview stability.
+    - **Instant Topology Mapping**: Embed the target system architecture directly inside the preview buffer using standard **Mermaid code blocks** to guarantee instant evaluation without rendering engine folding traps.
+    - **Obtain Sign-off**: Present the preview artifact link to the user and request design approval via interactive multiple-choice modal (`ask_question`).
+    - **Codebase Persistence**: Only upon explicit approval, copy/persist the pure Markdown `blueprint.md` design into the permanent code repository directory (`labs/dev/[lab-name]/`). Full diagram image synthesis can be scheduled asynchronously during published lab generation.
+- [ ] **Phase 3: Content Generation**
+    - Follow `codelab-formatting` standards.
+    - Write the content step-by-step.
+- [ ] **Phase 4: Validation & Authoritative Debugging**
+    - Use `codelab-testing` skill to extract and run commands.
+    - **Authoritative Debugging Gate**: If a gcloud or environment error is encountered during validation, you **MUST** query the `google-developer-documentation-mcp` server with the exact error message/command to pull the correct syntax, parameter definitions, and deprecation warnings instead of guessing.
+    - Fix any errors found during validation.
+- [ ] **Phase 5: User Review & Resource Clean-up Choice**
+    - Present the completed codelab to the user for feedback.
+    - **Clean-up Choice Gate**: Present a mandatory choice to the user via `ask_question` to either **delete** the sandboxed test project (to control cloud costs) or **retain** it (to allow the user to manually test or demo).
+- [ ] **Phase 6: Final Delivery**
+    - Convert to Google Doc if requested by the user.
+
+## Enterprise Standards
+
+To elevate codelabs to an enterprise standard, follow the principles outlined in [Enterprise Codelab Standards](references/enterprise_standards.md). This includes:
+- Leading with business problems.
+- Including stateful reliability (e.g., Maglev).
+- Implementing negative testing.
+- Adding operational guardrails.
+- Using modern infrastructure patterns (Instance Templates & MIGs).
+
+## Examples
+
+See a complete example of a blueprint and generated codelab in the `examples/` directory:
+
+- [Blueprint](examples/hello-mcp-cloudrun/blueprint.md)
+- [Codelab](examples/hello-mcp-cloudrun/hello-mcp-cloudrun.lab.md)
+
+This example shows how to build a simple MCP server and deploy it to Cloud Run.

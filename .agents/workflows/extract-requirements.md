@@ -1,27 +1,33 @@
 ---
-description: Orchestrate the automated evaluation of meeting notes and transcripts to extract comprehensive customer requirements and technical artifacts
+description: Orchestrate the automated evaluation of discovery call notes and transcripts to generate comprehensive customer artifacts (Blueprints, Gap Analyses, One-Pagers).
 ---
 
-Consult the **extracting-requirements-from-meetings** skill to steer the analytical extraction sequence for compiling a high-fidelity Artifact Blueprint.
+# Workflow: Customer Discovery Analysis
+
+Consult the **extracting-requirements-from-meetings**, **customer-gap-analysis**, or **customer-one-pager** skills to steer the analytical extraction sequence using the unified solutions architect prompt.
 
 Required parameters from the user:
-1. Target Meeting Source File, Transcript Path, or Google Doc Link (e.g., `meeting/customerX/discovery_transcript.txt` or `https://docs.google.com/document/d/...`)
+1. Target Meeting Source File, Transcript Path, or Google Doc Link (e.g., `meeting/customerX/discovery_transcript.txt`).
+2. Target Deliverable Format (Blueprint, Gap Analysis, or One-Pager).
 
 Overall Orchestration Lifecycle:
-1. **Phase 1: Scope Intake & Source Retrieval**
-   - Consult the **extracting-requirements-from-meetings** skill guidelines alongside the core **[meeting_analyzer.md](prompts/meeting_analyzer.md)** system profile.
+
+1. **Phase 1: Scope Intake & Target Alignment**
+   - Consult the target skill manifest guidelines alongside the unified **[discovery_analyst.md](prompts/discovery_analyst.md)** system profile.
    - Initialize the mandatory unindented HTML task tracking table (`task.md`) mapping out the progressive extraction steps:
-     - Step 1: Retrieve target meeting notes or transcript assets.
-     - Step 2: Evaluate multi-tab document layouts (prioritizing Transcript tabs natively).
-     - Step 3: Apply technical requirement extraction models via `meeting_analyzer.md` system logic.
-     - Step 4: Map functional drivers to prioritized advisory deliverables (P0, P1, P2).
-     - Step 5: Present finalized Artifact Blueprint structures cleanly to the user.
+     - Step 1: Retrieve and ingest target meeting notes or transcript assets (prioritizing raw transcripts).
+     - Step 2: Load the unified `discovery_analyst.md` system prompt with the designated format flag (e.g., `--format blueprint`, `--format gap_analysis`, `--format one_pager`).
+     - Step 3: Extract deep engineering variables, pain points, and objectives.
+     - Step 4: Synthesize functional requirements into the target deliverable template.
+     - Step 5: Save the finalized artifact to the native filesystem and present it cleanly to the user.
+
 2. **Phase 2: Technical Implementation Analysis**
    - Update the active row state in `task.md` to `RUNNING`.
-   - Scan the raw transcript source text focusing intensely on specific engineering variables (CIDRs, subnets, accounts) and past competitive pain points.
-   - Differentiate rigorously between functional "must-have" requirements and long-term optional optimizations.
-3. **Phase 3: Artifact Blueprint Assembly & Persistence**
-   - Compile the extracted metrics directly into the **Blueprint Template** defined within the skill specification.
-   - **Native Persistence Standard**: Ensure the finalized Artifact Blueprint document is explicitly saved to the native project filesystem under the target customer collaboration subfolder (e.g., using `write_to_file` with `IsArtifact: false` to save as `meeting/<customer_name>/artifact_blueprint.md`).
+   - Scan the raw transcript text, focusing intensely on specific variables (VPCs, CIDRs, IAM roles, subnets) and comparisons with other clouds.
+   - Map functional specifications and blockers.
+
+3. **Phase 3: Deliverable Assembly & Workspace Persistence**
+   - Compile the extracted data into the target markdown template (Artifact Blueprint, Gap Analysis Report, or One-Pager).
+   - **Native Persistence Standard**: Save the finalized document inside the customer subfolder under `meeting/` (e.g., `meeting/<customer_name>/artifact_blueprint.md`, `gap_analysis.md`, or `one_pager.md`).
    - Render the output summary alongside the clickable project file link inside the active view buffer.
-   - Mark final task execution state as `COMPLETED` in `task.md`.
+   - Mark the final task execution state as `COMPLETED` in `task.md`.

@@ -1,0 +1,12 @@
+{
+  "display_name": "CE Sandbox Sweeper",
+  "description": "Automated cost-control daemon that runs an hourly sweep to clean up expired Google Cloud sandbox projects.",
+  "builtin": "schedule",
+  "args": [
+    "0 * * * *",
+    "python3",
+    "scripts/sweeper.py",
+    "--force"
+  ],
+  "restart_policy": "always"
+}

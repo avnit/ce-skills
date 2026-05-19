@@ -60,7 +60,22 @@ Steer the onboarding execution lifecycle to prepare the active workspace environ
 
    ## Active Role Focus: [Practice CE / Platform CE / Outcome CE]
    - **Primary Objectives**: [Insert specific objective summary mapping chosen persona].
-   - **Artifact Constraints**: Tailor all technical reports, blueprint guides, and execution scripts to prioritize the specific metrics, delivery style, and detail granularity defined by this role.
+   - **Mapped Architectural Configurations (Mandatory Prompts Binding)**:
+     - **Practice CE Mappings**:
+       * Target Audience: `Cloud Architect / Enterprise Operator`
+       * Technical Level Depth: `Level 300 (Advanced Stateful & Resiliency Patterns)` or `Level 400 (Expert Deep Dive)`
+       * Delivery Tooling Preference: `Hybrid Setup (Terraform networking, gcloud workloads)` or `Pure gcloud CLI`
+       * Execution Realism: Highly scaled, production HA networks, terminal-first, with negative security testing.
+     - **Platform CE Mappings**:
+       * Target Audience: `Cloud Architect / Enterprise Operator`
+       * Technical Level Depth: `Level 200 (Intermediate Functional Walkthrough)` or `Level 300 (Advanced)`
+       * Delivery Tooling Preference: `Terraform IaC (Optimized for declarative GitOps)`
+       * Execution Realism: Broad landing zones, strategic IAM governance, and declarative state management.
+     - **Outcome CE Mappings**:
+       * Target Audience: `Developer / Fast Learner`
+       * Technical Level Depth: `Level 100 (Foundational Quick-Start)`
+       * Delivery Tooling Preference: `Pure gcloud CLI (Optimized for rapid console validation)`
+       * Execution Realism: Simple network setup, minimal VM footprints, copy-paste speed-runs, and rapid visual UI confirmations.
    ```
 3. **Author Credential Configuration**: Author the final `gcp_config.txt` file directly into the workspace root directory populated cleanly in standard `key=value` formatting:
    ```text
