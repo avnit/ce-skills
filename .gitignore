@@ -51,7 +51,7 @@ credentials.json
 *.metadata.json
 
 # Exclude localized active MCP configurations to block credential leaks
-.gemini/*
-!.gemini/mcp_config.json
+.gemini/
+
 
 
