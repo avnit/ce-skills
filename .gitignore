@@ -49,6 +49,7 @@ credentials.json
 *.enc
 *.resolved*
 *.metadata.json
+startup.sh
 
 # Exclude localized active MCP configurations to block credential leaks
 .gemini/
