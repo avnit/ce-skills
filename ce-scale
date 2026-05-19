@@ -86,13 +86,13 @@ Available Subcommands:
     if sub == "onboard":
         handle_onboard()
     elif sub == "validate":
-        run_script("_agents/skills/system-validation/scripts/verify_system.py", extra)
+        run_script(".agents/skills/system-validation/scripts/verify_system.py", extra)
     elif sub == "test":
-        run_script("_agents/skills/codelab-testing/scripts/deterministic_runner.py", extra)
+        run_script(".agents/skills/codelab-testing/scripts/deterministic_runner.py", extra)
     elif sub == "sweep":
-        run_script("_agents/skills/codelab-cleanup/scripts/sweeper.py", extra)
+        run_script(".agents/skills/codelab-cleanup/scripts/sweeper.py", extra)
     elif sub == "cleanup":
-        run_script("_agents/skills/codelab-cleanup/scripts/cleanup_projects.py", extra)
+        run_script(".agents/skills/codelab-cleanup/scripts/cleanup_projects.py", extra)
     else:
         print(f"{BOLD}{RED}❌ Unknown Subcommand: '{sub}'{RESET}")
         parser.print_help()
