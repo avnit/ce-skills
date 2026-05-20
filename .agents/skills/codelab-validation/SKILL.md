@@ -9,7 +9,19 @@ description: >
 
 # Codelab Validation
 
-You validate codelabs written in natural language using a stateful, step-by-step workflow.
+This skill provides instructions and tools for validating natural-language codelabs by interpreting tutorial steps statefully, running commands natively in a persistent bash subshell, and maintaining a live visual status board.
+
+## Unified Execution Engine
+
+You **MUST** use the unified `tester.py` script as the exclusive execution engine for all E2E validation. It handles step-by-step state transitions, prerequisite notifications, command hash-caching, and unindented HTML progress updates automatically.
+
+### How to Run
+
+```bash
+python3 .agents/skills/codelab-validation/scripts/tester.py path/to/your/codelab.md --artifact-dir <appDataDir>/brain/<conversation-id>
+```
+
+This merges the state tracking of `codelab-validation` with the persistent command execution of `deterministic_runner.py` into a single execution harness.
 
 ## Entry Point: Read State First
 

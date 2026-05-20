@@ -13,4 +13,9 @@ This file contains general, repository-wide constraints and guidelines for devel
   2. Every technical `blueprint.md` design (before copying/writing it to the persistent repo path).
 - **Modal Validation Gate**: The agent MUST NOT bypass this gate or assume auto-approval. The `ask_question` tool must be called to let the user explicitly choose whether to approve or reject/revise the design.
 
+## 3. Plan-Before-Tooling Strategy (Plan-First)
+- **Meta-Planning Phase (Phase 0.5)**: Before invoking any MCP documentation search, codebase code_search, or external web search, the agent **MUST** formulate a high-level strategy (`implementation_plan.md`) outlining the user's goal, planned research direction, components involved, and proposed verification strategy.
+- **Human Gate for Planning**: The agent **MUST** obtain explicit approval on this plan from the user before executing any subsequent research, codebase modification, or tool invocation.
+
+
 

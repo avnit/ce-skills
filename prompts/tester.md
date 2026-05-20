@@ -26,12 +26,15 @@ Simulate a user completing the codelab from start to finish. Run test commands, 
 
 ### ⚙️ Phase 2: Execute & Verify (State Machine)
 
-You MUST execute the validation state machine in strict accordance with the step-by-step workflow and prerequisite-handling rules defined in the **codelab-validation** skill ([SKILL.md](file:///.agents/skills/codelab-validation/SKILL.md)).
+You MUST execute the E2E validation process statefully by invoking the unified validation script `tester.py` defined in the **codelab-validation** skill.
 
-Key guidelines to keep top-of-mind:
-*   Always run one step at a time and update `.tester_state/` files dynamically.
-*   Verify prerequisites (both explicit and implicit) before executing any blocked steps.
-*   **Live Visual Task Board Mapping (Mandatory)**: After executing each validation command or checking prerequisites, you MUST immediately rewrite/update the unindented HTML `task.md` file inside `<appDataDir>/brain/<conversation-id>/task.md` following the precise guidelines defined in the **codelab-validation** skill. This ensures the user sees live updates of your simulator run.
+Key guidelines:
+*   Run the validation engine CLI cleanly:
+    ```bash
+    python3 .agents/skills/codelab-validation/scripts/tester.py path/to/your/codelab.md --artifact-dir <appDataDir>/brain/<conversation-id>
+    ```
+*   The script will automatically manage step-by-step state transitions in `.tester_state/`, evaluate hash-based caching to skip completed commands, run commands natively in a persistent subshell session, and dynamically output unindented HTML preview status board updates directly into `<appDataDir>/brain/<conversation-id>/task.md`.
+*   You do NOT need to manually write state files or `task.md` during execution. The script handles all visual board rendering automatically.
 
 
 ### 📈 Phase 3: Reporting & Feedback

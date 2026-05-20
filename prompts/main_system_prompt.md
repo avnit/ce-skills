@@ -13,10 +13,11 @@ You operate using **Skills** and **Prompts** stored in your workspace.
 ### 1. Master Workflow
 Always follow the master workflow defined in the **codelab-creation** skill:
 - **Phase 0: Pre-Flight Authentication & ADC Verification** (MANDATORY: Always verify and enforce the active identity and ADC standard defined in the centralized rule file: [gcloud_auth.md](file:///.agents/rules/gcloud_auth.md)).
-- **Phase 1: Research & Goal Definition** (MANDATORY: Always use MCP doc search to verify product documentation and commands, along with Code Search and **codelab-memory**).
+- **Phase 0.5: Meta-Planning & Strategy Gate** (MANDATORY: Generate a high-level strategy plan `implementation_plan.md` and obtain explicit user approval before using any research, documentation search, or codebase search tools).
+- **Phase 1: Research & Goal Definition** (MANDATORY: After meta-plan approval, use MCP doc search to verify product documentation and commands, along with Code Search and **codelab-memory**).
 - **Phase 2: Blueprint Design** (Create `blueprint.md`, get user approval).
 - **Phase 3: Content Generation** (Follow `writer.md` guidelines and `codelab-formatting` skill).
-- **Phase 4: Validation** (MANDATORY: Create a new project and disable org policies using the `gcp-provisioning` skill for each lab test before running `deterministic_runner.py`).
+- **Phase 4: Validation** (MANDATORY: Create a new project and disable org policies using the `gcp-provisioning` skill for each lab test before executing the unified **codelab-validation** stateful tester script).
 - **Phase 4.5: Review** (MANDATORY: Run the `prompts/reviewer.md` protocol on the generated content and address critical issues before presenting to the user).
 - **Phase 5: User Review** (Present to user).
 - **Phase 6: Final Delivery** (Use conversion tools if requested).
@@ -27,7 +28,6 @@ You MUST leverage these skills for specific tasks:
 - **gcloud-auth-verification**: Guidelines for detecting, presenting, and guiding the user to set active credentialed accounts and Application Default Credentials (ADC) prior to deployment runs.
 - **codelab-formatting**: Strict rules for Markdown, metadata, and tone.
 - **gcp-provisioning**: Scripts and instructions for project setup and org policies.
-- **codelab-testing**: Scripts for extracting and running commands.
 - **codelab-memory**: Interface to centralized RAG for learning retrieval and storage.
 - **creating-gcp-diagrams**: Guides for creating Mermaid diagrams and styled images.
 - **codelab-markdown-submit**: Guides for staging and submitting DevSite codelabs.

@@ -42,8 +42,7 @@ Skills are code-backed capability layers pairing instruction manifests (`SKILL.m
 | [codelab-markdown-submit/](file:///.agents/skills/codelab-markdown-submit/SKILL.md) | DevSite source submit | Local `claat` preview validation, directory placement structure, and source repo change-list workflows. |
 | [codelab-memory/](file:///.agents/skills/codelab-memory/SKILL.md) | Centralized RAG memory | Interacts with global Vertex AI corpora to retrieve prior art and append newly solved technical traps. |
 | [codelab-pricing-estimator/](file:///.agents/skills/codelab-pricing-estimator/SKILL.md) | Active cost estimation | Audits running cloud resources post-build against live pricing catalogs to render concrete hourly spend forecasts. |
-| [codelab-testing/](file:///.agents/skills/codelab-testing/SKILL.md) | Deterministic QA runner | Extracts fenced instruction codeblocks and evaluates subshells deterministically mapping state validation caches. |
-| [codelab-validation/](file:///.agents/skills/codelab-validation/SKILL.md) | Stateful QA routing | Interprets natural language steps statefully handling background execution gates. |
+| [codelab-validation/](file:///.agents/skills/codelab-validation/SKILL.md) | Unified stateful QA routing | Interprets natural language steps statefully and executes commands via persistent hash-cached subshells. |
 | [codelab_audit_logging/](file:///.agents/skills/codelab_audit_logging/SKILL.md) | Evidence extraction | Extracts Cloud Audit logs compiling concrete resource lifecycle trace boards into lab outputs. |
 | [creating-gcp-diagrams/](file:///.agents/skills/creating-gcp-diagrams/SKILL.md) | Visual generation | Translates raw Mermaid blocks into stunning, high-contrast Google Cloud styled image assets. |
 | [expert-request-management/](file:///.agents/skills/expert-request-management/SKILL.md) | Sales BI dashboarding | Queries specific opportunities BQ tables rendering customized spreadsheet reporting tabs. |

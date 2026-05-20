@@ -88,7 +88,7 @@ Available Subcommands:
     elif sub == "validate":
         run_script(".agents/skills/system-validation/scripts/verify_system.py", extra)
     elif sub == "test":
-        run_script(".agents/skills/codelab-testing/scripts/deterministic_runner.py", extra)
+        run_script(".agents/skills/codelab-validation/scripts/tester.py", extra)
     elif sub == "sweep":
         run_script(".agents/skills/codelab-cleanup/scripts/sweeper.py", extra)
     elif sub == "cleanup":

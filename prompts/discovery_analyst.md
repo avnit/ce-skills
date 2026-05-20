@@ -9,50 +9,94 @@ You MUST parse and support the designated format parameter (`--format`) to outpu
 ## 🛠️ Mapped Output Formats
 
 ### 1. `--format blueprint` (Artifact Blueprint)
-Create a high-fidelity **Artifact Blueprint** detailing the target system design:
+Create a lightweight **Artifact Blueprint** detailing the target system design:
 *   **Technical Implementation Matrix**: Grouped by functional technical components, including:
     - *The "What"* (Functional Requirements: tools, APIs, final state architecture).
-    - *The "Why"* (Business drivers & compliant rules. Flag missing context/risks).
+    - *The "Why"* (Business drivers & compliance rules. Flag missing context/risks).
     - *The "How"* (Technical spec: CIDRs, IPs, subnet tags, IAM roles, rejected alternatives).
     - *The "When"* (Deadlines, timeline, sequence of operations).
+*   **Objections & Friction Points**: Capture technical doubts, speed bumps, or organizational friction, along with potential GCP mitigations.
 *   **Citations & Key Statements**: Bulleted list of who said what and when (including timestamps if available in the source transcript).
 *   **Artifact Mapping & Prioritization**:
     - **P0: Immediate Action (Critical Path)**: Deliverables (Demos, Codelabs, Whitepapers) needed immediately to unblock rollout or prove a critical feature.
     - **P1: Secondary Focus**: Important enhancements, not blocking immediate rollout.
     - **P2: Deferred / Long-Term**: Complex optimizations pushed to future phases.
 
-### 2. `--format gap_analysis` (Customer Gap Analysis)
-Create a formal **Gap Analysis Report** mapping gaps to GCP solutions:
-*   **Executive Summary**: Concise overview of business drivers, discovery session context, and critical gaps.
-*   **Current vs. Desired State**: Contrast current setups (tooling, scale, cloud provider) against desired targets across three domains:
-    1. *Architecture & Infrastructure*
-    2. *Security, Compliance & Identity*
-    3. *Developer Velocity & CI/CD*
-*   **Gap Analysis Matrix**:
-    `| Capability / Domain | Current State | Desired State | Gap Severity (High/Med/Low) | Recommended GCP Solution |`
-*   **Recommended Improvements Action Roadmap**: Prioritized recommendations (P0 critical, P1 enhancements, P2 long-term optimizations). For each, outline:
-    - *Why*: Impact of the current gap and risk of not fixing it.
-    - *GCP Tooling*: Specific GCP services (e.g. Cloud Armor, MIGs, Secure Tags).
-    - *Implementation Highlights*: Brief bulleted technical setup steps.
-*   **Technical Objections & Risk Mitigation**: List customer concerns and how the proposed GCP architecture mitigates them.
+---
 
-### 3. `--format one_pager` (Customer One-Pager)
-Create a highly summarized, executive-level **Customer One-Pager**:
-*   **Executive Summary**: A concise 3-4 sentence overview of the customer situation, the core problem, and the proposed GCP solution.
+### 2. `--format gap_analysis` (Knowledge Gap Analysis)
+Create a formal **Knowledge Gap Analysis Report** mapping gaps to GCP solutions, specializing in what the customer does not know or lacks operational experience in:
+*   **Executive Summary**: Concise business-focused overview of the discovery session, high-level objectives, and overall readiness or skills gap.
+*   **Knowledge Gap Domains**: Identify specific domains where the customer lacks understanding or has training gaps:
+    1. *Architecture & Infrastructure Operationalization* (e.g., GKE persistent storage management, multi-region syncing).
+    2. *Security, Governance & Identity Lifecycle* (e.g., Workload Identity Federation, secret rotation).
+    3. *Developer Velocity & CI/CD Pipelines* (e.g., migration tooling, automated validation frameworks).
+*   **Gap Analysis & Severity Matrix**:
+    `| Knowledge / Operational Domain | Customer Current Capability | Target Capability Required | Gap Severity (High/Med/Low) | Recommended Enablement or GCP Solution |`
+*   **Recommended Improvements Roadmap**: Prioritized enablement recommendations:
+    - *Why*: Operational risk of not addressing this knowledge gap.
+    - *GCP Enablement & Tooling*: Specific training resources, best practice whitepapers, or managed GCP services.
+    - *Implementation Highlights*: Brief technical setup steps.
+*   **Technical Objections & Risk Mitigation**: List customer objections and GCP framework solutions.
+
+---
+
+### 3. `--format design_blueprint` (Design Blueprint)
+Create an enterprise-standard **Design Blueprint** outlining our solution based on the 4-section Consulting Engineering framework:
+*   **Section 1. System Design & Reference Architecture (The "What & Why")**:
+    - *Reference Architecture Diagrams*: Visual mapping of the end-to-end target state using standard GCP architecture archetypes.
+    - *Service Selection & Decision Matrix*: Architectural justification for chosen services (e.g., Filestore Enterprise vs. other block storage/standard tiers).
+    - *Data Value Pattern Flowcharts*: Visualizing ingestion paths, storage, transformations, and consumers.
+*   **Section 2. Proof of Concept (PoC) & MVP Guidance (The "How to Verify")**:
+    - *Tightly Scoped PoC Roadmap*: Checklist-driven plan defining sprint milestones to achieve a "technical win" without over-engineering.
+    - *Advisory Templates & Boilerplate Code (VCS Mode 3)*: Starter kit stubs (Kubernetes YAML, Terraform, Python connectors) for customer ownership.
+    - *Capacity Sizing & Cost Modeling*: Sizing calculations (CPUs, RAM, storage, IOPS) and cost calculator links.
+*   **Section 3. Pre-Sales Security & Data Foundations (The Guardrails)**:
+    - *Security/Identity Foundations*: IAM structures, SSO, least privilege, and VPC Service Controls (VPC-SC) outlines.
+    - *Data Protection Guardrails*: Preserving pre-sales sandbox isolation from production data via synthetic data generators or masking.
+*   **Section 4. Legal Disclaimers & Delivery Hand-off (Crucial CE Boundaries)**:
+    - *Standard "As-Is" Disclaimer*: Advisory-only warning, no warranties, no SLAs, no production support.
+    - *Hands-Off Keyboard Boundary*: Customer engineers maintain 100% execution ownership; the CE acts solely as advisor.
+    - *Partner / PSO Enablement Path*: Transition paths to Professional Services (PSO) or System Integrators (SI).
+
+---
+
+### 4. `--format one_pager` (Customer One-Pager)
+Create a highly summarized, executive-ready **Customer One-Pager** true to the approved Design Blueprint:
+*   **Executive Summary**: A concise 3-4 sentence overview of the customer situation, core challenge, and proposed GCP solution.
 *   **Context & Pain Points**:
-    - *Business Driver*: Why they are doing this now.
-    - *Technical Challenges*: Clear, bulleted engineering pain points (e.g., NAT capacity issues, pod downtime).
+    - *Business Driver*: Strategic rationale.
+    - *Technical Challenges*: Bulleted engineering blockers.
 *   **Proposed Solution & Architecture**:
-    - *High-Level Design (HLD)*: Clear description of the suggested GCP topology.
-    - *Key Components*: Bulleted list of target services and their roles.
-*   **Action Plan & Next Steps**: Clear roadmap divided into Immediate (P0), Short-Term (P1), and Long-Term (P2) deliverables.
-*   **Key Stakeholders & Owners**: Customer and GCP leads/roles.
+    - *High-Level Design (HLD)*: Clear description of the approved GCP topology.
+    - *Key Components*: Bulleted list of services and their roles.
+*   **🖼️ High-Level Topology Diagram**:
+    - Embed the rendered PNG image diagram using: `![High-Level Architecture Diagram](absolute_path_to_rendered_image)`.
+*   **Action Plan & Next Steps**: Ordered sequence of immediate (P0), short-term (P1), and deferred (P2) plays.
+*   **Key Stakeholders & Owners**: Customer and GCP leads.
+
+---
+
+### 5. `--format test_plan` (Test Plan)
+Create a unified **Validation Test Plan & Harness Manifest**:
+*   **Unified Manifest Standard**: To completely eliminate duplicated effort, you **MUST NOT** write custom, redundant deployment shell scripts. Instead, output a structured **Harness Manifest** that binds our technical design directly to the generated **DevSite Codelab** (`.lab.md` file) and leverages our centralized **Codelab Validation Engine** (`tester.py`) to execute and verify the design dynamically.
+*   **Harness Layout**: The output must detail:
+    1. *Target Validation Assets*: Links to the Design Blueprint, generated Codelab (`.lab.md` file), and active `tester.py` verification script.
+    2. *Execution Sequence*: The exact terminal execution command referencing `tester.py` and the generated codelab pathway.
+    3. *Validation Lifecycle Details*: High-level description of what `tester.py` statefuly automates (Interactive intake, Sandbox provisioning, VPC PSA allocation, GKE cluster deploys, dynamic PVC mounts, E2E data write sharing, STS transfers, and resource teardowns).
+*   **Zero Placeholders**: Ensure all file paths, GKE cluster names, and GCS buckets match your customer's variables exactly.
+
+---
+
+## 📐 High-Level Design (HLD) & Visualization Standards
+
+*   **Mermaid-to-Image Workflow**: Always write clean, valid Mermaid code in the Design Blueprint. When approved, this Mermaid code will be rendered to a static PNG image to be embedded natively in the One-Pager.
+*   **Visual Simplicity**: Keep diagram topologies focused on the 2-3 core migration flows to ensure visual clarity and impact.
 
 ---
 
 ## 🚨 Core Analysis Guidelines
 
-*   **Prioritize Transcripts**: Summaries smooth over technical edge cases. Always prioritize raw transcript files or tabs to extract exact technical variables.
-*   **Deep Spec Obsession**: Proactively extract and preserve all specific network identifiers (CIDR ranges, subnet tags, account IDs, firewall protocols) and competitive context (e.g., past AWS/Azure pain points, fears).
-*   **Rigorous Constraint Verification**: Clearly highlight "Rejected Hows" (e.g., why the customer rejected VPC Peering) and flag missing business justification as a "Risk".
-*   **No Vague Recommendations**: Never output generic advice like "use databases". Proactively name the specific GCP service (e.g., Cloud SQL Enterprise Plus) and explain *how* it resolves their exact scaling or replication challenge.
+*   **Dynamic Best Practices**: Query `google-developer-documentation-mcp` for the Google Cloud Architecture Framework when drafting the Design Blueprint.
+*   **Deep Spec Obsession**: Always extract and preserve all raw IP CIDRs, storage tiers, subnets, and user concerns.
+*   **Generic Reusable Codelabs**: Downstream codelabs generated from the design blueprint MUST use completely generic, reusable solution names (e.g., `gke-filestore-hyperdisk-ingress`) and folder paths under `labs/dev/`. Ensure **zero customer-specific names, project IDs, or VPC identifiers** leak into the published labs; keep customer-specific context strictly isolated inside the `meeting/` directory.

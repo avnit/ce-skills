@@ -16,6 +16,9 @@ Follow this interactive checklist to create a codelab:
 
 - [ ] **Phase 0: Pre-Flight Authentication & ADC Verification**
     - Consult and enforce the global active auth and ADC validation standard: [gcloud_auth.md](file:///.agents/rules/gcloud_auth.md).
+- [ ] **Phase 0.5: Meta-Planning & Strategy Gate (Mandatory Strategy Plan)**
+    - Before presenting scoping questions, querying service documentation, or modifying repository files, formulate a high-level strategy plan `implementation_plan.md` in the conversation workspace.
+    - **Gated Human Gate**: Pause and obtain explicit manual sign-off from the user via interactive chat/modal before proceeding to scope intake or subsequent phases.
 - [ ] **Phase 1: Research & Goal Definition**
     - **Mandatory Intake Confirmation**: Present three interactive intake questions via the `ask_question` tool to define the Execution Scope (E2E vs. Artifacts Only), Target Persona / Complexity Level (Outcome CE L100, Platform CE L200/300, or Practice CE L300/400), and Delivery Format (Pure gcloud CLI vs. Terraform IaC).
     - Understand the topic and align the design topology/task checklist dynamically to match the selected choices.
@@ -30,7 +33,7 @@ Follow this interactive checklist to create a codelab:
     - Follow `codelab-formatting` standards.
     - Write the content step-by-step.
 - [ ] **Phase 4: Validation & Authoritative Debugging**
-    - Use `codelab-testing` skill to extract and run commands.
+    - Execute step-by-step verification using the unified stateful **codelab-validation** skill and the `tester.py` script.
     - **Authoritative Debugging Gate**: If a gcloud or environment error is encountered during validation, you **MUST** query the `google-developer-documentation-mcp` server with the exact error message/command to pull the correct syntax, parameter definitions, and deprecation warnings instead of guessing.
     - Fix any errors found during validation.
 - [ ] **Phase 5: User Review & Resource Clean-up Choice**
