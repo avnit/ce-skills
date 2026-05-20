@@ -181,7 +181,8 @@ def audit_project(project_id, save_path):
                 discovered_resources.append({
                     'name': name,
                     'type': 'Compute Instance',
-                    'config': f"Machine: {machine_type} | Zone: {zone}",
+                    'config': f"Machine: {machine_type}",
+                    'location': zone,
                     'status': status,
                     'hourly_cost': cost
                 })
@@ -209,6 +210,7 @@ def audit_project(project_id, save_path):
                     'name': name,
                     'type': 'Persistent Disk',
                     'config': f"Size: {size_gb} GB | Type: {disk_type}",
+                    'location': zone,
                     'status': 'PROVISIONED',
                     'hourly_cost': cost
                 })
@@ -242,7 +244,8 @@ def audit_project(project_id, save_path):
                 discovered_resources.append({
                     'name': name,
                     'type': 'GKE Cluster',
-                    'config': f"Nodes: {node_count} x {machine_type} | Region: {location}",
+                    'config': f"Nodes: {node_count} x {machine_type}",
+                    'location': location,
                     'status': status,
                     'hourly_cost': cost
                 })
@@ -269,7 +272,8 @@ def audit_project(project_id, save_path):
                 discovered_resources.append({
                     'name': name,
                     'type': 'Cloud SQL Database',
-                    'config': f"Tier: {tier} | Region: {region}",
+                    'config': f"Tier: {tier}",
+                    'location': region,
                     'status': status,
                     'hourly_cost': cost
                 })
@@ -284,12 +288,12 @@ def audit_project(project_id, save_path):
         "",
         "## Active Billable Resources",
         "",
-        "| Resource Name | Resource Type | Status | Current Configuration | Hourly Cost |",
-        "| :--- | :--- | :--- | :--- | :--- |"
+        "| Resource Name | Resource Type | Status | Current Configuration | Location | Hourly Cost |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- |"
     ]
     
     for r in discovered_resources:
-        report.append(f"| {r['name']} | {r['type']} | {r['status']} | {r['config']} | ${r['hourly_cost']:.4f} |")
+        report.append(f"| {r['name']} | {r['type']} | {r['status']} | {r['config']} | {r.get('location', 'N/A')} | ${r['hourly_cost']:.4f} |")
         
     report.append("")
     report.append(f"**Total Deployed Sandbox Cost**: ${total_hourly_cost:.3f} / hour")

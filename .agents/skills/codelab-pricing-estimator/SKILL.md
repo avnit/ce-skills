@@ -40,12 +40,12 @@ Running `python3 extract_and_estimate.py --project "my-active-sandbox-99"` yield
 
 ## Active Billable Resources
 
-| Resource Name | Resource Type | Status | Current Configuration | Hourly Cost |
-| :--- | :--- | :--- | :--- | :--- |
-| `sandbox-web-server` | Compute Instance | RUNNING | Machine: e2-standard-2 \| Zone: us-central1-a | $0.0670 |
-| `sandbox-web-disk` | Persistent Disk | PROVISIONED | Size: 100 GB \| Type: pd-ssd | $0.0233 |
-| `sandbox-db` | Cloud SQL Database | RUNNABLE | Tier: db-custom-2-7680 \| Region: us-central1 | $0.1226 |
-| `gke-nodes` | GKE Cluster | STOPPED | Nodes: 3 x e2-medium \| Region: us-central1 | $0.0216 |
+| Resource Name | Resource Type | Status | Current Configuration | Location | Hourly Cost |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `sandbox-web-server` | Compute Instance | RUNNING | Machine: e2-standard-2 | us-central1-a | $0.0670 |
+| `sandbox-web-disk` | Persistent Disk | PROVISIONED | Size: 100 GB \| Type: pd-ssd | us-central1-a | $0.0233 |
+| `sandbox-db` | Cloud SQL Database | RUNNABLE | Tier: db-custom-2-7680 | us-central1 | $0.1226 |
+| `gke-nodes` | GKE Cluster | STOPPED | Nodes: 3 x e2-medium | us-central1 | $0.0216 |
 
 **Total Deployed Sandbox Cost**: $0.2345 / hour
 
