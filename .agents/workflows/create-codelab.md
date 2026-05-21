@@ -49,8 +49,11 @@ Overall Orchestration Lifecycle:
    - Dynamically update the active step status in `task.md` to `RUNNING`.
    - **Mandatory Design Sign-off Gate**: Pause execution and invoke the interactive `ask_question` tool to present a modal asking for approval of the preview blueprint design (e.g., options: "Approve and persist blueprint", "Request changes"). Under no circumstances should the agent proceed or write the blueprint to the repository before the user has explicitly approved it through this modal.
    - **Repository Persistence**: Only after receiving explicit user confirmation via the `ask_question` modal, copy/write the finalized contents of `blueprint.md` into the persistent repository directory (`labs/dev/[lab-name]/blueprint.md`), update `task.md` to mark blueprinting complete, and transition to Phase 3.
-5. **Phase 3: Narrative Content Generation**
+5. **Phase 3: Narrative Content Generation & Packaging**
    - Delegate drafting tasks to the **[writer.md](prompts/writer.md)** persona guidelines.
+   - **Mandatory Subfolder Placement**: You MUST save the narrative step-by-step `.lab.md` tutorial inside its dedicated repository subdirectory: `labs/dev/[lab-name]/[lab-name].lab.md`. Do NOT write it directly to `labs/dev/`.
+   - **Assets & Subdirectories**: Create a `./img/` subdirectory under `labs/dev/[lab-name]/img/` and save/copy all PNG architecture diagrams there, referencing them in the markdown via relative link paths (e.g., `![](./img/diagram.png)`).
+   - **Metadata Files**: Create a standard `OWNERS` metadata file inside `labs/dev/[lab-name]/OWNERS`.
    - Ensure output structure rigorously applies the formatting checklists defined in the **codelab-formatting** skill.
    - Update `task.md` to mark narrative generation complete. If the "Artifacts Only" scope was selected, conclude execution here and mark overall status as `COMPLETED`.
 6. **Phase 4: Hermetic Verification (Full E2E Scope Only)**

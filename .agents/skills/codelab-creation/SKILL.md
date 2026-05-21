@@ -29,9 +29,11 @@ Follow this interactive checklist to create a codelab:
     - **Instant Topology Mapping**: Embed the target system architecture directly inside the preview buffer using standard **Mermaid code blocks** to guarantee instant evaluation without rendering engine folding traps.
     - **Obtain Sign-off**: Present the preview artifact link to the user and request design approval via interactive multiple-choice modal (`ask_question`).
     - **Codebase Persistence**: Only upon explicit approval, copy/persist the pure Markdown `blueprint.md` design into the permanent code repository directory (`labs/dev/[lab-name]/`). Full diagram image synthesis can be scheduled asynchronously during published lab generation.
-- [ ] **Phase 3: Content Generation**
+- [ ] **Phase 3: Content Generation & Packaging**
     - Follow `codelab-formatting` standards.
-    - Write the content step-by-step.
+    - **Mandatory Placement**: The generated step-by-step narrative `.lab.md` file MUST be created directly inside the lab's dedicated subdirectory as: `labs/dev/[lab-name]/[lab-name].lab.md`. Do NOT save it in the parent root `labs/dev/`.
+    - **Assets & Subdirectories**: Create a `./img/` subdirectory under `labs/dev/[lab-name]/img/` to house all static PNG diagram assets, and reference them inside the `.lab.md` narrative using relative link syntax (e.g., `![](./img/diagram.png)`).
+    - **Metadata Files**: Author a standard `OWNERS` file in the lab directory `labs/dev/[lab-name]/OWNERS`.
 - [ ] **Phase 4: Validation & Authoritative Debugging**
     - Execute step-by-step verification using the unified stateful **codelab-validation** skill and the `tester.py` script.
     - **Authoritative Debugging Gate**: If a gcloud or environment error is encountered during validation, you **MUST** query the `google-developer-documentation-mcp` server with the exact error message/command to pull the correct syntax, parameter definitions, and deprecation warnings instead of guessing.
