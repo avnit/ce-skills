@@ -55,7 +55,12 @@ def check_python_dependencies():
     if missing:
         is_cloudtop = os.path.exists("/google/bin/releases") or ("glinux" in os.uname().release.lower() if hasattr(os, 'uname') else False)
         if is_cloudtop:
-            return False, f"Missing required Python packages on Cloudtop: {', '.join(missing)}. Please run: <code>pip install --user {' '.join(missing)}</code>"
+            apt_map = {
+                "google-api-python-client": "python3-googleapi",
+                "google-auth": "python3-google-auth"
+            }
+            apt_packages = [apt_map.get(p, p) for p in missing]
+            return False, f"Missing required Python packages on Cloudtop: {', '.join(missing)}.<br>Please install them via APT:<br><code>sudo apt-get update && sudo apt-get install -y {' '.join(apt_packages)}</code>"
     return True, "All required Python packages are installed."
 
 def get_gcloud_token():
