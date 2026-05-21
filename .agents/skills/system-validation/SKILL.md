@@ -23,6 +23,6 @@ This script performs two key categories of checks:
 If any check fails:
 1. **Analyze the Script Output**: Check which components failed (e.g., `gcp_config.txt` keys missing, or specific MCP servers returning connectivity/authentication errors).
 2. **Consult Setup Steps**: Point the user to the configuration guide for instructions on how to align environment parameters and enable APIs:
-   * [CE-Scale JetSki Configuration](https://docs.google.com/document/d/1RLhTRPgfZnXssXog-pKbBnMExulxZyaKMWWTbtw0mF0/edit?usp=sharing&resourcekey=0-ETB7RzJbpqeYH2syDTMF4g)
+   * [CE-Scale JetSki Configuration](https://docs.google.com/document/d/1KKsh2394jSC_GX5zAsu-JiABjWM6x2SWR5FIa5TrvIY/edit?usp=sharing)
 3. **Instruct the User**: Provide the precise gcloud service enablement or auth login command necessary to fix the problem, then prompt the user to run it.
 4. **Re-Verify**: Re-run the validation script after the user confirms the remediation steps have been completed.
