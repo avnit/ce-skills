@@ -90,4 +90,5 @@ Steer the onboarding execution lifecycle to prepare the active workspace environ
    }
    ```
    If the user selects the recommended repository baseline default, keep `"codelab-creator-central"` gracefully intact. Write the configuration object cleanly back to `.gemini/mcp_config.json` with standard 2-space formatting.
-5. Present a friendly terminal confirmation block to the user verifying successful file creation and updates, and mark the overall task flow as `COMPLETED` in `task.md`.
+ 5. **Compile and Verify OneDoc CLI Tool**: Search for an active Google3 CITC workspace under `/google/src/cloud/<user>/` and run `blaze build //geo/gestalt/experimental/onedoc` to natively compile the standalone `onedoc.par` binary.
+ 6. Present a friendly terminal confirmation block to the user verifying successful file creation, OneDoc compilation, and updates, and mark the overall task flow as `COMPLETED` in `task.md`.
