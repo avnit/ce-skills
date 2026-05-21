@@ -55,6 +55,37 @@ def find_onedoc_binary():
                 return onedoc_path
     return None
 
+def setup_onedoc_alias(onedoc_path):
+    import re
+    home = os.path.expanduser("~")
+    bash_aliases_path = os.path.join(home, ".bash_aliases")
+    bashrc_path = os.path.join(home, ".bashrc")
+    
+    alias_line = f"alias onedoc='{onedoc_path}'"
+    target_file = bash_aliases_path if os.path.exists(bash_aliases_path) else bashrc_path
+    
+    try:
+        content = ""
+        if os.path.exists(target_file):
+            with open(target_file, "r") as f:
+                content = f.read()
+        
+        if alias_line in content:
+            return True, f"OneDoc alias is already configured in {target_file}"
+            
+        if "alias onedoc=" in content:
+            content = re.sub(r"alias onedoc=.*", alias_line, content)
+            with open(target_file, "w") as f:
+                f.write(content)
+            return True, f"Updated OneDoc alias in {target_file}"
+            
+        with open(target_file, "a") as f:
+            f.write(f"\n# OneDoc CLI Tool Alias\n{alias_line}\n")
+        return True, f"Automatically configured OneDoc alias in {target_file}"
+        
+    except Exception as e:
+        return False, f"Failed to configure OneDoc alias in {target_file}: {e}"
+
 def check_and_build_onedoc():
     user = os.environ.get('USER') or os.environ.get('LOGNAME')
     if not user:
@@ -66,7 +97,8 @@ def check_and_build_onedoc():
     # Try to find an existing built onedoc
     onedoc_path = find_onedoc_binary()
     if onedoc_path:
-        return True, f"OneDoc binary verified at {onedoc_path}"
+        alias_ok, alias_msg = setup_onedoc_alias(onedoc_path)
+        return True, f"OneDoc binary verified at {onedoc_path}.<br>{alias_msg}"
     
     # If not found, let's try to build it in an existing google3 workspace
     preferred = ["ce-skills", "workspace-general", "codelab-creator"]
@@ -92,7 +124,8 @@ def check_and_build_onedoc():
                 if result.returncode == 0:
                     onedoc_path = os.path.join(google3_dir, "blaze-bin/geo/gestalt/experimental/onedoc/onedoc.par")
                     if os.path.exists(onedoc_path):
-                        return True, f"OneDoc successfully built with blaze and verified at {onedoc_path}"
+                        alias_ok, alias_msg = setup_onedoc_alias(onedoc_path)
+                        return True, f"OneDoc successfully built with blaze and verified at {onedoc_path}.<br>{alias_msg}"
                 else:
                     build_errors.append(f"Workspace '{client}' build failed: {result.stderr.strip()}")
             except Exception as e:
