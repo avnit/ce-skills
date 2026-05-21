@@ -7,6 +7,11 @@ description: Creates a fully populated Google Doc natively from a local source f
 
 This skill provides a reusable, highly secure document generator designed to execute natively on a Google Cloudtop (gLinux) workstation. It interfaces directly with the Google Drive API or Google Docs API using your active corporate credentials.
 
+### 🔒 Pre-Flight Corporate Identity & Scopes Boundary
+For compliance and corporate security, this skill enforces:
+1.  **Active Corporate Account**: The active `gcloud` authenticated account MUST belong to the corporate **`@google.com`** domain.
+2.  **Application Default Credentials (ADC) Scopes**: The local workstation token must be authenticated with active `drive` and `documents` scopes. If scopes are missing, the script automatically fails and prints the exact re-authentication command.
+
 This approach delivers shareable corporate document links instantly without requiring remote SSH configuration.
 
 ## Execution Guide

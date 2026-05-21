@@ -7,6 +7,9 @@ description: Sends secure, styled emails natively from the user's corporate Gmai
 
 This skill is a **generic, reusable system emailer** designed to execute natively on a Google Cloudtop (gLinux) workstation. It interfaces directly with the official pre-built corporate `gmail` CLI (`/google/bin/releases/gemini-agents-gmail/gmail`) using your active `gcert` session.
 
+### 🔒 Pre-Flight Corporate Security Gate
+For compliance and security, this skill enforces that the active `gcloud` authenticated account belongs to the corporate **`@google.com`** domain. It automatically runs pre-flight checks and fails with a helpful remediation command if a sandbox/admin account is in use.
+
 This provides a 100% secure, corporate-compliant, and zero-dependency mail delivery pipeline.
 
 ## Execution Guide

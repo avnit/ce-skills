@@ -214,8 +214,28 @@ def convert_markdown_to_styled_html(markdown_text, title):
     html_parts.append("</body></html>")
     return "".join(html_parts)
 
+def verify_active_account():
+    """Verifies that the active gcloud account is a corporate @google.com account."""
+    try:
+        active_account = subprocess.check_output(
+            ["gcloud", "config", "get-value", "account"],
+            text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        if not active_account.endswith("@google.com"):
+            print(f"❌ Error: Active gcloud account [{active_account}] is not a corporate @google.com employee account.", file=sys.stderr)
+            print("This corporate skill requires access to internal Google Workspace API endpoints.", file=sys.stderr)
+            print("Please switch to your corporate account in your terminal first by running:\n", file=sys.stderr)
+            print("    gcloud config set account <ldap>@google.com\n", file=sys.stderr)
+            return False
+        return True
+    except Exception as e:
+        return True
+
 def create_google_doc_api(src_path, title):
     """Creates a Google Doc natively on a Google Cloudtop workstation."""
+    if not verify_active_account():
+        return None
+
     if not os.path.exists(src_path):
         print(f"❌ Error: Source file not found at [{src_path}]", file=sys.stderr)
         return None
@@ -290,7 +310,13 @@ def create_google_doc_api(src_path, title):
         return doc_url
         
     except Exception as api_err:
-        print(f"❌ Native execution failed: {api_err}", file=sys.stderr)
+        err_str = str(api_err)
+        if "insufficient authentication scopes" in err_str.lower() or "access_token_scope_insufficient" in err_str or "scope_not_permitted" in err_str.lower():
+            print("\n❌ Error: Insufficient Application Default Credentials (ADC) scopes for Google Drive/Docs API.", file=sys.stderr)
+            print("To authorize dynamic document generation, please run the following command in your terminal first:\n", file=sys.stderr)
+            print("    gcloud auth application-default login --scopes=https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/documents,https://www.googleapis.com/auth/cloud-platform\n", file=sys.stderr)
+        else:
+            print(f"❌ Native execution failed: {api_err}", file=sys.stderr)
         return None
 
 def main():

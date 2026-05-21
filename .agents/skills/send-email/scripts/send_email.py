@@ -244,10 +244,30 @@ def markdown_to_html(md_text):
     
     return f"<html><head>{style_block}</head><body><div class='report-card'>{final_body}</div></body></html>"
 
+def verify_active_account():
+    """Verifies that the active gcloud account is a corporate @google.com account."""
+    try:
+        active_account = subprocess.check_output(
+            ["gcloud", "config", "get-value", "account"],
+            text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        if not active_account.endswith("@google.com"):
+            print(f"❌ Error: Active gcloud account [{active_account}] is not a corporate @google.com employee account.", file=sys.stderr)
+            print("This corporate skill requires access to internal Google Workspace API endpoints.", file=sys.stderr)
+            print("Please switch to your corporate account in your terminal first by running:\n", file=sys.stderr)
+            print("    gcloud config set account <ldap>@google.com\n", file=sys.stderr)
+            return False
+        return True
+    except Exception as e:
+        return True
+
 def send_email_api(to, subject, body_or_path, is_html=False, attachment=None):
     """Generic programmatic helper function that can be imported natively by other Python skills.
     Enforced to execute exclusively on a Google Cloudtop workstation.
     """
+    if not verify_active_account():
+        return False
+
     gmail_bin = "/google/bin/releases/gemini-agents-gmail/gmail"
     
     # ENVIRONMENT AWARENESS CHECK: Are we running natively on Cloudtop?
