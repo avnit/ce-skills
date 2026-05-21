@@ -1,0 +1,1 @@
+{"name":"create-skill","commandSpec":{"command":"python3","args":[".agents/skills/skill-creator/scripts/init_skill.py","--name"]}}

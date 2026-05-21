@@ -1,7 +1,7 @@
 ---
 name: customer-gap-analysis
 description: >-
-  Analyzes raw discovery calls, meeting notes, and transcripts to build a Knowledge Gap Analysis Report for the customer. Focuses on identifying what the customer does not know or lacks operational experience in, building a severity matrix, and providing structured recommendations mapped to GCP solutions and enablement.
+  Use when analyzing discovery calls, meeting notes, or transcripts to identify gaps in customer knowledge and operational capability. Focuses on identifying what the customer does not know or lacks operational experience in, building a severity matrix, and providing structured recommendations mapped to GCP solutions and enablement.
 ---
 
 # Customer Knowledge Gap Analysis (Stage 2)
