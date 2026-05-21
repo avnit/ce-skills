@@ -18,7 +18,7 @@ This skill outlines the methodology for analyzing customer discovery calls to id
 
 ## Analysis Prompt
 
-Use the unified discovery and solutions architect system prompt defined in [discovery_analyst.md](file:///prompts/discovery_analyst.md) passing the target flag: `--format gap_analysis`.
+Use the unified discovery and solutions architect system prompt defined in [discovery_analyst.md](../../../prompts/discovery_analyst.md) passing the target flag: `--format gap_analysis`.
 
 ---
 
