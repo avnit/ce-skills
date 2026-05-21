@@ -13,5 +13,5 @@ Steering Workflow:
 3. Analyze the exit code and standard output:
    - **If Exit Code is `0`**: Report a successful validation run cleanly to the user.
    - **If Exit Code is `1`**: Report the validation failures, list the precise remediation actions needed (e.g., setting credentials or enabling APIs), and provide the user with the link to the setup guide:
-     * [CE-Scale JetSki Configuration](https://docs.google.com/document/d/1KKsh2394jSC_GX5zAsu-JiABjWM6x2SWR5FIa5TrvIY/edit?usp=sharing)
+     * [CE-Scale JetSki Configuration](https://docs.google.com/document/d/1KKsh2394jSC_GX5zAsu-JiABjWM6x2SWR5FIa5TrvIY/edit?resourcekey=0-I92ALWXlSgB4_PxS9kbTLw&tab=t.3wn5ohhiptk4)
 4. Prompt the user to complete any failed setup requirements and re-run the validation once completed.

@@ -223,12 +223,12 @@ def generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc
     if all_pass:
         html.append('<p style="margin: 0; font-size: 14px; color: #5f6368; line-height: 1.5;">')
         html.append('Your environment is fully ready. For reference, see the ')
-        html.append('<a href="https://docs.google.com/document/d/1KKsh2394jSC_GX5zAsu-JiABjWM6x2SWR5FIa5TrvIY/edit?usp=sharing">CE-Scale JetSki Configuration</a>.')
+        html.append('<a href="https://docs.google.com/document/d/1KKsh2394jSC_GX5zAsu-JiABjWM6x2SWR5FIa5TrvIY/edit?resourcekey=0-I92ALWXlSgB4_PxS9kbTLw&amp;tab=t.3wn5ohhiptk4">CE-Scale JetSki Configuration</a>.')
         html.append('</p>')
     else:
         html.append('<p style="margin: 0; font-size: 14px; color: #5f6368; line-height: 1.5;">')
         html.append('One or more components failed verification. Please consult the ')
-        html.append('<a href="https://docs.google.com/document/d/1KKsh2394jSC_GX5zAsu-JiABjWM6x2SWR5FIa5TrvIY/edit?usp=sharing">CE-Scale JetSki Configuration</a>')
+        html.append('<a href="https://docs.google.com/document/d/1KKsh2394jSC_GX5zAsu-JiABjWM6x2SWR5FIa5TrvIY/edit?resourcekey=0-I92ALWXlSgB4_PxS9kbTLw&amp;tab=t.3wn5ohhiptk4">CE-Scale JetSki Configuration</a>')
         html.append(' for detailed setup steps and requirements.')
         html.append('</p>')
     html.append('</div>')
