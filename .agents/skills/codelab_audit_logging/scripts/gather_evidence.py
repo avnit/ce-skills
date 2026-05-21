@@ -6,6 +6,9 @@ import os
 import subprocess
 import sys
 
+DEFAULT_LOG_LIMIT = 5000
+
+
 
 def main():
     if len(sys.argv) < 3:
@@ -27,8 +30,7 @@ def main():
         "read",
         query,
         f"--project={project_id}",
-        "--limit=5000",
-
+        f"--limit={DEFAULT_LOG_LIMIT}",
         "--order=asc",
         "--format=json",
     ]
@@ -59,13 +61,8 @@ def main():
         except Exception as e:
             print(f"Error loading section map: {e}")
     else:
-        print(f"No section map found at {map_file}. Using hardcoded fallback.")
-        section_map = {
-             "Section 4 (Prerequisites)": ["ClusterManager", "networks", "subnetworks", "firewalls", "store-v1", "extension-service"],
-             "Section 5 (Scenario 1)": ["my-traffic-extension"],
-             "Section 6 (Scenario 2)": ["store-v2", "my-routing-extension"],
-             "Section 7 (Scenario 3)": ["external-traffic-extension", "external-http", "store-route-external"]
-        }
+        print(f"No section map found at {map_file}. Classifying all logs under Common/Unclassified.")
+        section_map = {}
 
     def correlate_to_section(action, resource):
         for section, keywords in section_map.items():
