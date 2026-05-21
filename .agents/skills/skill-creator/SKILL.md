@@ -103,3 +103,12 @@ Provide **one default** with a clear escape hatch, not a list of choices:
     git commit -m "feat: Initialize <your-skill-name> skill"
     git push origin <your_branch>
     ```
+
+***
+
+## Automated Skill Reviewer Subagent
+
+For automated compliance and quality audits of your skill directory, you can define and invoke the specialized **`skill-reviewer`** subagent:
+*   **System Prompt Reference**: See [skill_reviewer_prompt.md](references/skill_reviewer_prompt.md) for details.
+*   **How to Invoke**: Call `invoke_subagent` with the subagent name set to `skill-reviewer` and provide the target skill path in the prompt.
+
