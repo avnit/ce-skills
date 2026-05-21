@@ -19,10 +19,9 @@ This workflow guides you through generating a premium, Google Cloud-styled archi
 3.  If the user selects **Option B**:
     -   Capture their custom text layout description.
 
-### Phase 2: Card Sizing & Output Destination Configuration
-1.  Invoke the `ask_question` tool to capture:
-    -   The target **Image File Name** in standard `snake_case` (e.g., `gke_shared_storage`).
-    -   The target **Destination Folder** in the workspace where the completed asset should reside (e.g., `meeting/customer_a/assets/` or codelab `img/` folder).
+### Phase 2: Target Resource Intake
+1.  **Image File Name**: Invoke the `ask_question` tool to prompt the user for the target **Image File Name** in standard `snake_case` (e.g., `gke_shared_storage`).
+2.  **Destination Folder**: Invoke the `ask_question` tool to prompt the user for the target **Destination Folder** in the workspace (e.g., `meeting/customer_a/assets/` or `labs/dev/gke-filestore/img/`).
 
 ### Phase 3: Image Prompt Formulation
 1.  Construct the detailed Imagen 3 prompt by wrapping the extracted topology inside the official Google Cloud Architecture Style specifications:
