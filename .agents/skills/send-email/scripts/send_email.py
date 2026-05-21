@@ -263,15 +263,12 @@ def verify_active_account():
 
 def send_email_api(to, subject, body_or_path, is_html=False, attachment=None):
     """Generic programmatic helper function that can be imported natively by other Python skills.
-    Enforced to execute exclusively on a Google Cloudtop workstation.
+    Uses the Google Message Router (sendgmr) natively via local LOAS credentials to avoid gcloud auth changes.
     """
-    if not verify_active_account():
-        return False
-
-    gmail_bin = "/google/bin/releases/gemini-agents-gmail/gmail"
+    sendgmr_bin = "/google/bin/releases/gws-sre/files/sendgmr/sendgmr"
     
     # ENVIRONMENT AWARENESS CHECK: Are we running natively on Cloudtop?
-    is_running_on_cloudtop = os.path.exists(gmail_bin)
+    is_running_on_cloudtop = os.path.exists(sendgmr_bin)
     
     if not is_running_on_cloudtop:
         print("❌ Error: This skill can only be executed natively on a Google Cloudtop workstation.", file=sys.stderr)
@@ -287,43 +284,60 @@ def send_email_api(to, subject, body_or_path, is_html=False, attachment=None):
         except Exception as e:
             print(f"⚠️ Warning: Failed to read body file {body_or_path}, treating as raw text: {e}")
             
-    # Compile final body text
-    body_payload = body_content
-    if is_html:
-        body_payload = markdown_to_html(body_content)
+    # Build the command arguments
+    cmd_args = [
+        sendgmr_bin,
+        f"-to={to}",
+        f"-subject={subject}"
+    ]
+    
+    temp_html_file = None
+    temp_text_file = None
+    try:
+        # Write body_content to a temporary plain text file for -body_file
+        temp_text_file = tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8')
+        temp_text_file.write(body_content)
+        temp_text_file.close()
         
-    print("⚡ Environment Detected: Running natively on Cloudtop.")
-    if attachment:
-        html_flag = "--html" if is_html else ""
-        cmd_args = [
-            gmail_bin,
-            "send-with-attachment",
-            "--to", to,
-            "--subject", subject,
-            "--body", body_payload,
-            "--file", attachment
-        ]
-        if html_flag:
-            cmd_args.append(html_flag)
-    else:
-        html_flag = "--html" if is_html else None
-        cmd_args = [
-            gmail_bin,
-            "send",
-            "--to", to,
-            "--subject", subject,
-            "--body", body_payload
-        ]
-        if html_flag:
-            cmd_args.append(html_flag)
+        cmd_args.append(f"-body_file={temp_text_file.name}")
+        
+        if is_html:
+            html_payload = markdown_to_html(body_content)
+            # Write to a temporary file because sendgmr requires a file path for -html_file
+            temp_html_file = tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8')
+            temp_html_file.write(html_payload)
+            temp_html_file.close()
             
-    success, stdout, stderr = run_command(cmd_args)
-    if success:
-        print("🚀 Success! Email natively sent from your Cloudtop session.")
-        return True
-    else:
-        print(f"❌ Gmail CLI failed locally on Cloudtop:\n{stderr or stdout}", file=sys.stderr)
-        return False
+            cmd_args.append(f"-html_file={temp_html_file.name}")
+            
+        if attachment:
+            cmd_args.append(f"-attachment_files={attachment}")
+            
+        print("⚡ Environment Detected: Running natively on Cloudtop. Routing email securely via Google Message Router (sendgmr)...")
+        success, stdout, stderr = run_command(cmd_args)
+        
+        if success:
+            print("🚀 Success! Email natively sent via GMR using your active LOAS credentials.")
+            return True
+        else:
+            print(f"❌ sendgmr failed locally on Cloudtop:\n{stderr or stdout}", file=sys.stderr)
+            if "loas" in (stderr + stdout).lower() or "cert" in (stderr + stdout).lower():
+                print("\n💡 Setup Tip: Your local LOAS credentials or gcert session might have expired.", file=sys.stderr)
+                print("Please run `gcert` in your Cloudtop terminal to refresh your session.", file=sys.stderr)
+            return False
+            
+    finally:
+        # Clean up temporary files
+        if temp_html_file and os.path.exists(temp_html_file.name):
+            try:
+                os.unlink(temp_html_file.name)
+            except OSError:
+                pass
+        if temp_text_file and os.path.exists(temp_text_file.name):
+            try:
+                os.unlink(temp_text_file.name)
+            except OSError:
+                pass
 
 def main():
     parser = argparse.ArgumentParser(
