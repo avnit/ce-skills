@@ -1,24 +1,17 @@
 ---
 name: create-google-doc
-description: Creates a fully populated Google Doc natively from a local source file using a secure passwordless Remote Cloudtop Bridge.
+description: Creates a fully populated Google Doc natively from a local source file on a Google Cloudtop workstation.
 ---
 
-# Skill: Create Google Doc via Remote Cloudtop Bridge
+# Skill: Create Google Doc Natively on Cloudtop
 
-This skill provides a reusable, highly secure document generator that acts as a **Remote Cloudtop Bridge**. It securely copies markdown or text source files to your active gLinux Cloudtop virtual workstation via `scp` and executes internal Google API flows or standard CLI document builders remotely using passwordless `ssh` authenticated by your active corporate `gcert` session.
+This skill provides a reusable, highly secure document generator designed to execute natively on a Google Cloudtop (gLinux) workstation. It interfaces directly with the Google Drive API or Google Docs API using your active corporate credentials.
 
-This completely decouples token storage from your local `gcloud` lab Application Default Credentials (ADC), preventing permissions conflicts while delivering shareable corporate document links instantly.
+This approach delivers shareable corporate document links instantly without requiring remote SSH configuration.
 
-## Setup Guide
+## Execution Guide
 
-### Step 1: Verify Target Host in `gcp_config.txt`
-Ensure your Cloudtop virtual workstation host is present in `gcp_config.txt` at your workspace root directory:
-```text
-cloudtop_host=your-username-dev-glinux.c.googlers.com
-```
-
-### Step 2: Execute Natively
-Execute the script directly in your terminal:
+Execute the script directly in your Cloudtop terminal:
 ```bash
 python3 .agents/skills/create-google-doc/scripts/create_doc.py --src "artifacts/blueprint.md" --title "Artifact Blueprint: Customer Name"
 ```

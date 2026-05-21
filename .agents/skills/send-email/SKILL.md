@@ -1,27 +1,17 @@
 ---
 name: send-email
-description: Sends secure, styled emails natively from the user's corporate Gmail account using a passwordless Remote SSH/SCP Bridge to their Cloudtop workstation.
+description: Sends secure, styled emails natively from the user's corporate Gmail account on a Google Cloudtop workstation.
 ---
 
-# Skill: Generic Gmail Remote Cloudtop Bridge
+# Skill: Generic Gmail Cloudtop Native Emailer
 
-This skill is a **generic, reusable system emailer** that acts as a **Remote Cloudtop Bridge**. It securely copies email payloads to your active gLinux Cloudtop virtual workstation via `scp` and executes the official pre-built corporate `gmail` CLI (`/google/bin/releases/gemini-agents-gmail/gmail`) remotely using passwordless `ssh` authenticated by your active `gcert` session.
+This skill is a **generic, reusable system emailer** designed to execute natively on a Google Cloudtop (gLinux) workstation. It interfaces directly with the official pre-built corporate `gmail` CLI (`/google/bin/releases/gemini-agents-gmail/gmail`) using your active `gcert` session.
 
-This approach completely avoids local macOS codesign / security Gatekeeper blocks, standard OAuth consent screens, `credentials.json` client IDs, or local virtualenvs, providing a 100% secure, corporate-compliant, and zero-dependency mail delivery pipeline.
+This provides a 100% secure, corporate-compliant, and zero-dependency mail delivery pipeline.
 
-## Setup Guide
+## Execution Guide
 
-Follow these simple steps to configure your generic emailer in less than 30 seconds.
-
-### Step 1: Add Cloudtop Host to `gcp_config.txt`
-Open `gcp_config.txt` at your workspace root and append your Cloudtop virtual workstation host:
-
-```text
-cloudtop_host=your-username-dev-glinux.c.googlers.com
-```
-
-### Step 2: Execute natively
-Run the script natively in your terminal using your standard Mac Python 3 interpreter (no packages needed!):
+Run the script directly inside your Cloudtop terminal session:
 
 ```bash
 python3 .agents/skills/send-email/scripts/send_email.py --to "user@example.com" --subject "YOUR_SUBJECT" --body "YOUR_BODY" [options]

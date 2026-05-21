@@ -245,10 +245,19 @@ def markdown_to_html(md_text):
     return f"<html><head>{style_block}</head><body><div class='report-card'>{final_body}</div></body></html>"
 
 def send_email_api(to, subject, body_or_path, is_html=False, attachment=None):
-    """Generic programmatic helper function that can be imported natively by other Python skills."""
-    config = load_gcp_config()
-    cloudtop_host = config.get("cloudtop_host", "your-username-dev-glinux.c.googlers.com")
+    """Generic programmatic helper function that can be imported natively by other Python skills.
+    Enforced to execute exclusively on a Google Cloudtop workstation.
+    """
+    gmail_bin = "/google/bin/releases/gemini-agents-gmail/gmail"
     
+    # ENVIRONMENT AWARENESS CHECK: Are we running natively on Cloudtop?
+    is_running_on_cloudtop = os.path.exists(gmail_bin)
+    
+    if not is_running_on_cloudtop:
+        print("❌ Error: This skill can only be executed natively on a Google Cloudtop workstation.", file=sys.stderr)
+        print("For security and compliance, remote execution via the SSH Bridge has been disabled.", file=sys.stderr)
+        return False
+        
     # Resolve body content (check if it's a local file path)
     body_content = body_or_path
     if os.path.exists(body_or_path):
@@ -263,89 +272,38 @@ def send_email_api(to, subject, body_or_path, is_html=False, attachment=None):
     if is_html:
         body_payload = markdown_to_html(body_content)
         
-    gmail_bin = "/google/bin/releases/gemini-agents-gmail/gmail"
-    
-    # ENVIRONMENT AWARENESS CHECK: Are we running natively on Cloudtop?
-    is_running_on_cloudtop = os.path.exists(gmail_bin)
-    
-    if is_running_on_cloudtop:
-        print("⚡ Environment Detected: Running directly on Cloudtop. Bypassing SSH...")
-        if attachment:
-            html_flag = "--html" if is_html else ""
-            cmd_args = [
-                gmail_bin,
-                "send-with-attachment",
-                "--to", to,
-                "--subject", subject,
-                "--body", body_payload,
-                "--file", attachment
-            ]
-            if html_flag:
-                cmd_args.append(html_flag)
-        else:
-            html_flag = "--html" if is_html else None
-            cmd_args = [
-                gmail_bin,
-                "send",
-                "--to", to,
-                "--subject", subject,
-                "--body", body_payload
-            ]
-            if html_flag:
-                cmd_args.append(html_flag)
-                
-        success, stdout, stderr = run_command(cmd_args)
-        if success:
-            print("🚀 Success! Email natively sent from your Cloudtop session.")
-            return True
-        else:
-            print(f"❌ Gmail CLI failed locally on Cloudtop:\n{stderr or stdout}", file=sys.stderr)
-            return False
-            
+    print("⚡ Environment Detected: Running natively on Cloudtop.")
+    if attachment:
+        html_flag = "--html" if is_html else ""
+        cmd_args = [
+            gmail_bin,
+            "send-with-attachment",
+            "--to", to,
+            "--subject", subject,
+            "--body", body_payload,
+            "--file", attachment
+        ]
+        if html_flag:
+            cmd_args.append(html_flag)
     else:
-        # Running on local Mac/Chromebook -> Use the Remote SSH Bridge
-        print(f"🌐 Environment Detected: Running on local Mac/Chromebook. Establishing Remote Bridge to [{cloudtop_host}]...")
-        
-        # Base64 encode the body content to pass safely through SSH argument limits
-        import base64
-        b64_body = base64.b64encode(body_payload.encode('utf-8')).decode('utf-8')
-
-        # --- Step 1: Optionally SCP attachment ---
-        if attachment:
-            if not os.path.exists(attachment):
-                print(f"⚠️ Warning: Attachment file {attachment} not found. Skipping attachment.")
-                attachment = None
-            else:
-                print(f"📎 Copying attachment [{os.path.basename(attachment)}] to remote Cloudtop...")
-                scp_attach_args = ["scp", attachment, f"{cloudtop_host}:/tmp/email_attachment"]
-                ok, o, e = run_command(scp_attach_args)
-                if not ok:
-                    print(f"⚠️ Warning: Failed to copy attachment to Cloudtop. Skipping attachment:\n{e}", file=sys.stderr)
-                    attachment = None
-
-        # --- Step 2: Dispatch email remotely via a single secure SSH connection ---
-        if attachment:
-            html_flag = "--html" if is_html else ""
-            remote_cmd = f'''export BODY=$(echo '{b64_body}' | base64 -d) && {gmail_bin} send-with-attachment --to "{to}" --subject "{subject}" --body "$BODY" --file "/tmp/email_attachment" {html_flag}'''
-        else:
-            html_flag = "--html" if is_html else ""
-            remote_cmd = f'''export BODY=$(echo '{b64_body}' | base64 -d) && {gmail_bin} send --to "{to}" --subject "{subject}" --body "$BODY" {html_flag}'''
+        html_flag = "--html" if is_html else None
+        cmd_args = [
+            gmail_bin,
+            "send",
+            "--to", to,
+            "--subject", subject,
+            "--body", body_payload
+        ]
+        if html_flag:
+            cmd_args.append(html_flag)
             
-        print("🚀 Securely dispatching email natively from your Cloudtop account...")
-        ssh_args = ["ssh", cloudtop_host, remote_cmd]
-        success, stdout, stderr = run_command(ssh_args)
-        
-        # --- Step 3: Clean up remote files if any ---
-        if attachment:
-            cleanup_cmd = "rm -f /tmp/email_attachment"
-            run_command(["ssh", cloudtop_host, cleanup_cmd])
-            
-        if success:
-            print("🚀 Success! Email natively sent from your Google corporate account.")
-            return True
-        else:
-            print(f"❌ Gmail CLI failed on remote Cloudtop:\n{stderr or stdout}", file=sys.stderr)
-            return False
+    success, stdout, stderr = run_command(cmd_args)
+    if success:
+        print("🚀 Success! Email natively sent from your Cloudtop session.")
+        return True
+    else:
+        print(f"❌ Gmail CLI failed locally on Cloudtop:\n{stderr or stdout}", file=sys.stderr)
+        return False
 
 def main():
     parser = argparse.ArgumentParser(

@@ -40,6 +40,24 @@ def check_gcp_config():
             
     return True, "gcp_config.txt is successfully configured."
 
+def check_python_dependencies():
+    required_packages = {
+        "googleapiclient": "google-api-python-client",
+        "google.auth": "google-auth",
+    }
+    missing = []
+    for module_name, package_name in required_packages.items():
+        try:
+            __import__(module_name)
+        except ImportError:
+            missing.append(package_name)
+            
+    if missing:
+        is_cloudtop = os.path.exists("/google/bin/releases") or ("glinux" in os.uname().release.lower() if hasattr(os, 'uname') else False)
+        if is_cloudtop:
+            return False, f"Missing required Python packages on Cloudtop: {', '.join(missing)}. Please run: <code>pip install --user {' '.join(missing)}</code>"
+    return True, "All required Python packages are installed."
+
 def get_gcloud_token():
     try:
         token = subprocess.check_output(["gcloud", "auth", "print-access-token"], text=True).strip()
@@ -112,9 +130,9 @@ def check_mcp_servers():
             
     return True, results
 
-def generate_markdown_report(gcp_ok, gcp_msg, mcp_ok, mcp_results, report_path=None):
+def generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, mcp_ok, mcp_results, report_path=None):
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    all_pass = gcp_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
+    all_pass = gcp_ok and dep_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
     
     overall_status_color = "#137333" if all_pass else "#c5221f"
     overall_status_bg = "#e6f4ea" if all_pass else "#fce8e6"
@@ -169,6 +187,17 @@ def generate_markdown_report(gcp_ok, gcp_msg, mcp_ok, mcp_results, report_path=N
     html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{gcp_msg}</td>')
     html.append('</tr>')
     
+    dep_bg = "#e6f4ea" if dep_ok else "#fce8e6"
+    dep_color = "#137333" if dep_ok else "#c5221f"
+    dep_status = "PASS" if dep_ok else "FAIL"
+    html.append('<tr style="border-bottom: 1px solid #e8eaed;">')
+    html.append('<td style="padding: 14px 24px; vertical-align: top;">')
+    html.append(f'<span style="background: {dep_bg}; color: {dep_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">{dep_status}</span>')
+    html.append('</td>')
+    html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">Python Dependency Check</td>')
+    html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{dep_msg}</td>')
+    html.append('</tr>')
+    
     for server, res in mcp_results.items():
         status = res["status"]
         msg = res["message"]
@@ -218,11 +247,15 @@ def main():
     print(f"[*] GCP Configuration Check: {'PASS' if gcp_ok else 'FAIL'}")
     print(f"    {gcp_msg}\n")
     
+    dep_ok, dep_msg = check_python_dependencies()
+    print(f"[*] Python Dependency Check: {'PASS' if dep_ok else 'FAIL'}")
+    print(f"    {dep_msg}\n")
+    
     mcp_ok, mcp_results = check_mcp_servers()
     print(f"[*] MCP Servers Connectivity Check:")
     if not mcp_ok:
         print(f"    FAIL: {mcp_results}\n")
-        generate_markdown_report(gcp_ok, gcp_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path)
+        generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path)
         sys.exit(1)
         
     all_mcp_pass = True
@@ -235,9 +268,9 @@ def main():
             all_mcp_pass = False
     print()
     
-    generate_markdown_report(gcp_ok, gcp_msg, mcp_ok, mcp_results, report_path=report_path)
+    generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, mcp_ok, mcp_results, report_path=report_path)
     
-    if not gcp_ok or not all_mcp_pass:
+    if not gcp_ok or not dep_ok or not all_mcp_pass:
         print("[-] SYSTEM VALIDATION: FAILED")
         print("-" * 60)
         sys.exit(1)

@@ -215,7 +215,7 @@ def convert_markdown_to_styled_html(markdown_text, title):
     return "".join(html_parts)
 
 def create_google_doc_api(src_path, title):
-    """Creates a Google Doc natively implementing absolute global cascade bindings bridging local layers to remote networks."""
+    """Creates a Google Doc natively on a Google Cloudtop workstation."""
     if not os.path.exists(src_path):
         print(f"❌ Error: Source file not found at [{src_path}]", file=sys.stderr)
         return None
@@ -227,139 +227,70 @@ def create_google_doc_api(src_path, title):
         print(f"❌ Error reading source file: {e}", file=sys.stderr)
         return None
         
-    config = load_gcp_config()
-    cloudtop_host = config.get("cloudtop_host", "your-username-dev-glinux.c.googlers.com")
-    folder_id = config.get("folder_id", "")
-    
     # Check if running on Cloudtop natively
     is_cloudtop = os.path.exists("/google/bin/releases") or "glinux" in os.uname().release.lower() if hasattr(os, 'uname') else False
     
-    # Discover active local macOS gcloud credentials configurations
-    macos_adc_path = os.path.expanduser("~/.config/gcloud/application_default_credentials.json")
-    local_creds_exist = os.path.exists("credentials.json") or os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.path.exists(macos_adc_path)
+    if not is_cloudtop:
+        print("❌ Error: This skill can only be executed natively on a Google Cloudtop workstation.", file=sys.stderr)
+        print("For security and compliance, remote execution via the SSH Bridge has been disabled.", file=sys.stderr)
+        return None
+        
+    config = load_gcp_config()
+    folder_id = config.get("folder_id", "")
     
     # Compile structured HTML payload locally
     html_payload = convert_markdown_to_styled_html(content, title)
     
-    if is_cloudtop or local_creds_exist:
-        print("⚡ Environment Detected: Executing native Google Drive pre-formatted import flow...")
-        try:
-            from googleapiclient.discovery import build
-            from googleapiclient.http import MediaIoBaseUpload
-            from googleapiclient.errors import HttpError
-            import google.auth
-            
-            # Attempt 1: Native Pre-Formatted Google Drive Import
-            try:
-                creds, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/drive'])
-                drive_service = build('drive', 'v3', credentials=creds)
-                file_metadata = {
-                    'name': title,
-                    'mimeType': 'application/vnd.google-apps.document'
-                }
-                if folder_id:
-                    file_metadata['parents'] = [folder_id]
-                    
-                media = MediaIoBaseUpload(io.BytesIO(html_payload.encode('utf-8')), mimetype='text/html', resumable=True)
-                file_meta = drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-                doc_id = file_meta.get('id')
-                doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
-                print(f"🚀 Success! Pre-formatted Google Doc natively created:\n{doc_url}")
-                return doc_url
-            except HttpError as e:
-                err_str = str(e)
-                if "insufficient authentication scopes" in err_str or "SCOPE_NOT_PERMITTED" in err_str or "ACCESS_TOKEN_SCOPE_INSUFFICIENT" in err_str or "quota project" in err_str.lower() or "accessnotconfigured" in err_str.lower():
-                    print("\n⚠️ Local Google Drive API Restricted natively.", file=sys.stderr)
-                    print("Your active credentials token lacks quota project bindings or native Drive write permissions.", file=sys.stderr)
-                    print("To authorize native pre-formatted generation locally, configure your client credentials or set a quota project via:", file=sys.stderr)
-                    print("\n    gcloud auth application-default set-quota-project <PROJECT_ID>\n", file=sys.stderr)
-                    print("Gracefully cascading to permitted base Google Docs API builder...", file=sys.stderr)
-                else:
-                    print(f"⚠️ HTTP Error on Drive endpoint: {err_str}. Cascading...", file=sys.stderr)
-                
-            # Attempt 2: Fallback to standard permitted Google Docs API
-            creds, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive'])
-            docs_service = build('docs', 'v1', credentials=creds)
-            doc = docs_service.documents().create(body={'title': title}).execute()
-            doc_id = doc.get('documentId')
-            if content.strip():
-                requests = [{'insertText': {'location': {'index': 1}, 'text': content}}]
-                docs_service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
-                
-            doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
-            print(f"🚀 Success! Base Google Doc successfully generated:\n{doc_url}")
-            return doc_url
-            
-        except Exception as api_err:
-            print(f"⚠️ Native local execution restricted ({api_err}). Silently cascading to secure Remote Cloudtop Bridge...", file=sys.stderr)
-            pass
-            
-    # Establish Remote SSH/SCP Bridge to active Cloudtop virtual workstation
-    print(f"🌐 Environment Detected: Local macOS environment. Establishing passwordless Remote Bridge to [{cloudtop_host}]...")
-    
-    # Base64 encode payloads securely
-    b64_content = base64.b64encode(content.encode('utf-8')).decode('utf-8')
-    b64_html = base64.b64encode(html_payload.encode('utf-8')).decode('utf-8')
-    b64_title = base64.b64encode(title.encode('utf-8')).decode('utf-8')
-    
-    # Generate remote self-contained dual-path resilient inline python launcher block
-    remote_python_script = f"""
-import base64, io, sys
-try:
-    from googleapiclient.discovery import build
-    from googleapiclient.http import MediaIoBaseUpload
-    from googleapiclient.errors import HttpError
-    import google.auth
-    
-    title = base64.b64decode('{b64_title}').decode('utf-8')
-    content = base64.b64decode('{b64_content}').decode('utf-8')
-    html_content = base64.b64decode('{b64_html}').decode('utf-8')
-    folder_id = '{folder_id}'
-    
-    # Attempt 1: Native Pre-Formatted Google Drive Import
+    print("⚡ Environment Detected: Running natively on Cloudtop. Executing Google Drive pre-formatted import flow...")
     try:
-        creds, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/drive'])
-        service = build('drive', 'v3', credentials=creds)
-        file_metadata = {{'name': title, 'mimeType': 'application/vnd.google-apps.document'}}
-        if folder_id:
-            file_metadata['parents'] = [folder_id]
-        media = MediaIoBaseUpload(io.BytesIO(html_content.encode('utf-8')), mimetype='text/html', resumable=True)
-        file_meta = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-        doc_id = file_meta.get('id')
-        print(f"LINK:https://docs.google.com/document/d/{{doc_id}}/edit")
-        sys.exit(0)
-    except HttpError as e:
-        pass
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaIoBaseUpload
+        from googleapiclient.errors import HttpError
+        import google.auth
         
-    # Attempt 2: Permitted Google Docs API Base Document Creation & Text Insertion
-    creds, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive'])
-    docs_service = build('docs', 'v1', credentials=creds)
-    doc = docs_service.documents().create(body={{'title': title}}).execute()
-    doc_id = doc.get('documentId')
-    
-    if content.strip():
-        requests = [{{'insertText': {{'location': {{'index': 1}}, 'text': content}}}}]
-        docs_service.documents().batchUpdate(documentId=doc_id, body={{'requests': requests}}).execute()
+        # Attempt 1: Native Pre-Formatted Google Drive Import
+        try:
+            creds, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/drive'])
+            drive_service = build('drive', 'v3', credentials=creds)
+            file_metadata = {
+                'name': title,
+                'mimeType': 'application/vnd.google-apps.document'
+            }
+            if folder_id:
+                file_metadata['parents'] = [folder_id]
+                
+            media = MediaIoBaseUpload(io.BytesIO(html_payload.encode('utf-8')), mimetype='text/html', resumable=True)
+            file_meta = drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+            doc_id = file_meta.get('id')
+            doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
+            print(f"🚀 Success! Pre-formatted Google Doc natively created:\n{doc_url}")
+            return doc_url
+        except HttpError as e:
+            err_str = str(e)
+            if "insufficient authentication scopes" in err_str or "SCOPE_NOT_PERMITTED" in err_str or "ACCESS_TOKEN_SCOPE_INSUFFICIENT" in err_str or "quota project" in err_str.lower() or "accessnotconfigured" in err_str.lower():
+                print("\n⚠️ Local Google Drive API Restricted natively.", file=sys.stderr)
+                print("Your active credentials token lacks quota project bindings or native Drive write permissions.", file=sys.stderr)
+                print("To authorize native pre-formatted generation locally, configure your client credentials or set a quota project via:", file=sys.stderr)
+                print("\n    gcloud auth application-default set-quota-project <PROJECT_ID>\n", file=sys.stderr)
+                print("Gracefully cascading to permitted base Google Docs API builder...", file=sys.stderr)
+            else:
+                print(f"⚠️ HTTP Error on Drive endpoint: {err_str}. Cascading...", file=sys.stderr)
+            
+        # Attempt 2: Fallback to standard permitted Google Docs API
+        creds, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive'])
+        docs_service = build('docs', 'v1', credentials=creds)
+        doc = docs_service.documents().create(body={'title': title}).execute()
+        doc_id = doc.get('documentId')
+        if content.strip():
+            requests = [{'insertText': {'location': {'index': 1}, 'text': content}}]
+            docs_service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
+            
+        doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
+        print(f"🚀 Success! Base Google Doc successfully generated:\n{doc_url}")
+        return doc_url
         
-    print(f"LINK:https://docs.google.com/document/d/{{doc_id}}/edit")
-except Exception as e:
-    print(f"ERROR:{{str(e)}}", file=sys.stderr)
-    sys.exit(1)
-"""
-    
-    # Encode remote python execution block
-    b64_script = base64.b64encode(remote_python_script.strip().encode('utf-8')).decode('utf-8')
-    remote_cmd = f"python3 -c \"import base64; exec(base64.b64decode('{b64_script}').decode('utf-8'))\""
-    
-    print("🚀 Dispatching secure dual-path resilient compilation over active gcert session...")
-    success, stdout, stderr = run_command(["ssh", cloudtop_host, remote_cmd])
-    
-    if success and "LINK:" in stdout:
-        link = stdout.split("LINK:")[1].strip()
-        print(f"🚀 Success! Resilient Google Doc successfully authored via Remote Bridge:\n{link}")
-        return link
-    else:
-        print(f"❌ Remote Bridge execution failed on Cloudtop workstation:\n{stderr or stdout}", file=sys.stderr)
+    except Exception as api_err:
+        print(f"❌ Native execution failed: {api_err}", file=sys.stderr)
         return None
 
 def main():
