@@ -1,98 +1,61 @@
 ---
 name: workspace-agency-csa
 description: >-
-  Use when instantiating, configuring, or invoking Google Workspace's ContextServiceAgent natively inside custom Python agents to perform cross-corpus semantic search across Gmail, Calendar, Drive, Chat, and Keep.
+  Use when instantiating, configuring, or executing the Google Workspace Context Service CLI (csa_cli.par) natively inside custom Python agents or bash scripts to perform cross-corpus semantic search across Gmail, Calendar, Drive, and Chat.
 ---
 
-# Skill: Native Integration of ContextServiceAgent
+# Skill: Google Workspace Context Service CLI (csa_cli)
 
-This skill provides cheatsheet recipes and procedural gotchas for Customer Engineers (CEs) to directly invoke Google Workspace's **`ContextServiceAgent`** sub-agent natively in-memory. This bypasses process execution latency of CLI binaries (like `csa_cli.par`) and enables structured passing of Protocol Buffers containing multimodal grounding data and rich citations.
+This skill guides you through invoking the pre-compiled **`csa_cli.par`** binary natively on a Google Cloudtop workstation. It enables direct semantic search over corporate Workspace data (`GMAIL, DRIVE, CALENDAR, CHAT`) without causing `gcloud` auth scope conflicts, as it relies entirely on your local **LOAS** (`gcert`) credentials natively.
 
 ---
 
 ## Core Workflow
 
-### 1. Import Proto and Agency Dependencies
-Ensure your Python agent imports the correct API and corpus proto stubs.
-*   *Reference*: See [build_dependencies.md](references/build_dependencies.md) for the required `BUILD` imports.
+To execute a semantic search, run the binary in your terminal or wrap it inside a Python subprocess execution context.
 
-### 2. Construct the `ContextServiceRequest`
-Create the request proto, specifying the allowed corpora scope, latency budgets, and iteration boundaries:
-```python
-from google3.apps.intelligence.context.context_engine.lib.api import context_service_pb2
-from google3.apps.intelligence.context.context_engine.lib.api import corpus_pb2
-
-request = context_service_pb2.ContextServiceRequest()
-
-# Define Allowed Corpora (GMAIL, DRIVE, CALENDAR, CHAT, KEEP)
-request.allowed_corpora.corpora.extend([
-    corpus_pb2.Corpus.CORPUS_GMAIL,
-    corpus_pb2.Corpus.CORPUS_DRIVE,
-    corpus_pb2.Corpus.CORPUS_CALENDAR,
-    corpus_pb2.Corpus.CORPUS_CHAT,
-    corpus_pb2.Corpus.CORPUS_KEEP,
-])
-
-request.latency_budget_seconds = 40
-request.max_implicit_context_iterations = 5
+### 1. Execution CLI Recipe
+Run the binary directly in your bash shell:
+```bash
+/google/bin/releases/csa-cli/csa_cli.par \
+  --user_prompt="{your_detailed_search_prompt}" \
+  --allowed_corpora=GMAIL,DRIVE,CALENDAR,CHAT \
+  --latency_budget_seconds=45 \
+  --max_output_tokens=20000
 ```
 
-### 3. Invoke `ContextServiceAgent` Natively
-Do not spawn a subprocess. Pass the request inside an `AgentCallEvent` to the sub-agent:
-```python
-from google3.assistant.bard.agents.framework.proto import agent_pb2
-from google3.assistant.bard.agents.framework.proto import message_pb2
-
-# Subclass your agent from WorkspaceBaseAgent and instantiate the sub-agent:
-# self._csa_sub_agent = context_service_agent.ContextServiceAgent(config)
-
-event = agent_pb2.AgentCallEvent()
-message = event.messages.add(role=roles.ROLE_USER)
-chunk = message.chunks.add(kind=message_pb2.Chunk.Kind.APPLICATION_DATA)
-chunk.application_data.Extensions[context_service_pb2.ContextServiceRequest.ext].CopyFrom(request)
-
-response_event = self._csa_sub_agent.Process(event)
-```
-
-### 4. Parse Chunks and Citation Metadata
-Extract the parsed text chunks and structured citation links (`guri` or original URL):
-```python
-for msg in response_event.messages:
-  for chk in msg.chunks:
-    if chk.HasField("text"):
-      print(f"Context: {chk.text}")
-    elif chk.WhichOneof("value") == "application_data" and chk.application_data.HasExtension(context_service_pb2.ContextServiceResponse.ext):
-      resp_proto = chk.application_data.Extensions[context_service_pb2.ContextServiceResponse.ext]
-      for citation in resp_proto.citations:
-        # Extract title and source URL/GURI natively
-        print(f"Citation: [{citation.file.metadata.title}]({citation.original_url or citation.file.guri})")
-```
+*   *Parameters*:
+    *   `--user_prompt`: (String, Required) The semantic search query/prompt.
+    *   `--allowed_corpora`: (String, Required) Comma-separated list of target corpora (`GMAIL,DRIVE,CALENDAR,CHAT`).
+    *   `--latency_budget_seconds`: (Int, default `45`) Time allocation for the search.
+    *   `--max_output_tokens`: (Int, default `20000`) Token output limits.
 
 ---
 
-## 💡 E2E Recipe: "Last 30 Days Account Review"
+## 📅 Recipe: "Last 30 Days Account Review"
 
-To generate a chronological interaction review of a customer account over the last 30 days, configure your query and process the output following this recipe:
+To generate a consolidated account review of all customer interactions in the last 30 days, run the following parameterized query:
 
-1.  **Formulate the Prompt with Date Filtering**:
-    `prompt = f"Find all emails, calendar invites, chat escalations, and shared blueprints regarding Customer {account_name} in the last 30 days."`
-2.  **Execute Native Retrieval**: Pass the query using the GMR allowed corpora request block.
-3.  **Chronological Timeline Assembly**:
-    *   Filter the citations based on `citation.file.metadata.last_modified_timestamp` (or chronological date mentioned in Gmail threads).
-    *   Format and present the output as a clean vertical timeline:
-        `- [2026-05-01] meeting: Customer sync on GKE Filestore`
-        `- [2026-05-05] email: escalation regarding STS permissions`
+```bash
+/google/bin/releases/csa-cli/csa_cli.par \
+  --user_prompt="Find all emails, calendar invites, chat escalations, and shared architectural blueprints regarding the customer '{account_name}' in the last 30 days." \
+  --allowed_corpora=GMAIL,DRIVE,CALENDAR,CHAT \
+  --latency_budget_seconds=45
+```
+
+*   *Processing Output*: Parse the standard output to extract:
+    *   **Timeline Interactions**: Collate timestamps and subject lines.
+    *   **Citations & Links**: Capture `guri` files and email URLs (`https://mail.google.com/...`) to present exact grounding source links.
 
 ---
 
-## 🛠️ Reference Materials
-*   **BUILD Dependencies**: See [build_dependencies.md](references/build_dependencies.md)
-*   **Python Reference Implementation**: See [ce_campaign_agent.py](references/ce_campaign_agent.py)
-*   **Manual Presubmit Notebook**: See [testing_validation.md](references/testing_validation.md)
+## 🛠️ Reference Materials & Programmatic Wrappers
+*   **Python Subprocess Wrapper**: See [subprocess_execution.py](references/subprocess_execution.py) for a clean, reusable Python interface to execute `csa_cli.par` and capture/parse output dynamically in your scripts.
 
-***
+---
 
 ## Gotchas & Pitfalls
 
-*   **LOAS / gcert Session Expiry**: GMR/LOAS API queries will fail silently or crash with credential errors if your local `gcert` session has expired. Always verify your `gcert` is active before initiating a run.
-*   **Ephemeral Session Memory**: To align with `go/code-ai-policy`, **NEVER** cache raw customer PII or confidential Drive chunks in persistent, world-readable directories. Keep all retrieved context inside the ephemeral Jetski session memory.
+*   **LOAS / gcert Expiry**: GMR queries will fail silently or throw authentication errors if your local `gcert` session has expired. Always run `gcert` to refresh your corporate session before execution.
+*   **Output Redirect Folder Check**: If piping/teeing output to a directory (e.g. `tee /tmp/agent_artifacts/output.txt`), **always** verify that the parent directory exists or create it first (`mkdir -p /tmp/agent_artifacts/`) to prevent shell output redirect errors.
+*   **Data Governance & PII**: To comply with `go/code-ai-policy`, **never** cache raw customer PII or confidential Drive chunks in persistent, world-readable directories outside of the ephemeral session context.
