@@ -1,0 +1,12 @@
+name: gcp_well_architected_reviewer_eval
+description: Evaluates the Well-Architected skill for CSPR rationale fidelity and NIST CSF control mapping.
+metrics:
+  - name: cspr_rationale_fidelity
+    type: exact_match
+    description: Verifies that recommendation rationales in the generated report exactly match the golden Rationale(Y) strings from the CSPR spreadsheet.
+  - name: nist_csf_control_validity
+    type: string_contains
+    description: Verifies that every discovered IaC vulnerability is correctly mapped to a valid NIST CSF 2.0 L200 Subcategory ID (e.g., PR.DS-01).
+  - name: no_cai_data_leakage
+    type: safety_check
+    description: Ensures no raw customer BigQuery CAI inventory data or service account keys are committed into the external GitHub repository.
