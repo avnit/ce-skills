@@ -163,10 +163,12 @@ def main():
               print(f"⚠️ Warning: Skipping unreadable file {tf_path}: {e}", file=sys.stderr)
               continue
               
-            # storage bucket Uniform Access
+            # A. GCS bucket Uniform Access
             storage_buckets = extract_resource_blocks(content, "google_storage_bucket")
             for bucket_name, block_content in storage_buckets:
               clean_block = strip_comments(block_content)
+              
+              # Check Uniform Access
               if "uniform_bucket_level_access" not in clean_block or "uniform_bucket_level_access = false" in clean_block:
                 findings.append({
                     "resource_name": bucket_name,
@@ -179,8 +181,22 @@ def main():
                     "nist_csf_mapping": nist_kb.get("entries", {}).get("PR.DS-01", {"subcategory_id": "PR.DS-01", "description": "Data-at-rest encryption and protection."}),
                     "remediation_hcl": "uniform_bucket_level_access = true"
                 })
+                
+              # Check CMEK Encryption (New!)
+              if "encryption" not in clean_block:
+                findings.append({
+                    "resource_name": bucket_name,
+                    "resource_type": "google_storage_bucket",
+                    "vulnerability": "MISSING_GCS_CMEK",
+                    "severity": "MEDIUM",
+                    "pillar": "SECURITY",
+                    "cspr_golden_title": "Enforce KMS Customer-Managed Keys",
+                    "cspr_golden_rationale": "Using Customer-Managed Encryption Keys (CMEK) gives organizations full regulatory control and audit logging over key access.",
+                    "nist_csf_mapping": nist_kb.get("entries", {}).get("PR.DS-01", {"subcategory_id": "PR.DS-01", "description": "Data-at-rest encryption and protection."}),
+                    "remediation_hcl": "encryption {\n    default_kms_key_name = \"YOUR_KMS_KEY_NAME\"\n  }"
+                })
 
-            # wildcard project IAM bindings
+            # B. Wildcard project IAM bindings
             iam_bindings = extract_resource_blocks(content, "google_project_iam_binding")
             for binding_name, block_content in iam_bindings:
               clean_block = strip_comments(block_content)
@@ -197,7 +213,7 @@ def main():
                     "remediation_hcl": "# REMOVE allUsers/allAuthenticatedUsers from members list"
                 })
 
-            # KMS Key rotation gaps
+            # C. KMS Key rotation gaps
             crypto_keys = extract_resource_blocks(content, "google_kms_crypto_key")
             for key_name, block_content in crypto_keys:
               clean_block = strip_comments(block_content)
@@ -212,6 +228,91 @@ def main():
                     "cspr_golden_rationale": "Limits the exposure window of compromised cryptographic material by automatically rotating keys.",
                     "nist_csf_mapping": nist_kb.get("entries", {}).get("PR.DS-02", {"subcategory_id": "PR.DS-02", "description": "Data-in-transit encryption and protection."}),
                     "remediation_hcl": "rotation_period = \"7776000s\" # 90 days"
+                })
+
+            # D. Open SSH Ingress ports (0.0.0.0/0 port 22)
+            firewalls = extract_resource_blocks(content, "google_compute_firewall")
+            for fw_name, block_content in firewalls:
+              clean_block = strip_comments(block_content)
+              if "0.0.0.0/0" in clean_block and ("\"22\"" in clean_block or "'22'" in clean_block or "22" in clean_block):
+                findings.append({
+                    "resource_name": fw_name,
+                    "resource_type": "google_compute_firewall",
+                    "vulnerability": "OPEN_SSH_PORT",
+                    "severity": "CRITICAL",
+                    "pillar": "SECURITY",
+                    "cspr_golden_title": "Restrict Open Ingress Ports",
+                    "cspr_golden_rationale": "Wildcard ingress rules allowing port 22 (SSH) from 0.0.0.0/0 expose your internal GCE instances to global brute-force attacks and vulnerability exploitation.",
+                    "nist_csf_mapping": nist_kb.get("entries", {}).get("PR.AC-04", {"subcategory_id": "PR.AC-04", "description": "Network access control is managed and enforced."}),
+                    "remediation_hcl": "source_ranges = [\"YOUR_OFFICE_IP/32\"] # RESTRICT access to specific secure CIDR blocks"
+                })
+
+            # E. BigQuery Dataset Public Access (New!)
+            bq_access = extract_resource_blocks(content, "google_bigquery_dataset_access")
+            for bq_name, block_content in bq_access:
+              clean_block = strip_comments(block_content)
+              if "allUsers" in clean_block or "special_group = \"allUsers\"" in clean_block:
+                findings.append({
+                    "resource_name": bq_name,
+                    "resource_type": "google_bigquery_dataset_access",
+                    "vulnerability": "PUBLIC_BIGQUERY_DATASET",
+                    "severity": "CRITICAL",
+                    "pillar": "SECURITY",
+                    "cspr_golden_title": "Restrict Public Dataset Access",
+                    "cspr_golden_rationale": "Wildcard public access configurations (e.g., special_group = 'allUsers') on BigQuery datasets expose sensitive data tables globally.",
+                    "nist_csf_mapping": nist_kb.get("entries", {}).get("PR.AC-04", {"subcategory_id": "PR.AC-04", "description": "Network access control is managed and enforced."}),
+                    "remediation_hcl": "# REMOVE allUsers/special_group = 'allUsers' block from resource settings"
+                })
+
+            # F. Cloud SQL Backup Configuration (New!)
+            sql_instances = extract_resource_blocks(content, "google_sql_database_instance")
+            for sql_name, block_content in sql_instances:
+              clean_block = strip_comments(block_content)
+              if "backup_configuration" not in clean_block or "enabled = false" in clean_block:
+                findings.append({
+                    "resource_name": sql_name,
+                    "resource_type": "google_sql_database_instance",
+                    "vulnerability": "MISSING_SQL_BACKUP",
+                    "severity": "HIGH",
+                    "pillar": "RELIABILITY",
+                    "cspr_golden_title": "Enforce Database Backups",
+                    "cspr_golden_rationale": "Configuring automated backup schedules on active databases guarantees high availability and fast business recovery in disaster scenarios.",
+                    "nist_csf_mapping": nist_kb.get("entries", {}).get("PR.DS-11", {"subcategory_id": "PR.DS-11", "description": "Backups of data-at-rest and systems are performed, maintained, and tested."}),
+                    "remediation_hcl": "settings {\n    backup_configuration {\n      enabled = true\n    }\n  }"
+                })
+
+            # G. GKE Private Nodes (New!)
+            gke_clusters = extract_resource_blocks(content, "google_container_cluster")
+            for gke_name, block_content in gke_clusters:
+              clean_block = strip_comments(block_content)
+              if "enable_private_nodes" not in clean_block or "enable_private_nodes = false" in clean_block:
+                findings.append({
+                    "resource_name": gke_name,
+                    "resource_type": "google_container_cluster",
+                    "vulnerability": "GKE_PUBLIC_NODES",
+                    "severity": "HIGH",
+                    "pillar": "SECURITY",
+                    "cspr_golden_title": "Enforce Private GKE Cluster Nodes",
+                    "cspr_golden_rationale": "Enabling private nodes isolates GKE worker nodes from direct internet ingress, preventing automated external container exploitations.",
+                    "nist_csf_mapping": nist_kb.get("entries", {}).get("PR.AC-04", {"subcategory_id": "PR.AC-04", "description": "Network access control is managed and enforced."}),
+                    "remediation_hcl": "private_cluster_config {\n    enable_private_nodes = true\n  }"
+                })
+
+            # H. VPC Flow Logs (New!)
+            subnets = extract_resource_blocks(content, "google_compute_subnetwork")
+            for subnet_name, block_content in subnets:
+              clean_block = strip_comments(block_content)
+              if "log_config" not in clean_block:
+                findings.append({
+                    "resource_name": subnet_name,
+                    "resource_type": "google_compute_subnetwork",
+                    "vulnerability": "MISSING_VPC_FLOW_LOGS",
+                    "severity": "MEDIUM",
+                    "pillar": "OPERATIONAL_EXCELLENCE",
+                    "cspr_golden_title": "Enforce VPC Flow Logging",
+                    "cspr_golden_rationale": "Enabling flow logging on active subnets is crucial for real-time network anomaly detection and security breach audits.",
+                    "nist_csf_mapping": nist_kb.get("entries", {}).get("DE.CM-01", {"subcategory_id": "DE.CM-01", "description": "The network and physical environment are monitored to identify potential cybersecurity events."}),
+                    "remediation_hcl": "log_config {\n    aggregation_interval = \"INTERVAL_5_SEC\"\n    flow_sampling        = 0.5\n    metadata             = \"INCLUDE_ALL_METADATA\"\n  }"
                 })
 
   # 2. Scan Asset Inventory CSV if supplied

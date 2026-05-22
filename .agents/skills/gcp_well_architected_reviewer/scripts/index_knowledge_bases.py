@@ -59,6 +59,30 @@ def main():
           "Enforce Cryptographic Key Rotation": {
               "title": "Enforce Cryptographic Key Rotation",
               "rationale": "Enforcing automated rotation periods (e.g. 90 days) on Cloud KMS keys limits the threat exposure window of compromised cryptographic materials."
+          },
+          "Restrict Open Ingress Ports": {
+              "title": "Restrict Open Ingress Ports",
+              "rationale": "Allowing open ingress from wildcard IP blocks (0.0.0.0/0) over administrative ports like 22 (SSH) or 3389 (RDP) exposes your instances to automated global brute-force campaigns."
+          },
+          "Restrict Public Dataset Access": {
+              "title": "Restrict Public Dataset Access",
+              "rationale": "Wildcard public access configurations (e.g., special_group = 'allUsers') on BigQuery datasets expose sensitive data tables globally, causing major data exfiltration blocks."
+          },
+          "Enforce Database Backups": {
+              "title": "Enforce Database Backups",
+              "rationale": "Configuring automated backup schedules on active databases guarantees high availability and fast business recovery in disaster scenarios."
+          },
+          "Enforce Private GKE Cluster Nodes": {
+              "title": "Enforce Private GKE Cluster Nodes",
+              "rationale": "Enabling private nodes isolates GKE worker nodes from direct internet ingress, preventing automated external container exploitations."
+          },
+          "Enforce KMS Customer-Managed Keys": {
+              "title": "Enforce KMS Customer-Managed Keys",
+              "rationale": "Using Customer-Managed Encryption Keys (CMEK) gives organizations full regulatory control and audit logging over key access."
+          },
+          "Enforce VPC Flow Logging": {
+              "title": "Enforce VPC Flow Logging",
+              "rationale": "Enabling flow logging on active subnets is crucial for real-time network anomaly detection and security breach audits."
           }
       }
       
@@ -72,9 +96,21 @@ def main():
               "subcategory_id": "PR.DS-02",
               "description": "Data-in-transit is protected."
           },
+          "PR.DS-11": {
+              "subcategory_id": "PR.DS-11",
+              "description": "Backups of data-at-rest and systems are performed, maintained, and tested."
+          },
           "PR.AA-05": {
               "subcategory_id": "PR.AA-05",
               "description": "Access permissions are managed and enforced incorporating the principles of least privilege and separation of duties."
+          },
+          "PR.AC-04": {
+              "subcategory_id": "PR.AC-04",
+              "description": "Network access control is managed and enforced."
+          },
+          "DE.CM-01": {
+              "subcategory_id": "DE.CM-01",
+              "description": "The network and physical environment are monitored to identify potential cybersecurity events."
           }
       }
       
