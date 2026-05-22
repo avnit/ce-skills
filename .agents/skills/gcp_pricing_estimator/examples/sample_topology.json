@@ -1,0 +1,18 @@
+{
+  "project_id": "my-active-sandbox-99",
+  "region": "us-central1",
+  "resources": [
+    {
+      "name": "gke-cluster-1",
+      "type": "gke_node_pool",
+      "machine_type": "e2-standard-4",
+      "node_count": 3
+    },
+    {
+      "name": "alloydb-instance-1",
+      "type": "alloydb_instance",
+      "tier": "db-alloydb-default",
+      "storage_gb": 500
+    }
+  ]
+}
