@@ -109,6 +109,14 @@ To ensure absolute determinism, all messages must conform to a strict, versioned
 *   **How it works**: LLMs struggle to isolate multiple, competing directives inside a single chat transcript (e.g. "Write HCL but also check these 15 security benchmarks and also format the Markdown output"). 
 *   **The ROI**: The mailbox filters out conversational background noise. The `security-critic` only receives a single, highly sterile JSON message outlining exactly where the HCL file is and which rule set to audit. It performs the audit, writes the findings back to the blackboard, and exits. This reduces the subagent's attention window to a minimum, completely eliminating "attention fade."
 
+### 4.4. User-Visibility & Chat-Pointer Rules
+*   **How it works**: While subagents communicate strictly via structured JSON envelopes, these interactions must remain **100% transparent and visible to the user**.
+*   **The Chat-Pointer Protocol**: Subagents are strictly prohibited from printing verbose technical JSONs or raw command stack traces in the conversational chat. Instead, when a subagent transmits a message to its peer or parent, it outputs a single, clean line in the chat:
+    > *"I sent you message `msg_124501` (Audit Request for gclb-multi-region-iap)."*
+*   **Clickable Workspace Links**: The Orchestrator dynamically renders this pointer as a standard, clickable file link pointing directly to the JSON file:
+    `[msg_124501](file:///.agents/mailboxes/orchestrator/inbox/msg_124501.json)`
+*   **The Efficacy**: This keeps your primary chat window clean, structured, and highly readable, while offering complete "glass-box" transparency. The user can click on any message pointer in the chat history to open the exact JSON communication envelope in an IDE preview tab.
+
 ---
 
 ## 5. Multi-Agent Execution Flow
