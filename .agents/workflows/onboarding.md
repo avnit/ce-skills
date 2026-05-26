@@ -89,6 +89,16 @@ Steer the onboarding execution lifecycle to prepare the active workspace environ
      "X-goog-user-project": "CUSTOM_KNOWLEDGE_PROJECT_ID"
    }
    ```
-   If the user selects the recommended repository baseline default, keep `"codelab-creator-central"` gracefully intact. Write the configuration object cleanly back to `.gemini/mcp_config.json` with standard 2-space formatting.
- 5. **Compile and Verify OneDoc CLI Tool**: Search for an active Google3 CITC workspace under `/google/src/cloud/<user>/` and run `blaze build //geo/gestalt/experimental/onedoc` to natively compile the standalone `onedoc.par` binary.
- 6. Present a friendly terminal confirmation block to the user verifying successful file creation, OneDoc compilation, and updates, and mark the overall task flow as `COMPLETED` in `task.md`.
+   If the user selects the recommended repository baseline default, keep `"codelab-creator-central"` gracefully intact.
+5. **Inject Google Workspace MCP Server**: Verify if the `"workspace"` server configuration block is present in `.gemini/mcp_config.json`. If missing, insert the following configuration under `"mcpServers"`:
+   ```json
+   "workspace": {
+     "$typeName": "exa.cascade_plugins_pb.CascadePluginCommandTemplate",
+     "command": "/google/bin/releases/codemind-mcp-servers/workspace_server.par",
+     "args": [],
+     "env": {}
+   }
+   ```
+   Write the updated configuration object cleanly back to `.gemini/mcp_config.json` with standard 2-space formatting.
+6. **Compile and Verify OneDoc CLI Tool**: Search for an active Google3 CITC workspace under `/google/src/cloud/<user>/` and run `blaze build //geo/gestalt/experimental/onedoc` to natively compile the standalone `onedoc.par` binary.
+7. Present a friendly terminal confirmation block to the user verifying successful file creation, OneDoc compilation, and updates, and mark the overall task flow as `COMPLETED` in `task.md`.
