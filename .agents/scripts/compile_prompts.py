@@ -29,9 +29,15 @@ SUBAGENTS_MAP = {
         "enable_write_tools": True,
         "enable_mcp_tools": False
     },
+    "security-critic": {
+        "file": "security_critic.md",
+        "description": "Audits cloud configurations and Terraform HCL against zero-trust and compliance standards in a read-only sandbox.",
+        "enable_write_tools": False,  # Strict read-only sandbox
+        "enable_mcp_tools": True
+    },
     "codelab-reviewer": {
-        "file": "reviewer.md",
-        "description": "Audits cloud architectures, structural formatting, and instructional design in a read-only sandbox.",
+        "file": "codelab_reviewer.md",
+        "description": "Audits drafted Markdown tutorials for DevSite formatting standards and instructional pedagogy.",
         "enable_write_tools": False,  # Strict read-only sandbox
         "enable_mcp_tools": True
     },
