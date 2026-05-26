@@ -29,9 +29,9 @@ SUBAGENTS_MAP = {
         "enable_write_tools": True,
         "enable_mcp_tools": False
     },
-    "security-critic": {
+    "codelab-reviewer": {
         "file": "reviewer.md",
-        "description": "Audits cloud designs and HCL against NIST security policies in a read-only sandbox.",
+        "description": "Audits cloud architectures, structural formatting, and instructional design in a read-only sandbox.",
         "enable_write_tools": False,  # Strict read-only sandbox
         "enable_mcp_tools": True
     },
