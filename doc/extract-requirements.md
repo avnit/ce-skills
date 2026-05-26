@@ -126,3 +126,32 @@ Here is how the workflow progresses sequentially, incorporating interactive huma
 > [!TIP]
 > **Dynamic GCP Architecture Framework Queries**
 > During Design Blueprint creation, always query the framework guidelines. This ensures that we recommend the exact, enterprise-grade managed service configurations (e.g. Cloud SQL regional HA configurations) instead of generic assumptions.
+
+---
+
+## 6. Evolution to Decoupled Subagents & Mailboxes (Pointer Model)
+
+To scale the Solutions Engineering pipeline, we adapt the workflow from a single, monolithic analyst prompt (`discovery_analyst.md`) to a decoupled, asynchronous **Core-and-Adapter Multi-Subagent Architecture**:
+
+👉 **Mailbox System Architecture**: [reports/actor_mailbox_architecture.md](file:///usr/local/google/home/shacharb/skynet/reports/actor_mailbox_architecture.md)
+👉 **Core Orchestrator Event Loop**: [.agents/scripts/core_orchestrator.py](file:///.agents/scripts/core_orchestrator.py)
+
+### 6.1. Segmented Subagent Personas (The Specialist Prism)
+Instead of evaluating all templates inside a single context window, we segment the workflow into specialized, isolated subagent actors running in separate background threads:
+1.  **`discovery-analyst`**: Ingests raw meeting transcripts and generates the structured `artifact_blueprint.md` (--format blueprint).
+2.  **`gap-critic`**: Focuses strictly on identifying customer operational knowledge gaps and severity matrices (`gap_analysis.md`).
+3.  **`solutions-architect`**: Designs Well-Architected solutions architecture and maps out Mermaid topologies (`design_blueprint.md`).
+4.  **`test-engineer`**: Develops precise validation test plans and gcloud validation commands (`test_plan.md`).
+
+### 6.2. File System Mailbox & Pointer Model
+*   **Data Isolation**: All detailed diagnostic logs, transcripts, and large HCL templates reside strictly in the customer local folder: `meeting/<customer_name>/`.
+*   **Pointer Envelopes**: Subagents never transmit raw Markdown/JSON over the conversational chat. Instead, they write a lightweight Pointer Envelope to the Orchestrator's inbox folder:
+    `[msg_301](file:///.agents/mailboxes/orchestrator/inbox/msg_301.json)`
+    This keeps the user chat history clean and readable while offering complete, clickable "glass-box" transparency over the agent-to-agent messages!
+
+### 6.3. Automated Workflow Adapter (`extract_requirements_runner.py`)
+We deploy a specialized runner class (`.agents/runners/extract_requirements_runner.py`) inheriting from `OrchestratorCore` to automate the pipeline:
+*   Automates pre-flight auth gates.
+*   Statically audits gcloud commands inside `test_plan.md` using the Developer Documentation MCP before project provisioning.
+*   Orchestrates the sequential invocation of the `discovery-analyst` and `solutions-architect` subagents statefully.
+*   Injects automated bug log creations (`bug_BUGNNN.json`) on validation test failures, pausing and allowing human-in-the-loop resume overrides cleanly!
