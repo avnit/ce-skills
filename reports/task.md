@@ -7,7 +7,7 @@
 <span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">DONE</span>
 </div>
 <div><strong>Started:</strong> 2026-05-26 04:15:40</div>
-<div><strong>Last Updated:</strong> 2026-05-26 04:41:16</div>
+<div><strong>Last Updated:</strong> 2026-05-26 04:59:56</div>
 </div>
 </div>
 <div style="padding: 20px 24px; border-bottom: 1px solid #e8eaed;">
@@ -30,10 +30,10 @@ Orchestrate the end-to-end creation, validation, and delivery of a Google Cloud 
 <span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">DONE</span>
 </td>
 <td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">
-Steps 1-23 completed successfully.
+Steps 1-24 completed successfully.
 </td>
 <td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">
-All pre-flight linter architectures, E2E sandbox validation suites, geoblocking self-healing syntax lints, and master `orchestrator.py` scripts are fully delivered.
+All pre-flight linter architectures, E2E sandbox validations, self-healed syntax, and Core-Adapter Orchestration designs are completed and checked into Git.
 </td>
 </tr>
 <tr style="border-bottom: 1px solid #e8eaed; background-color: #fafbfc;">
@@ -41,11 +41,11 @@ All pre-flight linter architectures, E2E sandbox validation suites, geoblocking 
 <span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">DONE</span>
 </td>
 <td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">
-Step 24: Core-and-Adapter Orchestration Design
+Step 25: True Actor Mailbox Remediation
 </td>
 <td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">
-Designed the Core-and-Adapter architectural pattern, isolating generic edge utilities into `core_orchestrator.py` and mapping workflows as lightweight pluggable runners.
-<pre style="font-family: ui-monospace, monospace; font-size: 11px; background: #f1f3f4; padding: 8px 12px; border-radius: 6px; color: #202124; margin: 8px 0 0 0; white-space: pre-wrap; word-break: break-all;">Artifact: file:///usr/local/google/home/shacharb/.gemini/jetski/brain/2996961b-0145-4393-b011-530d9ebabe30/generic_vs_specialized_orchestration.md</pre>
+Designed the detailed migration plan to transition from faked orchestrator-polling to decentralized message-passing, embedding mailbox-writing logic directly inside individual subagent skill scripts.
+<pre style="font-family: ui-monospace, monospace; font-size: 11px; background: #f1f3f4; padding: 8px 12px; border-radius: 6px; color: #202124; margin: 8px 0 0 0; white-space: pre-wrap; word-break: break-all;">Artifact: file:///usr/local/google/home/shacharb/.gemini/jetski/brain/2996961b-0145-4393-b011-530d9ebabe30/true_actor_mailbox_remediation.md</pre>
 </td>
 </tr>
 </tbody>
