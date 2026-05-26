@@ -12,9 +12,14 @@ In monolithic systems, when a task fails, the execution collapses, losing all ca
 ### The Escalation & Resume Loop
 
 ```
-[ Chaos Tester (QA) ] ──> [ FAILED ] ──> Writes bug_UUID.json (NEW) to Blackboard
+[ Chaos Tester (QA) ] ──> [ FAILED ] ──> Writes bug_UUID.json (NEW) to Local Lab Directory
                                                  │
-                                                 ▼ (Orchestrator Wakes Up)
+                                                 ▼ (Lightweight Pointer Message to Orchestrator)
+                                      [ ORCHESTRATOR WAKES UP ]
+                                      - Receives pointer: bug_id="BUG_801"
+                                      - Reads labs/dev/[lab]/bugs/bug_801.json dynamically
+                                                 │
+                                                 ▼
                                       [ Orchestrator (Architect) ]
                                                  │
                                                  ├─> (Auto-Heals) ─> Patches HCL/Code ─> Mark RESOLVED
@@ -26,32 +31,50 @@ In monolithic systems, when a task fails, the execution collapses, losing all ca
                                                                                 │
                                                                                 ▼
                                       [ Re-engage Subagent ]
-                                - Ingests RESOLVED bug_UUID.json
+                                - Ingests RESOLVED bug_pointer
                                 - Reads progress.json (Cache-Hit)
                                 - Resumes exactly at failed step!
 ```
 
 ---
 
-## 2. Directory Layout on the Blackboard
+## 2. Directory Layout on the Blackboard & Workspace
 
-We introduce a structured `/bugs/` folder directly inside our workspace state engine:
+To prevent global memory bloating, all detailed diagnostic logs (stdderr outputs, VM states) are **strictly isolated within the local lab folder**. The global Blackboard only holds tiny active pointers.
 
+### 2.1 Local Lab Directory (Detailed Logs - Git Tracked)
+```
+labs/dev/[lab-name]/
+├── [lab-name].lab.md
+├── blueprint.md
+├── OWNERS
+└── bugs/                            # Isolated, local bug directory for this lab
+    ├── bug_BUG801.json              # Detailed stack trace & failed command log
+    └── bug_BUG802.json
+```
+
+### 2.2 Shared Blackboard State (Pointers Only)
 ```
 <appDataDir>/brain/<conversation-id>/workspace_state/
-├── intake_specs.json
-├── blueprint.json
-├── validation_state.json
-└── bugs/
-    ├── bug_BUG801_GCLB_PROV.json        # Active, structured bug log
-    └── bug_BUG802_IAP_SSH.json
+└── active_bug_pointers.json         # List of lightweight active pointers
 ```
 
 ---
 
-## 3. Standardized JSON Bug Schema
+## 3. The Lightweight Pointer Message Schema
 
-All failures must be documented using a highly strict JSON schema to prevent loose text descriptions:
+When a subagent fails, the **ONLY** data it transmits to the Orchestrator's mailbox (or parent chat window) is a lightweight JSON pointer envelope:
+
+```json
+{
+  "status": "FAILED",
+  "bug_id": "BUG_801",
+  "bug_pointer": "labs/dev/gclb-multi-region-iap/bugs/bug_BUG801.json"
+}
+```
+
+### 3.1 Detailed Local Bug Schema (`bug_BUG801.json`)
+The actual detailed diagnostic payload remains safely locked inside the local file, read dynamically by the Orchestrator *only* when performing audits:
 
 ```json
 {
@@ -87,23 +110,8 @@ All failures must be documented using a highly strict JSON schema to prevent loo
 
 ---
 
-## 4. The Human-in-the-Loop "Blocked" Escape Hatch
+## 4. Technical ROI of the Pointer Isolation Model
 
-A massive advantage of this design is that it provides the **ultimate clean gateway for human intervention** when automated self-healing fails:
-
-1.  **Automated Ingest**: If `chaos-tester` fails at Step 7 (VPC Ingress), it writes the bug file to GCS/Blackboard.
-2.  **Orchestrator Attempt**: The Orchestrator reads the bug, tries to solve the issue, but fails (e.g. it hits a strict organizational policy block that cannot be bypassed via script).
-3.  **Transition to Blocked**: The Orchestrator writes `status: "BLOCKED_HUMAN_REQUIRED"` to the bug file, outputs the exact stack trace to the chat, and **halts execution**.
-4.  **Human Action**: The user (you) reads the chat, executes a manual fix (e.g., toggling a policy in the console or typing a password), and writes `status: "RESOLVED"` inside `bug_UUID.json`.
-5.  **Re-engagement**: You type "resume" or "go" in the chat. The Orchestrator immediately boots the subagent, which reads the resolved status, matches it against its cached `.tester_state/progress.json` files, skips the successful Steps 1–6, and **resumes E2E validation directly at Step 7!**
-
----
-
-## 5. Feasibility and Evaluation
-
-| Metric | Traditional Crash & Restart | Stateful Bug Tracking & Re-engage |
-| :--- | :--- | :--- |
-| **State Retention** | Poor (wastes time/quota recreating resources). | **100% Cached** (Resumes from last successful step). |
-| **Human-in-the-Loop UX** | Messy (User must manual-patch and guess where to restart). | **Elegant** (Strict JSON status transitions and auto-resume). |
-| **Trace Logging** | Weak (No central structured error logs). | **Excellent** (Complete database of `/bugs/` files saved in Git). |
-| **Self-Healing Loop Efficacy**| Low (Generator gets lost in massive chat logs). | **High** (Specific and clean JSON stack trace). |
+1.  **Total Memory Protection (Context Shielding)**: Preventing massive, multi-kilobyte GCE and CLI stack traces from leaking into the parent conversation thread preserves the Orchestrator's attention span, avoiding "Lost in the Middle" prompt drift.
+2.  **Clean Git Paper Trail**: Because the detailed bug logs reside in the `/bugs/` directory inside `labs/dev/[lab-name]/`, they are naturally committed to Git. This creates a perfect historical record of your codebase's validation failures and automated self-healing fixes.
+3.  **Zero Overhead Human Interactivity**: If a human engineer needs to step in to unblock a `BLOCKED_HUMAN_REQUIRED` state, they open the local `bug_BUG801.json` file in their IDE, toggle the status, and proceed cleanly.
