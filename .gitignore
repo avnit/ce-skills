@@ -54,5 +54,6 @@ startup.sh
 # Exclude localized active MCP configurations to block credential leaks
 .gemini/
 
-
-
+# Exclude active agent runtime states and mailboxes
+.agents/state/
+.agents/mailboxes/
