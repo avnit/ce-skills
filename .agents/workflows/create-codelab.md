@@ -65,3 +65,25 @@ Overall Orchestration Lifecycle:
    - **Clean-up Choice Gate**: If the user selected "Automatically delete" in Question 4, confirm that resources have been fully destroyed. If the user selected "Retain", present an interactive `ask_question` modal to the user, offering them the choice to either **delete** all deployed GCP resources now (Clean up) or **retain** them permanently for continuous experimentation.
    - **Diagram Cost Optimization**: Once the E2E verification has completed successfully, to reduce diagram image generation cost, call the **`creating-gcp-diagrams`** skill to synthesize a high-quality styled image representing the verified architecture. Copy the generated image into the lab's `/img/` subdirectory, and embed it directly into the persistent narrative markdown (`.lab.md`) as a relative image link, replacing or supplementing any plain text descriptions.
    - Present validated Markdown artifacts to the user and mark final execution state as `COMPLETED` in `task.md`.
+
+## 8. Orchestrator Runner Integration & HITL Checkpoints
+
+To programmatically automate this natural-language workflow while maintaining absolute human control, we utilize the **Central Orchestrator Event Loop** script:
+
+👉 **Orchestrator Automation Runner**: [.agents/scripts/orchestrator.py](file:///.agents/scripts/orchestrator.py)
+
+### How Human-in-the-Loop (HITL) Gates are Enforced in Code:
+
+1.  **Phase 0.5 Strategy Sign-Off**: 
+    *   *SOP Rule*: "The agent MUST explicitly pause execution and request user approval of the proposed plan."
+    *   *Code Hook*: `orchestrator.py` writes the `implementation_plan.md` to the Blackboard, prints a CLI warning, pauses the process execution thread, and blocks until the user hits `[Enter]` (or responds via `ask_question` modal) to proceed or type `abort`.
+2.  **Phase 1 Parameter Scope Selection**:
+    *   *SOP Rule*: "Invoke the ask_question tool to present interactive intake questions."
+    *   *Code Hook*: The script accepts command-line parameters (e.g. `--skip-cleanup`). If omitted in headless mode, it automatically triggers interactive prompt selections to bind variables before running project creation.
+3.  **Phase 2 Blueprint Sign-Off**:
+    *   *SOP Rule*: "Pause execution and invoke the interactive ask_question tool to present a modal asking for approval of the preview blueprint."
+    *   *Code Hook*: The script generates `blueprint.md`, prints the file location, and blocks until the user explicitly provides approval in the console or modal before deploying any VPC or firewall resources.
+4.  **Stateful Error Escalation (Bug Blocks)**:
+    *   *SOP Rule*: "If the failure persists or is unrecoverable, stop execution."
+    *   *Code Hook*: If `tester.py` encounters a failure, `orchestrator.py` intercepts it, logs the error to a structured local bug file `bug_BUGNNN.json`, sets `status: "BLOCKED_HUMAN_REQUIRED"`, prints the stack trace to the terminal, and halts.
+    *   *The Resume*: Once the user manually patches the bug in-place and sets the status to `RESOLVED` in the JSON file, hitting `[Enter]` re-engages the runner, which resumes validation exactly at the failed step!
