@@ -1,19 +1,19 @@
 <div style="max-width: 900px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #ffffff; border-radius: 12px; border: 1px solid #e8eaed; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
 <div style="padding: 20px 24px; background: #ffffff; border-bottom: 1px solid #e8eaed; border-left: 6px solid #1a73e8;">
-<h1 style="margin: 0 0 8px 0; font-size: 22px; color: #1a73e8; font-weight: 600;">Create Codelab: Global ALB with Multi-Region Backends & IAP SSH</h1>
+<h1 style="margin: 0 0 8px 0; font-size: 22px; color: #1a73e8; font-weight: 600;">Create Codelab: GCP Cloud Firewall Geo-Blocking & Logging</h1>
 <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: #5f6368;">
 <div style="display: flex; align-items: center; gap: 6px;">
 <strong>Overall Status:</strong> 
 <span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">DONE</span>
 </div>
-<div><strong>Started:</strong> 2026-05-26 03:38:35</div>
-<div><strong>Last Updated:</strong> 2026-05-26 04:13:15</div>
+<div><strong>Started:</strong> 2026-05-26 04:15:40</div>
+<div><strong>Last Updated:</strong> 2026-05-26 04:28:46</div>
 </div>
 </div>
 <div style="padding: 20px 24px; border-bottom: 1px solid #e8eaed;">
 <div style="font-size: 14px; font-weight: 600; margin: 0 0 8px 0; color: #3c4043; text-transform: uppercase; letter-spacing: 0.5px;">Objective</div>
 <p style="margin: 0; font-size: 14px; color: #5f6368; line-height: 1.5;">
-Orchestrate the end-to-end creation, validation, and delivery of a Google Cloud Codelab teaching the deployment of a Global Application Load Balancer (ALB) backed by two-region managed instance groups running a web app that visualizes routing destinations, with secure IAP SSH shell access enabled.
+Orchestrate the end-to-end creation, validation, and delivery of a Google Cloud Codelab teaching the deployment of a Compute Engine instance running a simple web server, configuring a Cloud Firewall Standard policy to block incoming traffic from China while permitting it from the rest of the world, enabling firewall logging, and showing the user how to audit the logs using Cloud Logging.
 </p>
 </div>
 <table style="width: 100%; border-collapse: collapse; margin: 0; font-size: 13px;">
@@ -33,7 +33,7 @@ Orchestrate the end-to-end creation, validation, and delivery of a Google Cloud 
 Phase 0: Pre-Flight & Strategy Plan
 </td>
 <td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">
-Confirmed credential context switched to Sandbox Administrator: `admin@shacharb.altostrat.com`. strategy plan `implementation_plan.md` has been generated and approved.
+Confirmed Sandbox Admin active context (`admin@shacharb.altostrat.com`). strategy plan `implementation_plan.md` generated and approved.
 </td>
 </tr>
 <tr style="border-bottom: 1px solid #e8eaed; background-color: #fafbfc;">
@@ -44,7 +44,7 @@ Confirmed credential context switched to Sandbox Administrator: `admin@shacharb.
 Phase 1: Scope Intake & Memory Match
 </td>
 <td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">
-Resolved user parameters: E2E Verification, Practice CE Persona (Level 300/400), Pure gcloud CLI format, Retain sandbox policy. RAG database query bypassed due to missing pip/venv libraries in environment.
+Ingested parameters: E2E Verification, Level 300/400 Practice CE, Pure gcloud CLI, Automatic teardown active. Performed pre-flight Documentation MCP syntax audits confirming `--src-region-codes` and `--enable-logging` flags.
 </td>
 </tr>
 <tr style="border-bottom: 1px solid #e8eaed; background-color: #fafbfc;">
@@ -55,7 +55,7 @@ Resolved user parameters: E2E Verification, Practice CE Persona (Level 300/400),
 Phase 2: Ephemeral Blueprint Scoping
 </td>
 <td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">
-Drafted and got interactive sign-off for `blueprint.md`. Decoupled proxy-only subnet requirements for Global ALB, saving VPC network scale and resource costs. Persisted design to `labs/dev/gclb-multi-region-iap/blueprint.md`.
+Drafted and got interactive sign-off for `blueprint.md`. Mapped standard global firewall rules for CN blocking, Logging targets, and VPC attachments. Persisted design to `labs/dev/firewall-geoblocking/blueprint.md`.
 </td>
 </tr>
 <tr style="border-bottom: 1px solid #e8eaed; background-color: #fafbfc;">
@@ -66,7 +66,7 @@ Drafted and got interactive sign-off for `blueprint.md`. Decoupled proxy-only su
 Phase 3: Tutorial Narrative Packaging
 </td>
 <td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">
-Drafted and saved dynamic Codelab Markdown file `gclb-multi-region-iap.lab.md` and static `OWNERS` metadata inside `labs/dev/gclb-multi-region-iap/`.
+Generated step-by-step Markdown Codelab guide `firewall-geoblocking.lab.md` and static `OWNERS` file inside `labs/dev/firewall-geoblocking/`.
 </td>
 </tr>
 <tr style="border-bottom: 1px solid #e8eaed; background-color: #fafbfc;">
@@ -77,8 +77,8 @@ Drafted and saved dynamic Codelab Markdown file `gclb-multi-region-iap.lab.md` a
 Phase 4: Stateful Sandbox Verification
 </td>
 <td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">
-Executed E2E sandbox tests. Automated self-healing successfully patched the `--region` subnet templates syntax blocker inside the workspace. Stateful deployments of custom VPC, NAT, private templates, regional MIGs, and global health-checks passed 100% successfully.
-<pre style="font-family: ui-monospace, monospace; font-size: 11px; background: #f1f3f4; padding: 8px 12px; border-radius: 6px; color: #202124; margin: 8px 0 0 0; white-space: pre-wrap; word-break: break-all;">GCP Test Project: gclb-multi-region-i-1779767080</pre>
+Executed E2E sandbox test suite. Autonomously self-healed the mandatory protocol flag (`--layer4-configs=all`) and invalid association listing subcommands. Deployed VPC, instance, and firewall standard geolocation policies cleanly, verified logs, and successfully deallocated all resources to prevent cloud waste.
+<pre style="font-family: ui-monospace, monospace; font-size: 11px; background: #f1f3f4; padding: 8px 12px; border-radius: 6px; color: #202124; margin: 8px 0 0 0; white-space: pre-wrap; word-break: break-all;">Validation Verdict: SUCCESS</pre>
 </td>
 </tr>
 <tr style="border-bottom: 1px solid #e8eaed; background-color: #fafbfc;">
@@ -89,8 +89,8 @@ Executed E2E sandbox tests. Automated self-healing successfully patched the `--r
 Phase 5: Peer Quality Audit & Delivery
 </td>
 <td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">
-Invoked `codelab-reviewer` subagent. Patched 100% of the 7 quality and formatting remediations in the workspace: wrapped frontmatter, cleaned up non-standard metadata keys, added `gcloud config set project` sandboxing, and highlighted GCLB propagation delays using a high-visibility `> aside negative` warning block.
-<pre style="font-family: ui-monospace, monospace; font-size: 11px; background: #f1f3f4; padding: 8px 12px; border-radius: 6px; color: #202124; margin: 8px 0 0 0; white-space: pre-wrap; word-break: break-all;">Audited Codelab: file:///usr/local/google/home/shacharb/skynet/labs/dev/gclb-multi-region-iap/gclb-multi-region-iap.lab.md</pre>
+Invoked `codelab-reviewer` subagent. Patched 100% of recommendations in the workspace: mapped high-visibility geoblock simulation instructions enabling users to add their own country code to trigger DENY logs locally, and added a billing leak aside negative callout warning.
+<pre style="font-family: ui-monospace, monospace; font-size: 11px; background: #f1f3f4; padding: 8px 12px; border-radius: 6px; color: #202124; margin: 8px 0 0 0; white-space: pre-wrap; word-break: break-all;">Finalized Codelab: file:///usr/local/google/home/shacharb/skynet/labs/dev/firewall-geoblocking/firewall-geoblocking.lab.md</pre>
 </td>
 </tr>
 </tbody>
