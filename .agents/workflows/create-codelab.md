@@ -42,11 +42,13 @@ Overall Orchestration Lifecycle:
      - **Artifacts Only Checklist**: Steps for Upfront Alignment, Blueprint Authoring, and Narrative Markdown Generation.
      - **Full E2E Checklist**: Steps for Upfront Alignment, Blueprint Authoring, Narrative Generation, Sandboxed GCP Project Provisioning, Hermetic Testing Validation, and Quality Review.
    - Query centralized RAG lessons learned via the **codelab-memory** skill.
-4. **Phase 2: Technical Blueprint Design**
+ 4. **Phase 2: Technical Blueprint Design**
    - **CRITICAL RULE - PREVIEW-FIRST BLUEPRINTING**: Do not author plain markdown files directly into the target repo folder initially. Instead, instruct the Architect persona to generate an **ephemeral preview blueprint** inside the conversation tracking folder (`<appDataDir>/brain/<conversation-id>/blueprint.md`).
    - Structure the preview blueprint using **pure standard Markdown formatting** (standard headings `#`, `##`, bullet lists) to ensure flawless IDE rendering tab evaluation and stability.
    - **Low-Latency Topology Mapping**: Embed the architecture diagram directly into the pure Markdown layout using native **Mermaid code blocks** (`mermaid` syntax) to guarantee instant visual rendering without background image synthesis latencies.
    - Dynamically update the active step status in `task.md` to `RUNNING`.
+   - **Grounded Critic Audit Loop**: Before presenting the blueprint to the user, spawn the `arch-critic` subagent asynchronously. The critic will query official Google Cloud Well-Architected framework benchmarks and technical constraints using the `google-developer-documentation-mcp` API (e.g., `search_documents`, `answer_query`), and dynamically coordinate remediations with the `cloud-architect` via the file-system-backed mailbox broker.
+   - **Critic Resolution Gate**: The loop will run programmatically in the background until the `arch-critic` issues an `APPROVED` mailbox envelope. Every design objection and official Google documentation citation link is archived for complete human audit transparency.
    - **Mandatory Design Sign-off Gate**: Pause execution and invoke the interactive `ask_question` tool to present a modal asking for approval of the preview blueprint design (e.g., options: "Approve and persist blueprint", "Request changes"). Under no circumstances should the agent proceed or write the blueprint to the repository before the user has explicitly approved it through this modal.
    - **Repository Persistence**: Only after receiving explicit user confirmation via the `ask_question` modal, copy/write the finalized contents of `blueprint.md` into the persistent repository directory (`labs/dev/[lab-name]/blueprint.md`), update `task.md` to mark blueprinting complete, and transition to Phase 3.
 5. **Phase 3: Narrative Content Generation & Packaging**

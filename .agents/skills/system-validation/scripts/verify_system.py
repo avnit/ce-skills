@@ -230,9 +230,43 @@ def check_mcp_servers():
             
     return True, results
 
-def generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc_msg, mcp_ok, mcp_results, report_path=None):
+def check_cdp_socket_conflicts():
+    import socket
+    port = 9222
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(1.0)
+    try:
+        s.connect(('127.0.0.1', port))
+        s.close()
+        try:
+            # Attempt to fetch browser version from DevTools HTTP interface
+            req = urllib.request.Request(f"http://127.0.0.1:{port}/json/version", method="GET")
+            with urllib.request.urlopen(req, timeout=1.0) as response:
+                info = json.loads(response.read().decode('utf-8'))
+                browser = info.get("Browser", "Unknown Chrome-like process")
+                return False, f"PORT CONFLICT: Singleton CDP port {port} is already occupied by: <b>{browser}</b>.<br>This will cause DevTools/CDP WebSocket crashes during E2E runs. Please kill duplicate browser instances (e.g. <code>pkill -f headless</code>) before running."
+        except Exception:
+            return False, f"PORT CONFLICT: Singleton CDP port {port} is already in use by an unresponsive process.<br>Please run <code>pkill -f 'chrome\\|headless'</code> or <code>fuser -k {port}/tcp</code> to clear it."
+    except socket.error:
+        pass
+        
+    try:
+        result = subprocess.run(
+            ["pgrep", "-f", "headless|chrome|chromium"],
+            capture_output=True,
+            text=True
+        )
+        pids = [pid.strip() for pid in result.stdout.splitlines() if pid.strip()]
+        if len(pids) > 2:
+            return True, f"WARNING: {len(pids)} running Chrome/headless processes detected in background. While port {port} is currently free, you are advised to run <code>pkill -f 'headless\\|chrome'</code> to prevent future conflicts."
+    except Exception:
+        pass
+        
+    return True, "CDP / Chrome DevTools singleton socket is clear and ready."
+
+def generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=None):
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    all_pass = gcp_ok and dep_ok and onedoc_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
+    all_pass = gcp_ok and dep_ok and onedoc_ok and cdp_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
     
     overall_status_color = "#137333" if all_pass else "#c5221f"
     overall_status_bg = "#e6f4ea" if all_pass else "#fce8e6"
@@ -309,6 +343,17 @@ def generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc
     html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{onedoc_msg}</td>')
     html.append('</tr>')
     
+    cdp_bg = "#e6f4ea" if cdp_ok else "#fce8e6"
+    cdp_color = "#137333" if cdp_ok else "#c5221f"
+    cdp_status = "PASS" if cdp_ok else "FAIL"
+    html.append('<tr style="border-bottom: 1px solid #e8eaed;">')
+    html.append('<td style="padding: 14px 24px; vertical-align: top;">')
+    html.append(f'<span style="background: {cdp_bg}; color: {cdp_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">{cdp_status}</span>')
+    html.append('</td>')
+    html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">CDP Debugger Socket Check (Port 9222)</td>')
+    html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{cdp_msg}</td>')
+    html.append('</tr>')
+    
     for server, res in mcp_results.items():
         status = res["status"]
         msg = res["message"]
@@ -351,8 +396,12 @@ def main():
     print("=" * 60)
     
     report_path = None
-    if len(sys.argv) > 1:
-        report_path = sys.argv[1]
+    skip_cdp = False
+    for arg in sys.argv[1:]:
+        if arg == "--skip-cdp":
+            skip_cdp = True
+        elif not arg.startswith("-"):
+            report_path = arg
         
     gcp_ok, gcp_msg = check_gcp_config()
     print(f"[*] GCP Configuration Check: {'PASS' if gcp_ok else 'FAIL'}")
@@ -366,11 +415,18 @@ def main():
     print(f"[*] OneDoc Tool Check (go/onedoc): {'PASS' if onedoc_ok else 'FAIL'}")
     print(f"    {onedoc_msg}\n")
     
+    if skip_cdp:
+        cdp_ok, cdp_msg = True, "CDP socket conflict check skipped via --skip-cdp."
+    else:
+        cdp_ok, cdp_msg = check_cdp_socket_conflicts()
+    print(f"[*] CDP Debugger Socket Check (Port 9222): {'PASS' if cdp_ok else 'FAIL'}")
+    print(f"    {cdp_msg}\n")
+
     mcp_ok, mcp_results = check_mcp_servers()
     print(f"[*] MCP Servers Connectivity Check:")
     if not mcp_ok:
         print(f"    FAIL: {mcp_results}\n")
-        generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path)
+        generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc_msg, cdp_ok, cdp_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path)
         sys.exit(1)
         
     all_mcp_pass = True
@@ -383,9 +439,9 @@ def main():
             all_mcp_pass = False
     print()
     
-    generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc_msg, mcp_ok, mcp_results, report_path=report_path)
+    generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=report_path)
     
-    if not gcp_ok or not dep_ok or not onedoc_ok or not all_mcp_pass:
+    if not gcp_ok or not dep_ok or not onedoc_ok or not cdp_ok or not all_mcp_pass:
         print("[-] SYSTEM VALIDATION: FAILED")
         print("-" * 60)
         sys.exit(1)

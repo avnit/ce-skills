@@ -61,6 +61,8 @@ To make the converted tutorial an **amazing codelab**, ensure all output blocks 
 - **Duration Annotation**: Every step heading (`##`) MUST contain an explicit time duration estimation formatted exactly as `Duration: MM:SS` directly underneath the heading string.
 - **Callout Blocks**: Use standard callout wrappers (`> aside positive` or `> aside negative`) sparingly to highlight important context or manual UI actions.
 - **Proof of Life / Outcome Visualization**: For every critical deployment or testing command, ensure expected output visualization blocks are present, using formatting headers like `"You should see output similar to:"` followed by terminal blocks.
+- **Hyperlink & Resource Enrichment**: Proactively discover reference materials (e.g., project repositories like Tunix, external tools, API guidelines, credential panels) in the source content, and enforce formatting them as standard Markdown hyperlinks (e.g., `[Tunix](https://github.com/google/tunix)`). Do not leave references as unlinked plain text.
+- **Automated Image Asset Local Sourcing**: Detect all remote images (Markdown image structures or HTML `img` tags) in the raw extracted source. Run the asset-downloader script (`python3 .agents/skills/qwiklabs-to-codelab/scripts/download_images.py [lab_path]`) to download these files into an `img/` folder adjacent to the `.lab.md` file and automatically update references to clean relative paths (`img/[filename]`).
 
 ---
 
@@ -68,8 +70,12 @@ To make the converted tutorial an **amazing codelab**, ensure all output blocks 
 
 When executing a conversion pass, apply the following structured guidelines:
 
-1. **Intake & Segment**: Read through the raw extracted tutorial content. Group steps logically to maintain step hygiene (aiming for one logical task per top-level step heading).
-2. **Filter out Noise**: Strip all mentions of Qwiklabs support panels, temporary student passwords, or hosted timers.
-3. **Reconstruct Frontmatter**: Derive an intuitive, lowercase hyphenated identifier string for the `id` parameter and compose a concise single-line summary.
-4. **Author Output**: Generate the full markdown file (`.lab.md`) ensuring perfect code block indentation, clean markdown structures, and zero deviation in terminal command syntaxes.
-5. **Deliver Clean Artifacts**: Output the path to the finalized markdown file directly to the user for local validation.
+1. **Interactive Parameter Elicitation**: Before initiating the capture or parser phase, you MUST call the **`ask_question`** tool to obtain target metadata from the user: Author names list, suggested lowercase hyphenated folder name/ID, and suggested technical keywords list. Allow user overrides for all configurations.
+2. **Intake & Segment**: Read through the raw extracted tutorial content. Group steps logically to maintain step hygiene (aiming for one logical task per top-level step heading).
+3. **Filter out Noise**: Strip all mentions of Qwiklabs support panels, temporary student passwords, or hosted timers.
+4. **Reconstruct Frontmatter**: Derive an intuitive, lowercase hyphenated identifier string for the `id` parameter and compose a concise single-line summary.
+5. **Author Output**: Generate the full markdown file (`.lab.md`) ensuring perfect code block indentation, clean markdown structures, and zero deviation in terminal command syntaxes.
+6. **Explanatory Content Integrity**: Never summarize, truncate, or omit explanatory lists, tables, or paragraphs from the source that explain code blocks, directory layouts, or platform/infrastructure states (e.g. queued resource lifecycles).
+7. **Retain exit links / CTAs**: Do not replace exit funnels. Retain 100% of external hyperlinks, further reading references, and concluding CTA links in the final section, ensuring they are hyperlinked to their canonical homepages.
+8. **Inconsistency Auditing**: Proactively detect and resolve mismatched dataset references or logical discrepancies in the source (e.g., correcting references to a "math dataset" when the code block imports a "medical" dataset).
+9. **Deliver Clean Artifacts**: Output the path to the finalized markdown file directly to the user for local validation.

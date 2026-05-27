@@ -308,6 +308,67 @@ class StatefulCodelabTester:
             with open(self.artifact_task_file, "w") as f:
                 f.write(html_content)
 
+    def file_bug_and_notify_mailbox(self, failed_step, failed_command, error_output):
+        """Decentralized subagent bug logging and POSIX mailbox message dispatch."""
+        import sys
+        sys.path.append("/usr/local/google/home/shacharb/skynet/.agents/scripts")
+        try:
+            from mailbox_handler import MailboxBroker
+        except ImportError as e:
+            logging.error(f"[Tester] Failed to import MailboxBroker: {e}")
+            return
+
+        # 1. Generate local Bug JSON (Data Isolation)
+        bug_epoch = int(time.time())
+        bug_id = f"BUG_{failed_step:03d}_{bug_epoch}"
+        bugs_dir = os.path.join(self.lab_dir, "bugs")
+        os.makedirs(bugs_dir, exist_ok=True)
+        
+        bug_file = os.path.join(bugs_dir, f"bug_{bug_id}.json")
+        
+        bug_payload = {
+            "bug_id": bug_id,
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
+            "lab_name": os.path.basename(self.lab_dir),
+            "step_number": failed_step,
+            "step_title": self.steps[failed_step - 1]["title"],
+            "error_logs": {
+                "failed_command": failed_command,
+                "stderr_output": error_output
+            },
+            "status": "NEW"
+        }
+        
+        try:
+            with open(bug_file, "w", encoding="utf-8") as f:
+                json.dump(bug_payload, f, indent=2)
+            logging.info(f"[Tester] Structured Bug File successfully created locally: {bug_file}")
+        except Exception as e:
+            logging.error(f"[Tester] Failed to write Bug File: {e}")
+            return
+
+        # 2. Dispatch message envelope via MailboxBroker
+        try:
+            broker = MailboxBroker()
+            blackboard_pointers = {
+                "blueprint": self.md_path,
+                "bug_report": bug_file
+            }
+            payload = {
+                "bug_id": bug_id,
+                "findings_summary": f"Step {failed_step} ('{bug_payload['step_title']}') failed execution on command: {failed_command}"
+            }
+            
+            broker.send_message(
+                sender="chaos-tester",
+                recipient="orchestrator",
+                action_type="REMEDIATE",
+                blackboard_pointers=blackboard_pointers,
+                payload=payload
+            )
+        except Exception as e:
+            logging.error(f"[Tester] Failed to dispatch mailbox message envelope: {e}")
+
     def run(self) -> bool:
         """Executes step-by-step state validation."""
         self.load_or_initialize_state()
@@ -386,6 +447,7 @@ class StatefulCodelabTester:
                     self.save_state(idx, "FAILED")
                     self.write_visual_boards("FAILED")
                     logging.error("[Tester] Step %d failed.", step["num"])
+                    self.file_bug_and_notify_mailbox(step["num"], cmd, step["error"])
                     return False
                 
                 # Step successfully completed

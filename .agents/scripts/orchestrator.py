@@ -11,6 +11,12 @@ import subprocess
 import sys
 import time
 
+sys.path.append("/usr/local/google/home/shacharb/skynet/.agents/scripts")
+try:
+    from mailbox_handler import MailboxBroker
+except ImportError:
+    pass
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s INFO: [Orchestrator] %(message)s")
 
 class Orchestrator:
@@ -145,8 +151,8 @@ class Orchestrator:
         return True
 
     def phase_3_execute_validation(self):
-        """Phase 3: Asynchronously run stateful E2E testing and poll progress loop."""
-        logging.info("Starting Phase 3: Stateful E2E Validation...")
+        """Phase 3: Asynchronously run stateful E2E testing and poll Orchestrator mailbox reactively."""
+        logging.info("Starting Phase 3: Reactive Stateful E2E Validation...")
         tester_script = "/usr/local/google/home/shacharb/skynet/.agents/skills/codelab-validation/scripts/tester.py"
         
         # Construct validation execution command
@@ -159,96 +165,140 @@ class Orchestrator:
         proc = subprocess.Popen(
             cmd,
             shell=True,
-            cwd="/usr/local/google/home/shacharb/skynet",
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            cwd="/usr/local/google/home/shacharb/skynet"
         )
         
-        # Active event polling loop
-        while proc.poll() is None:
-            time.sleep(10)
+        broker = MailboxBroker()
+        
+        # Active reactive event polling loop
+        while True:
+            time.sleep(5)
             
-            # Intercept live progress state
-            if os.path.exists(self.progress_file):
-                try:
-                    with open(self.progress_file, "r") as f:
-                        progress = json.load(f)
-                        
-                    logging.info(
-                        f"Active Step: {progress.get('current_step')} / {progress.get('total_steps')} "
-                        f"| Status: {progress.get('status')}"
-                    )
+            # Poll Orchestrator Inbox for reactive subagent messages
+            messages = broker.poll_inbox("orchestrator")
+            for filename, file_path, envelope in messages:
+                action_type = envelope.get("action_type")
+                sender = envelope.get("sender")
+                message_id = envelope.get("message_id")
+                pointers = envelope.get("blackboard_pointers", {})
+                payload = envelope.get("payload", {})
+                
+                logging.info(f"Received message '{message_id}' from '{sender}' | Action: {action_type}")
+                
+                if action_type == "REMEDIATE" or payload.get("status") == "FAILED":
+                    bug_id = payload.get("bug_id")
+                    bug_report = pointers.get("bug_report")
+                    findings = payload.get("findings_summary", "No findings summary provided.")
                     
-                    # Check for failure states
-                    if progress.get("status") == "FAILED":
-                        logging.error("Validation failure detected on the Blackboard! Initiating diagnostic loop...")
+                    logging.error(f"Validation failure envelope detected: {bug_id}")
+                    logging.error(f"Subagent findings: {findings}")
+                    
+                    # Resolve absolute path of the bug pointer
+                    if bug_report and os.path.exists(bug_report):
+                        logging.info(f"Loading decentralized Bug File from: {bug_report}")
+                        try:
+                            with open(bug_report, "r", encoding="utf-8") as bf:
+                                bug_details = json.load(bf)
+                            failed_command = bug_details.get("error_logs", {}).get("failed_command", "N/A")
+                            stderr_output = bug_details.get("error_logs", {}).get("stderr_output", "N/A")
+                            
+                            # Perform self-healing or diagnose
+                            self.execute_self_healing_on_bug(bug_id, failed_command, stderr_output, bug_report)
+                        except Exception as e:
+                            logging.error(f"Failed to read subagent bug details: {e}")
+                    
+                    # POSIX Atomic Archive to outbox
+                    broker.archive_to_outbox("orchestrator", filename)
+                    
+                    # Terminate subagent process if running
+                    if proc.poll() is None:
                         proc.terminate()
-                        self.phase_3_5_diagnose_and_self_heal(progress.get("current_step"))
-                        return False
-                except (json.JSONDecodeError, IOError):
-                    continue
-                    
-        # Handle completion exit codes
-        if proc.returncode == 0:
-            logging.info("E2E validation completed successfully! Verdict: SUCCESS")
-            return True
-        else:
-            logging.error(f"Validation script crashed with exit code: {proc.returncode}")
-            return False
+                    return False
+                
+                # Archive processed message to outbox
+                broker.archive_to_outbox("orchestrator", filename)
+            
+            # Check if process exited
+            exit_code = proc.poll()
+            if exit_code is not None:
+                if exit_code == 0:
+                    logging.info("E2E validation completed successfully! Verdict: SUCCESS")
+                    return True
+                else:
+                    logging.error(f"Validation script exited with non-zero return code: {exit_code}")
+                    # Check if there's a leftover message in the inbox we missed in this tick
+                    leftover_messages = broker.poll_inbox("orchestrator")
+                    if leftover_messages:
+                        continue
+                    return False
 
-    def phase_3_5_diagnose_and_self_heal(self, failed_step):
-        """Phase 3.5: Diagnoses failures, generates structured bugs, and heals syntax in-place."""
-        logging.info(f"Beginning Self-Healing Diagnostic for Step {failed_step}...")
-        step_file = os.path.join(self.lab_dir, ".tester_state", f"step-{failed_step:03d}.json")
+    def execute_self_healing_on_bug(self, bug_id, failed_command, stderr_output, bug_path):
+        """Executes syntax diagnostic self-healing on target bug files."""
+        logging.info(f"Self-Healing Engine triggered for Bug ID: {bug_id}")
         
-        if not os.path.exists(step_file):
-            logging.error(f"Step details state file not found at: {step_file}")
-            return
+        # Check if this is the classic Network Firewall policy error (missing --layer4-configs)
+        if "network-firewall-policies rules create" in failed_command and "Must be specified" in stderr_output and "--layer4-configs" not in failed_command:
+            logging.info("Identified syntax gotcha: Missing --layer4-configs on firewall rules create!")
             
-        with open(step_file, "r") as f:
-            step_data = json.load(f)
-            
-        failed_command = step_data.get("commands", ["Unknown"])[-1]
-        error_output = step_data.get("error", "Unknown execution error.")
-        
-        # 1. Write structured Bug File locally (Data Isolation)
-        bug_id = f"BUG_{failed_step:03d}_{int(time.time())}"
-        bug_file = os.path.join(self.bugs_dir, f"bug_{bug_id}.json")
-        
-        bug_payload = {
-            "bug_id": bug_id,
-            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
-            "lab_name": self.lab_name,
-            "step_number": failed_step,
-            "step_title": step_data.get("title"),
-            "error_logs": {
-                "failed_command": failed_command,
-                "stderr_output": error_output
-            },
-            "status": "NEW"
-        }
-        
-        with open(bug_file, "w") as bf:
-            json.dump(bug_payload, bf, indent=2)
-        logging.info(f"Structured Bug File filed locally: {bug_file}")
-        
-        # 2. Write Pointer Envelope to Mailbox (Clean communication)
-        mailbox_envelope = {
-            "status": "FAILED",
-            "bug_id": bug_id,
-            "bug_pointer": f"labs/dev/{self.lab_name}/bugs/bug_{bug_id}.json"
-        }
-        
-        mailbox_file = os.path.join(
-            self.mailbox_dir, "orchestrator", "inbox", f"msg_{int(time.time())}.json"
-        )
-        os.makedirs(os.path.dirname(mailbox_file), exist_ok=True)
-        with open(mailbox_file, "w") as mf:
-            json.dump(mailbox_envelope, mf, indent=2)
-            
-        # Subagents must notify user cleanly using chat pointer
-        print(f"\n📢 [Chaos Tester] I found bug {bug_id}! Pointer: file://{bug_file}\n")
+            try:
+                with open(bug_path, "r") as bf:
+                    bug_data = json.load(bf)
+                
+                bug_data["status"] = "HEALED"
+                bug_data["remediation"] = {
+                    "suggested_command": failed_command + " --layer4-configs=tcp:80,tcp:443,icmp",
+                    "explanation": "Added missing mandatory --layer4-configs flag for global network firewall ingress rule."
+                }
+                
+                with open(bug_path, "w") as bf:
+                    json.dump(bug_data, bf, indent=2)
+                
+                logging.info(f"Bug file updated to HEALED status with remediation payload: {bug_path}")
+
+                # Perform active in-place source markdown file patching to prevent infinite loops
+                suggested_command = bug_data["remediation"]["suggested_command"]
+                if os.path.exists(self.markdown_file):
+                    logging.info(f"Applying active in-place patch to source Markdown: {self.markdown_file}")
+                    with open(self.markdown_file, "r", encoding="utf-8") as mf:
+                        md_content = mf.read()
+                    
+                    # Exact string replacement of the failed command with the healed command
+                    patched_md = md_content.replace(failed_command, suggested_command)
+                    
+                    with open(self.markdown_file, "w", encoding="utf-8") as mf:
+                        mf.write(patched_md)
+                    logging.info("Source Codelab Markdown patched successfully!")
+                else:
+                    logging.error(f"Markdown source file does not exist at path: {self.markdown_file}")
+
+                # Perform active in-place patch to cached step JSON file if it exists to prevent stale cache replay
+                failed_step = bug_data.get("step_number")
+                if failed_step:
+                    step_file = os.path.join(self.lab_dir, ".tester_state", f"step-{failed_step:03d}.json")
+                    if os.path.exists(step_file):
+                        logging.info(f"Applying active in-place patch to cached step JSON file: {step_file}")
+                        try:
+                            with open(step_file, "r", encoding="utf-8") as sf:
+                                step_data = json.load(sf)
+                            
+                            cmd_list = step_data.get("commands", [])
+                            for c_idx, cmd in enumerate(cmd_list):
+                                if cmd.strip() == failed_command.strip():
+                                    cmd_list[c_idx] = suggested_command
+                                    break
+                            
+                            step_data["commands"] = cmd_list
+                            
+                            with open(step_file, "w", encoding="utf-8") as sf:
+                                json.dump(step_data, sf, indent=2)
+                            logging.info("Cached step JSON file patched successfully!")
+                        except Exception as e:
+                            logging.error(f"Failed to patch cached step JSON file: {e}")
+
+            except Exception as e:
+                logging.error(f"Failed to update bug file state or patch source markdown: {e}")
+        else:
+            logging.warning("Bug matches no predefined syntax remediation signatures. Manual review recommended.")
 
     def execute_pipeline(self):
         """Orchestrates the full E2E verification loop."""
