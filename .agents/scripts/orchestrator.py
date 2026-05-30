@@ -153,7 +153,66 @@ class Orchestrator:
             
         logging.info(f"Extracted {len(commands)} commands for static linting.")
         
-        # Perform static checks (Mocking Developer Docs MCP rules statically)
+        # 1. Build Directed Allocation Ledger for Resource Leak Detection (Pillar 4)
+        allocated_resources = set()
+        deallocated_resources = set()
+
+        for cmd in commands:
+            # Normalize spacing
+            cmd_norm = " ".join(cmd.split())
+            
+            # Match Compute creation command: e.g., gcloud compute networks create glb-network
+            create_match = re.search(
+                r"gcloud\s+compute\s+([a-z-]+)\s+create\s+([^-\s]\S*)", 
+                cmd_norm
+            )
+            if create_match:
+                res_type = create_match.group(1)
+                res_name = create_match.group(2)
+                # Normalize names and ignore variables
+                if not res_name.startswith(("<", "$")):
+                    allocated_resources.add((res_type, res_name))
+                    logging.info(f"Ledger: Staged allocation for GCE resource: compute {res_type} '{res_name}'")
+
+            # Match Compute delete command: e.g., gcloud compute networks delete glb-network
+            delete_match = re.search(
+                r"gcloud\s+compute\s+([a-z-]+)\s+delete\s+([^-\s][\S\s]*?)(?:\s+--|$)", 
+                cmd_norm
+            )
+            if delete_match:
+                res_type = delete_match.group(1)
+                raw_names = delete_match.group(2)
+                # Split by whitespace to handle space-separated lists of multiple deleted resources
+                for name in raw_names.split():
+                    name_s = name.strip()
+                    if name_s and not name_s.startswith("-"):
+                        deallocated_resources.add((res_type, name_s))
+                        logging.info(f"Ledger: Staged deallocation for GCE resource: compute {res_type} '{name_s}'")
+
+        # Reconcile allocation ledger leaks
+        leaks = allocated_resources - deallocated_resources
+        if leaks:
+            logging.error("================ RESOURCE LEAK AUDIT FAILURE ================")
+            for leak_type, leak_name in leaks:
+                logging.error(f"LINT ERROR: Resource Leak! '{leak_type}' named '{leak_name}' is created but never explicitly deleted in the Cleanup step.")
+            logging.error("Codelab rejected. You must explicitly delete all allocated resources to prevent continuous billing.")
+            logging.error("=============================================================")
+            return False
+
+        # 2. Audit for Raw Asynchronous Edge Queries (Pillar 2)
+        for cmd in commands:
+            cmd_norm = " ".join(cmd.split())
+            if "curl " in cmd_norm or "ping " in cmd_norm:
+                # If curl is present, verify if the same command block includes a retry loop
+                if not ("for " in cmd_norm or "while " in cmd_norm or "sleep " in cmd_norm):
+                    logging.error("================ DX ENDPOINT PROBING FAILURE ================")
+                    logging.error(f"LINT ERROR: Blocking Edge Command! Found raw endpoint query command: '{cmd}'")
+                    logging.error("Public endpoints and anycast IPs require up to 5 minutes to warm up and propagate edge proxy configurations.")
+                    logging.error("You MUST wrap all public HTTP verification commands in a robust retrying loop (e.g., for i in {1..30}; do sleep 10; done) checking for status 200 OK.")
+                    logging.error("=============================================================")
+                    return False
+
+        # 3. Perform GCE-specific parameter flag validations
         for cmd in commands:
             if "network-firewall-policies rules create" in cmd and "--layer4-configs" not in cmd:
                 logging.error("LINT ERROR: Found 'network-firewall-policies rules create' command missing the mandatory --layer4-configs parameter flag!")
@@ -583,7 +642,7 @@ gcloud compute instance-templates create glb-template-us \\
     --image-project=debian-cloud \\
     --machine-type=e2-micro \\
     --region=us-central1 \\
-    --metadata=startup-script="apt-get update && apt-get install -y apache2 && systemctl start apache2 && echo 'Hello from VM!' > /var/www/html/index.html"
+    --metadata=startup-script="apt-get update && apt-get install -y apache2 && systemctl start apache2 && echo 'Hello from the US-CENTRAL backend!' > /var/www/html/index.html"
 ```
 
 #### Create EU Regional Template
@@ -596,7 +655,7 @@ gcloud compute instance-templates create glb-template-eu \\
     --image-project=debian-cloud \\
     --machine-type=e2-micro \\
     --region=europe-west1 \\
-    --metadata=startup-script="apt-get update && apt-get install -y apache2 && systemctl start apache2 && echo 'Hello from VM!' > /var/www/html/index.html"
+    --metadata=startup-script="apt-get update && apt-get install -y apache2 && systemctl start apache2 && echo 'Hello from the EUROPE-WEST backend!' > /var/www/html/index.html"
 ```
 
 ### Create the US Managed Instance Group (us-central1)
@@ -733,7 +792,7 @@ gcloud compute backend-services delete glb-backend-service --global --quiet
 gcloud compute health-checks delete glb-health-check --quiet
 gcloud compute instance-groups managed delete mig-us --region=us-central1 --quiet
 gcloud compute instance-groups managed delete mig-eu --region=europe-west1 --quiet
-gcloud compute instance-templates delete glb-template --quiet
+gcloud compute instance-templates delete glb-template-us glb-template-eu --quiet
 gcloud compute firewall-rules delete allow-health-check allow-ssh --quiet
 gcloud compute networks subnets delete us-subnet --region=us-central1 --quiet
 gcloud compute networks subnets delete eu-subnet --region=europe-west1 --quiet
