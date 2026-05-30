@@ -79,13 +79,22 @@ Steering Workflow:
      👉 /merge-pr --force --reason="Benign tag grouping refactoring"
      ```
 
-8. **Phase 8: Ephemeral Sandbox Teardown**
+8. **Phase 8: Ephemeral Sandbox Artifact Review Gate (Mandatory HITL)**
+   - Before executing the cleanup scripts or destroying worktrees, the orchestrator **MUST explicitly pause and invoke the `ask_question` tool** to present an interactive modal:
+     - **Question**: *"Would you like to keep the temporary Git worktrees and GCP sandbox projects active to manually review the generated codelab artifacts and logs, or should I clean them up now?"*
+     - **Options**:
+       - `"Automatically delete both GCP projects and unregister Git worktrees now (Recommended)"`
+       - `"Retain all temporary staging environments and GCP resources for manual inspection"`
+   - If the user chooses to clean up: proceed immediately to Phase 9.
+   - If the user chooses to retain: skip the teardown commands, print the project IDs and worktree directories (`/tmp/skynet-base` and `/tmp/skynet-pr`) to the console, and conclude the workflow.
+
+9. **Phase 9: Ephemeral Sandbox Teardown**
    - Run the cleanup utility to delete both provisioned sandbox cloud projects:
      ```bash
      python3 .agents/scripts/sandbox_cleanup.py --projects="sysa-proj-[ID],sysb-proj-[ID]"
      ```
-   - Force remove and unregister the git worktree to restore a pristine local workspace state:
+   - Force remove and unregister the git worktrees to restore a pristine local workspace state:
      ```bash
-     git worktree remove --force /tmp/skynet-base
+     git worktree remove --force /tmp/skynet-base /tmp/skynet-pr
      ```
    - Stream final UI update: *"Staging sandbox teardown complete. PR validation finished."*
