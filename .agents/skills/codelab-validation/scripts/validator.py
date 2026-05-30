@@ -3,7 +3,7 @@
 
 This script fetches/copies the codelab, provisions a temporary GCP project if needed,
 runs the stateful tester, and compiles a comprehensive validation report.
-All run-specific inputs and outputs are stored inside `/usr/local/google/home/shacharb/skynet/labs/validate/`.
+All run-specific inputs and outputs are stored inside the `labs/validate/` subdirectory under the repository root.
 """
 
 import argparse
@@ -16,6 +16,10 @@ import shutil
 import subprocess
 import sys
 import urllib.request
+
+# Resolve repository root dynamically
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+repo_root = os.path.abspath(os.path.join(_script_dir, "..", "..", "..", ".."))
 
 # Run-specific paths will be determined dynamically inside main()
 
@@ -91,6 +95,23 @@ def download_url(url):
         sys.exit(1)
 
 
+def scan_placeholders(markdown_path):
+    """Parses a markdown file and returns a sorted list of unique bracketed placeholders found in bash blocks."""
+    with open(markdown_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    bash_block_pattern = re.compile(r"```bash\n(.*?)\n[ \t]*```", re.DOTALL)
+    bash_blocks = bash_block_pattern.findall(content)
+    placeholders = set()
+    placeholder_pattern = re.compile(r"<([^>]+)>")
+    for block in bash_blocks:
+        matches = placeholder_pattern.findall(block)
+        for match in matches:
+            match_clean = match.strip()
+            if match_clean and not any(char in match_clean for char in ['=', ';', '|', '&', '$']):
+                placeholders.add(match_clean)
+    return sorted(list(placeholders))
+
+
 def setup_active_lab(src, validate_dir, active_lab_path):
     """Prepares the active lab guide inside the dedicated lab validate_dir from local path or web URL."""
     # Resolve absolute path first if local
@@ -106,8 +127,10 @@ def setup_active_lab(src, validate_dir, active_lab_path):
         print(f"[Validator] Cleaning up previous run state from {validate_dir}...")
         for item in os.listdir(validate_dir):
             item_path = os.path.join(validate_dir, item)
-            # Do not delete the source file itself if it sits inside the validate dir!
+            # Do not delete the source file itself or variables.json!
             if local_src and os.path.exists(item_path) and os.path.samefile(item_path, local_src):
+                continue
+            if item == "variables.json":
                 continue
             try:
                 if os.path.isdir(item_path):
@@ -150,8 +173,8 @@ def setup_active_lab(src, validate_dir, active_lab_path):
     content = re.sub(r'(?m)^\s*(gcloud auth application-default login\b)', r'# \1', content)
     
     # 2. Replace project ID placeholders
-    content = re.sub(r'(?i)<your-project-id>', '${PROJECT_ID}', content)
-    content = re.sub(r'(?i)<project-id>', '${PROJECT_ID}', content)
+    content = re.sub(r'(?i)<your[- ]project[- ]id>', '${PROJECT_ID}', content)
+    content = re.sub(r'(?i)<project[- ]id>', '${PROJECT_ID}', content)
     
     # 3. Replace AGENT_ID placeholder
     content = content.replace("<numeric-id-from-output>", "$AGENT_ID")
@@ -210,7 +233,7 @@ def setup_active_lab(src, validate_dir, active_lab_path):
     # 6. Bypass sudo command for skaffold by copying to workspace bin
     content = content.replace(
         "sudo install skaffold /usr/local/bin/",
-        "mkdir -p /usr/local/google/home/shacharb/skynet/bin && cp skaffold /usr/local/google/home/shacharb/skynet/bin/ && chmod +x /usr/local/google/home/shacharb/skynet/bin/skaffold"
+        f"mkdir -p {repo_root}/bin && cp skaffold {repo_root}/bin/ && chmod +x {repo_root}/bin/skaffold"
     )
     
     # 7. Comment out sudo apt-get installation of gettext-base (envsubst is already preinstalled)
@@ -266,15 +289,7 @@ def setup_active_lab(src, validate_dir, active_lab_path):
     # 12. Comment out export ORG_ID=ID_FROM_OUTPUT to prevent overwriting the dynamically queried value
     content = re.sub(r'(?m)^\s*(export ORG_ID=ID_FROM_OUTPUT\b)', r'# \1', content)
     
-    # 13. Dynamically prepend export PATH to all bash blocks to ensure local tools (skaffold, uv) resolve correctly
-    def add_path_to_bash(match):
-        cmd = match.group(1)
-        path_export = 'export PATH="/usr/local/google/home/shacharb/skynet/bin:$HOME/.local/bin:$PATH"'
-        if path_export not in cmd:
-            cmd = f"{path_export}\n{cmd}"
-        return f"```bash\n{cmd}\n```\n"
-        
-    content = re.sub(r'```bash\r?\n(.*?)\r?\n```(?:\r?\n|$)', add_path_to_bash, content, flags=re.DOTALL)
+
     
     with open(active_lab_path, "w", encoding="utf-8") as f:
         f.write(content)
@@ -418,7 +433,7 @@ def main():
     if not lab_name:
         lab_name = "active-lab"
         
-    validate_dir = os.path.join("/usr/local/google/home/shacharb/skynet/labs/validate", lab_name)
+    validate_dir = os.path.join(repo_root, "labs", "validate", lab_name)
     active_lab_path = os.path.join(validate_dir, f"{lab_name}.lab.md")
     report_dir = os.path.join(validate_dir, "report")
     report_path = os.path.join(report_dir, "validation-report.md")
@@ -429,6 +444,34 @@ def main():
     # 1. Resolve active lab source inside dynamic validate_dir
     setup_active_lab(args.src, validate_dir, active_lab_path)
     
+    # Scan dynamic variable placeholders
+    placeholders = scan_placeholders(active_lab_path)
+    vars_file = os.path.join(validate_dir, "variables.json")
+    existing_vars = {}
+    if os.path.exists(vars_file):
+        try:
+            with open(vars_file, "r", encoding="utf-8") as vf:
+                existing_vars = json.load(vf)
+        except Exception:
+            pass
+    
+    updated_vars = {}
+    for p in placeholders:
+        # Ignore default project ID placeholders that validator.py already handles
+        if p.lower() in ["your-project-id", "project-id", "your project id", "project id"]:
+            continue
+        updated_vars[p] = existing_vars.get(p, "")
+        
+    # Write or update variables.json file
+    with open(vars_file, "w", encoding="utf-8") as vf:
+        json.dump(updated_vars, vf, indent=2)
+    
+    if updated_vars:
+        print(f"[Validator] Dynamic variables detected and written to {vars_file}")
+        empty_vars = [k for k, v in updated_vars.items() if not v]
+        if empty_vars:
+            print(f"[Validator] WARNING: The following variables must be populated in variables.json: {empty_vars}")
+
     # 2. Handle Project ID
     project_id = args.project_id
     temp_project_created = False

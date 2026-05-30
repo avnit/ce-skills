@@ -30,7 +30,9 @@ Steering Workflow:
    - The validator will automatically:
      - Stage the lab guide in `labs/validate/active_lab.lab.md`.
      - Provision the new project (if not provided) and disable common Org Policies using `disable_org_policies.sh`.
-     - Launch the stateful tester subshell (`tester.py`) to execute all bash command blocks sequentially.
+     - Scan the guide for dynamic variable placeholders, generating a `variables.json` template inside the validation folder to map dynamic configurations seamlessly.
+     - Identify steps containing manual/GUI actions and flag them with the `🖥️ GUI / MANUAL ACTION` orange badge on the E2E validation board.
+     - Launch the stateful tester subshell (`tester.py`) to execute all bash command blocks sequentially with resolved variables.
      - Maintain the visual task preview board in real-time.
 
 4. **Phase 4: Result Compilation & Report Delivery**

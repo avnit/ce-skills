@@ -36,25 +36,23 @@ Steering Workflow:
    - Stream UI updates: *"Provisioned twin isolated GCP staging projects."*
 
 4. **Phase 4: Execution Run - System A (Control Baseline)**
-   - Setup a hermetic virtual environment inside the worktree to prevent dependency bleeding:
-     ```bash
-     cd /tmp/skynet-base
-     python3 -m venv venv && source venv/bin/activate && pip install --index-url https://pypi.google.com/mirror -r requirements.txt
-     ```
-   - **Parent-Coordinated Execution**: Because subprocesses lack MCP sockets and credentials, **the Parent JetSki Agent executes the prompts sequentially** pointing to the `/tmp/skynet-base` baseline code directories using its active authenticated sessions:
-     ```bash
-     python3 .agents/scripts/core_orchestrator.py --project-id=sysa-proj-[ID] --run-suite=golden_prompts --randomize-params --output-dir=/tmp/system_a_outputs
-     ```
+   - **Fidelity Subagent Branching**: Instead of launching raw Python scripts that bypass MCP sockets and local workflows, the Parent Agent spawns a dedicated JetSki Subagent targeting the baseline `/tmp/skynet-base` worktree.
+   - Call `invoke_subagent` with the following configuration:
+     * **Workspace**: `branch` pointing to `/tmp/skynet-base` (guarantees that `main` branch versions of `.agents/workflows/` and skills are evaluated).
+     * **Role**: `"System A Control Runner"`
+     * **MCP Tools**: `enable_mcp_tools: true` (seamlessly bridges sockets/pipes for `f1`, `plx`, `moma`, etc.)
+     * **GCP Project Context**: Bind sandbox project `sysa-proj-[ID]`.
    - Stream UI updates: *"Control System A Golden Prompts execution completed successfully."*
 
 5. **Phase 5: Execution Run - System B (PR Workspace Candidate)**
-   - **Hermetic Workspace Protection**: Execute subagents inside isolated workspace branch folders using the **`Workspace: "branch"`** configuration in `invoke_subagent`. This prevents the agent from reading developer modifications outside of targeted tool execution scopes.
-   - Execute identical golden prompts (with matching randomized parameters) inside the branched candidate namespace pointing to your active workspace directories:
-     ```bash
-     cd /usr/local/google/home/shacharb/skynet
-     python3 .agents/scripts/core_orchestrator.py --project-id=sysb-proj-[ID] --run-suite=golden_prompts --randomize-params --output-dir=/tmp/system_b_outputs
-     ```
+   - **Candidate Subagent Staging**: The Parent Agent spawns a second, twin JetSki Subagent targeting the active workspace branch `/usr/local/google/home/shacharb/skynet`.
+   - Call `invoke_subagent` with the following configuration:
+     * **Workspace**: `inherit` or `branch` pointing to the developer's active branch directory (ensures that the modified workflows/skills under evaluation are actively executed).
+     * **Role**: `"System B Candidate Runner"`
+     * **MCP Tools**: `enable_mcp_tools: true`
+     * **GCP Project Context**: Bind sandbox project `sysb-proj-[ID]`.
    - Stream UI updates: *"Candidate System B Golden Prompts execution completed successfully."*
+
 
 6. **Phase 6: Evaluator Execution & Scoring (Pre-filtering)**
    - Execute the `evaluator.py` skill locally to recursively compare outputs and identify structural drift, running a pre-filtering pass that strips out non-functional metadata (such as generated timestamps, credentials, and ordering deltas):

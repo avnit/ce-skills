@@ -1,6 +1,8 @@
 import json
+import os
 
-filepath = '/usr/local/google/home/shacharb/.gemini/jetski/brain/aa8521f9-5699-4284-a1ac-243df51ca049/.system_generated/logs/transcript.jsonl'
+home = os.path.expanduser("~")
+filepath = os.path.join(home, '.gemini/jetski/brain/aa8521f9-5699-4284-a1ac-243df51ca049/.system_generated/logs/transcript.jsonl')
 
 with open(filepath, 'r') as f:
     for line in f:

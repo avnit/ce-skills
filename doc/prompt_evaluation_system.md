@@ -74,9 +74,15 @@ To ensure this local Git-worktree workflow is robust and execution-safe, address
   - **The Impact**: Because these directories are gitignored, Git worktree checkouts (`git worktree add`) **will NOT copy these directories into the staging folder `/tmp/skynet-base`!** Running a baseline validation inside the worktree will crash immediately on "File/Directory not found" errors because the guide files (e.g., `swp-basics.lab.md`) are missing!
   - **The Operational Fix**: The orchestrator must dynamically execute a manual, offline file copy command (`cp -r labs/ /tmp/skynet-base/labs/`) immediately after worktree creation to bridge Git-excluded guides into the isolated staging folder securely.
 
-### 3.2. The Subprocess MCP Session Boundary (Execution Block)
-- **Why it fails**: `core_orchestrator.py` statefully communicates with **MCP (Model Context Protocol) servers** (`f1`, `plx`, `moma`, `workspace`) and parent LLM APIs. Spawning a standalone background Python subprocess (`python3 core_orchestrator.py`) inside `/tmp/skynet-base` will **lack the environment variables, socket handles, and pipe descriptors** required to access authenticated MCP servers. The subprocess will crash immediately on model calls.
-- **The Hardening Fix**: The **Parent JetSki Agent** coordinates both execution runs sequentially. JetSki runs the baseline suite pointing to files in `/tmp/skynet-base` using its active authenticated tool pipes, then runs the workspace candidate suite in the active folder. No unsupported background subprocesses are spawned.
+### 3.2. Workflow Parity & Subagent-Native MCP Pipes (Fidelity Block)
+- **Why it fails**: 
+  1. **Workflow Instruction Drifts**: If a developer modifies a workflow file (e.g., `.agents/workflows/create-codelab.md`) or a core skill file (e.g., under `.agents/skills/`), a simple static command run using the Parent's environment will **not** execute the branch-specific instructions. The baseline run (System A) must load and parse the workflows/skills *as they exist in `origin/main`*, while the candidate run (System B) must load and parse the *newly modified* workflows/skills.
+  2. **MCP Socket Access**: Standalone subprocesses (`python3 core_orchestrator.py`) run outside the parent LLM/agent process loop. They lack the necessary environment variables, socket file descriptors, and IPC pipes required to communicate with authenticated Model Context Protocol (MCP) servers (`f1`, `plx`, `moma`, `workspace`). Subprocesses will immediately crash when attempting database or template searches.
+- **The Hardening Fix**: Rather than spawning a raw background Python shell, the framework **spawns native JetSki Subagents (`invoke_subagent`) inside branch-isolated workspaces**:
+  * **System A Control Subagent**: Spawns a dedicated subagent using `Workspace: "branch"` set to target `/tmp/skynet-base` directory, passing `enable_mcp_tools: true` and loading the baseline `.agents/workflows/` and skills under `/tmp/skynet-base/`.
+  * **System B Candidate Subagent**: Spawns a dedicated subagent using `Workspace: "inherit"` (or branched for pristine isolation) pointing to the active workspace directory `/usr/local/google/home/shacharb/skynet`, also passing `enable_mcp_tools: true`.
+  * **Result**: Since both run as native JetSki Subagents, **they automatically inherit full MCP socket channels and active gcloud sandbox permissions**, while loading and executing the *exact, branch-specific versions of workflows and skills* belonging to their respective workspace paths!
+
 
 ### 3.3. Project-Level GCP State Contamination (Cloud Collision Block)
 - **Why it fails**: Running System A and System B concurrently or sequentially on the *same GCP sandbox project* will contaminate project-level global state. E.g., if System A enables `compute.googleapis.com`, System B will see it already enabled, masking latency and activation bugs.
@@ -164,16 +170,18 @@ steps:
 
   - name: System A Control Run (Base Code)
     action: |
-      cd /tmp/skynet-base
-      python3 -m venv venv && source venv/bin/activate && pip install --index-url https://pypi.google.com/mirror -r requirements.txt
-      # Execute via Parent JetSki Session
-      python3 .agents/scripts/core_orchestrator.py --project-id=sysa-proj-123 --run-suite=golden_prompts --randomize-params --output-dir=/tmp/system_a_outputs
+      1. Spawn a native JetSki Subagent using Workspace: "branch" pointing to "/tmp/skynet-base".
+      2. Pass "enable_mcp_tools: true" to authorize access to f1, plx, moma, and workspace.
+      3. Direct the subagent to execute the golden prompt suite using the project-id "sysa-proj-123".
+      4. Save System A results to "/tmp/system_a_outputs".
 
   - name: System B Workspace Run (Candidate Code)
     action: |
-      cd /usr/local/google/home/shacharb/skynet
-      # Execute via Parent JetSki Session (Workspace: branch isolation)
-      python3 .agents/scripts/core_orchestrator.py --project-id=sysb-proj-456 --run-suite=golden_prompts --randomize-params --output-dir=/tmp/system_b_outputs
+      1. Spawn a native JetSki Subagent using Workspace: "inherit" (or "branch" to isolate uncommitted local state).
+      2. Pass "enable_mcp_tools: true" to authorize access to f1, plx, moma, and workspace.
+      3. Direct the subagent to execute the golden prompt suite using the project-id "sysb-proj-456".
+      4. Save System B results to "/tmp/system_b_outputs".
+
 
   - name: Evaluator Engine Execution (Trajectory Scoring)
     action: "Invoke evaluator.py comparing /tmp/system_a_outputs and /tmp/system_b_outputs."

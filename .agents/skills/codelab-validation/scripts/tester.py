@@ -15,6 +15,10 @@ import sys
 import time
 import uuid
 
+# Resolve repository root dynamically
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+repo_root = os.path.abspath(os.path.join(_script_dir, "..", "..", "..", ".."))
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
@@ -59,12 +63,20 @@ BADGE_MAP = {
 class SubshellRunner:
     """Manages a persistent, non-blocking bash session safely."""
     def __init__(self, cwd: str):
+        env = os.environ.copy()
+        # Prioritize repo-local bin and home local bin dynamically
+        local_bin = os.path.join(repo_root, "bin")
+        home_bin = os.path.expanduser("~/.local/bin")
+        current_path = env.get("PATH", "")
+        env["PATH"] = f"{local_bin}:{home_bin}:{current_path}"
+
         self.process = subprocess.Popen(
             ["bash"],
             cwd=cwd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            env=env,
             text=False,
         )
         assert self.process.stdout is not None
@@ -205,6 +217,13 @@ class StatefulCodelabTester:
             if re.search(r"(?i)(wait for|after the|until the|prerequisite)", body):
                 prereqs.append("Prerequisite delay/propagation condition detected")
                 
+            # Detect GUI/manual actions
+            has_gui = False
+            if not commands:
+                has_gui = True
+            elif re.search(r"(?i)(click|select|navigate|console|ui|save|dropdown|checkbox|fill out|button|radio button|under the|navigate to)", body):
+                has_gui = True
+
             # Standardize instructions from body
             clean_body_lines = [line.strip() for line in body.splitlines() if line.strip() and not line.strip().startswith("```")]
             instructions = " ".join(clean_body_lines[:3]) + "..." if clean_body_lines else "Execute steps."
@@ -217,7 +236,8 @@ class StatefulCodelabTester:
                 "prerequisites": prereqs,
                 "commands": commands,
                 "output": "",
-                "error": ""
+                "error": "",
+                "has_gui": has_gui
             })
             step_num += 1
             
@@ -283,8 +303,14 @@ class StatefulCodelabTester:
                 row_style = 'border-bottom: 2px solid #1a73e8; background-color: #ffffff;'
 
             details = step["instructions"]
+            if step.get("has_gui"):
+                details = '<span style="background: #fff3e0; color: #e65100; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; display: inline-block; margin-bottom: 6px;">🖥️ GUI / MANUAL ACTION</span><br>' + details
             if step["commands"]:
-                cmd_preview = step["commands"][0][:100] + "..." if len(step["commands"][0]) > 100 else step["commands"][0]
+                cmd_text = step["commands"][0]
+                prefix_to_strip = f'export PATH="{repo_root}/bin:$HOME/.local/bin:$PATH"'
+                if cmd_text.startswith(prefix_to_strip):
+                    cmd_text = cmd_text[len(prefix_to_strip):].lstrip()
+                cmd_preview = cmd_text[:100] + "..." if len(cmd_text) > 100 else cmd_text
                 details += f'<br><code style="font-family: monospace; font-size: 11px; color: #202124; background: #f1f3f4; padding: 2px 4px; border-radius: 4px;">{cmd_preview}</code>'
 
             lines.append(f'<tr style="{row_style}">')
@@ -311,7 +337,7 @@ class StatefulCodelabTester:
     def file_bug_and_notify_mailbox(self, failed_step, failed_command, error_output):
         """Decentralized subagent bug logging and POSIX mailbox message dispatch."""
         import sys
-        sys.path.append("/usr/local/google/home/shacharb/skynet/.agents/scripts")
+        sys.path.append(os.path.join(repo_root, ".agents", "scripts"))
         try:
             from mailbox_handler import MailboxBroker
         except ImportError as e:
@@ -373,6 +399,17 @@ class StatefulCodelabTester:
         """Executes step-by-step state validation."""
         self.load_or_initialize_state()
         
+        # Load custom variables mapped in variables.json
+        custom_vars = {}
+        vars_file = os.path.join(self.lab_dir, "variables.json")
+        if os.path.exists(vars_file):
+            try:
+                with open(vars_file, "r", encoding="utf-8") as vf:
+                    custom_vars = json.load(vf)
+                logging.info(f"[Tester] Loaded {len(custom_vars)} custom variables for replacement.")
+            except Exception as e:
+                logging.error(f"[Tester] Failed to load variables.json: {e}")
+        
         # Determine historical state file for commands
         state_file = self.md_path + ".state"
         env_file = self.md_path + ".env"
@@ -424,6 +461,10 @@ class StatefulCodelabTester:
                     
                     # Replace variable placeholders
                     evaluated_cmd = cmd.replace("<PROJECT_ID>", self.project_id)
+                    evaluated_cmd = evaluated_cmd.replace("<project-id>", self.project_id)
+                    evaluated_cmd = evaluated_cmd.replace("<your-project-id>", self.project_id)
+                    for key, val in custom_vars.items():
+                        evaluated_cmd = evaluated_cmd.replace(f"<{key}>", val)
                     
                     # Run command in persistent subshell
                     status, output = runner.run_command(evaluated_cmd, timeout=self.timeout)
