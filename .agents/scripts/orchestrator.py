@@ -85,12 +85,48 @@ class Orchestrator:
             return False
 
     def phase_1_preflight_lint(self):
-        """Phase 1: Statically parse and audit gcloud commands for syntax gotchas."""
-        logging.info("Starting Phase 1: Pre-Flight Static Command Audit...")
+        """Phase 1: Statically parse and audit gcloud commands and formatting layout."""
+        logging.info("Starting Phase 1: Pre-Flight Static & Formatting Audit...")
         
         if not os.path.exists(self.markdown_file):
             logging.error(f"Codelab markdown file not found at: {self.markdown_file}")
             return False
+
+        # Ingest pre-generated Codelab Reviewer subagent style audit report
+        logging.info("Reading pre-generated Subagent Codelab Style Audit Report...")
+        
+        report_file = os.path.join(self.lab_dir, "style_audit_report.json")
+        
+        if not os.path.exists(report_file):
+            logging.error(f"LINT ERROR: Style audit report not found at {report_file}!")
+            logging.error("Please ensure the 'codelab-reviewer' subagent has executed first.")
+            return False
+
+        try:
+            with open(report_file, "r", encoding="utf-8") as rf:
+                report_data = json.load(rf)
+        except Exception as e:
+            logging.error(f"Failed to read subagent style audit report: {e}")
+            return False
+
+        status = report_data.get("audit_status", "NEEDS_REVISION")
+        scorecard = report_data.get("scorecard", {})
+        remediations = report_data.get("critical_remediations", [])
+
+        logging.info(f"Subagent Style Audit Verdict: {status} | Scores: {scorecard}")
+
+        if status == "NEEDS_REVISION":
+            logging.error("LINT ERROR: Codelab Markdown Formatting standards violated!")
+            for rem in remediations:
+                step = rem.get("step_number", "N/A")
+                issue = rem.get("issue_type", "N/A")
+                desc = rem.get("description", "N/A")
+                rec = rem.get("recommendation", "N/A")
+                logging.error(f"Formatting Check Failure (Step {step} - {issue}): {desc}")
+                logging.error(f"  Suggested Recommendation: {rec}")
+            return False
+
+        logging.info("Dynamic Markdown Formatting Audit passed successfully.")
             
         with open(self.markdown_file, "r") as f:
             content = f.read()
@@ -112,7 +148,7 @@ class Orchestrator:
                 logging.error("LINT ERROR: Found GCE 'instance-templates create' command missing --region tag, which will trigger API parameter blocks!")
                 return False
                 
-        logging.info("Pre-Flight Static Command Audit passed successfully.")
+        logging.info("Pre-Flight Static Command & Formatting Audit passed successfully.")
         return True
 
     def phase_2_provision_sandbox(self):

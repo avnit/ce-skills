@@ -31,24 +31,35 @@ LIST_POLICIES=(
 
 echo "Disabling Org Policies for project: $PROJECT_ID"
 
-for POLICY in "${BOOLEAN_POLICIES[@]}"; do
-  echo "Disabling Boolean Policy $POLICY..."
-  gcloud resource-manager org-policies disable-enforce "constraints/$POLICY" --project="$PROJECT_ID" || echo "Warning: Failed to disable $POLICY"
+# Create policy file for Boolean (Enforced: False)
+cat <<EOF > boolean_policy.yaml
+name: projects/$PROJECT_ID/policies/%POLICY%
+spec:
+  rules:
+  - enforce: false
+EOF
+
+for policy in "${BOOLEAN_POLICIES[@]}"; do
+    echo "Disabling Boolean Policy $policy..."
+    sed "s|%POLICY%|$policy|g" boolean_policy.yaml > current_boolean.yaml
+    gcloud org-policies set-policy current_boolean.yaml --project="$PROJECT_ID" || echo "Warning: Failed to disable $policy"
 done
 
-for POLICY in "${LIST_POLICIES[@]}"; do
-  echo "Enforcing ALLOW_ALL for List Policy $POLICY..."
-  POLICY_TEMP=$(mktemp /tmp/policy_XXXXXX.yaml)
-  trap 'rm -f "$POLICY_TEMP"' EXIT
-  cat <<EOF > "$POLICY_TEMP"
-constraint: constraints/$POLICY
-listPolicy:
-  allValues: ALLOW
+# Create policy file for List (Allow All: True)
+cat <<EOF > list_policy.yaml
+name: projects/$PROJECT_ID/policies/%POLICY%
+spec:
+  rules:
+  - allowAll: true
 EOF
-  gcloud resource-manager org-policies set-policy "$POLICY_TEMP" --project="$PROJECT_ID" || echo "Warning: Failed to set policy for $POLICY"
-  rm -f "$POLICY_TEMP"
-  trap - EXIT
+
+for policy in "${LIST_POLICIES[@]}"; do
+    echo "Enforcing ALLOW_ALL for List Policy $policy..."
+    sed "s|%POLICY%|$policy|g" list_policy.yaml > current_list.yaml
+    gcloud org-policies set-policy current_list.yaml --project="$PROJECT_ID" || echo "Warning: Failed to set policy for $policy"
 done
+
+rm -f boolean_policy.yaml list_policy.yaml current_boolean.yaml current_list.yaml
 
 echo "Waiting 60 seconds for policy propagation..."
 sleep 60

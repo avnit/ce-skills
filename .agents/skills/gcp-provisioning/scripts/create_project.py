@@ -153,6 +153,22 @@ def main():
         print(f"Error: Failed to link billing account to project {project_id} after {retries} attempts.")
         sys.exit(1)
         
+    # 5. Enable Core APIs
+    print("Enabling core APIs...")
+    apis = [
+        "compute.googleapis.com",
+        "networkconnectivity.googleapis.com",
+        "logging.googleapis.com",
+        "artifactregistry.googleapis.com",
+        "pubsub.googleapis.com",
+        "cloudresourcemanager.googleapis.com",
+        "orgpolicy.googleapis.com"
+    ]
+    apis_cmd = f"gcloud services enable {' '.join(apis)} --project={project_id}"
+    if not run_command(apis_cmd, args.dry_run):
+        print(f"Failed to enable APIs for project {project_id}.")
+        sys.exit(1)
+        
     print(f"\nSUCCESS: Project {project_id} setup complete.")
 
     print(f"\nProject {project_id} is ready for use.")
