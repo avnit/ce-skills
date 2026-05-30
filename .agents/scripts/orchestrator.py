@@ -184,6 +184,9 @@ class Orchestrator:
         self.project_id = match.group(1).strip()
         logging.info(f"Successfully provisioned sandbox Project ID: {self.project_id}")
         
+        # Set CLOUDSDK_CORE_PROJECT in the environment to isolate gcloud commands from global configuration collisions
+        os.environ["CLOUDSDK_CORE_PROJECT"] = self.project_id
+        
         # Disable org policies
         logging.info("Disabling organization policy constraints...")
         policy_script = os.path.join(REPO_ROOT, ".agents/skills/gcp-provisioning/scripts/disable_org_policies.sh")
