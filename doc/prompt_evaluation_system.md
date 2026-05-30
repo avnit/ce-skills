@@ -1,13 +1,13 @@
 # System Design Document: Local E2E Prompt Evaluation Framework (JetSki Git Sandbox)
 **Role Focus**: Systems Engineering, Quality Automation, & Sandbox-Native Tooling  
 **Target Audience**: Core Development Team (2 Engineers - Pure Git & GitHub Environment)  
-**Status**: APPROVED IMPLEMENTATION PLAN (LOCAL GIT WORKTREE NATIVE)  
+**Status**: APPROVED IMPLEMENTATION PLAN (LOCAL GIT WORKTREE NATIVE & TRAJECTORY AWARE)  
 
 ---
 
 ## 1. Context & Executive Summary
 
-This document outlines the system design and execution model for the **Local E2E Prompt Evaluation Framework** optimized for development within a **pure Git repository environment** inside **JetSki**.
+This document outlines the system design, architectural guardrails, trajectory metrics, elite hardening masterstrokes, and execution model for the **Local E2E Prompt Evaluation Framework** optimized for JetSki development within a **pure Git repository environment**.
 
 ### The JetSki Local Git Execution Model
 Because multi-subagent workflows execute entirely inside JetSki on your local workstation, remote CI/CD runners cannot directly access your local sandbox environments. Therefore, the **developer initiates the evaluation locally** via a JetSki slash command (`/validate-pr`) and approves or merges the Pull Request based on the local grading output.
@@ -27,6 +27,7 @@ graph TD
     
     subgraph Git_Isolation [Git Sandbox Worktree Staging]
         JetSki_Agent --> Worktree["git worktree add --detach /tmp/skynet-base origin/main"]
+        Worktree --> Staging_Copy["Offline File cp -r labs/ /tmp/skynet-base/labs/"]
     end
     
     subgraph Twin_GCP_Sandbox [Twin Staging GCP Projects]
@@ -59,24 +60,36 @@ graph TD
 
 ## 3. Level 400 Advisory: Why This Will Fail & Operational Remedies
 
-To ensure this pure Git-worktree local workflow is robust and execution-safe, address the following critical gotchas:
+To ensure this local Git-worktree workflow is robust and execution-safe, address the following critical gotchas:
 
-### 3.1. The Subprocess MCP Session Boundary (Execution Block)
+### 3.1. Git Worktree Best Practices & Pitfalls
+> [!TIP]
+> **Worktree Detached HEAD & Trapped State**  
+> When automating `git worktree add`, always use the `--detach` flag pointing to `origin/main`. If you attach to a local branch name that is already checked out elsewhere, Git will throw a fatal lock error.
+
+- **A. Pristine Checkout**: Execute `git worktree add --detach /tmp/skynet-base origin/main` to guarantee a clean, unconflicted control baseline.
+- **B. Force Teardown**: Use `git worktree remove --force /tmp/skynet-base` in your cleanup block to ensure the temporary worktree unregisters cleanly even if uncommitted artifacts or pycache files were generated inside it.
+- **C. The Gitignored Files Gotcha (Critical Stage Block)**:
+  - **Why it fails**: Developer sandboxes frequently add dynamic testing folders to `.gitignore` (e.g., `labs/` or `meeting/` or `artifacts/`) to prevent dynamic runs from polluting the Git branch history.
+  - **The Impact**: Because these directories are gitignored, Git worktree checkouts (`git worktree add`) **will NOT copy these directories into the staging folder `/tmp/skynet-base`!** Running a baseline validation inside the worktree will crash immediately on "File/Directory not found" errors because the guide files (e.g., `swp-basics.lab.md`) are missing!
+  - **The Operational Fix**: The orchestrator must dynamically execute a manual, offline file copy command (`cp -r labs/ /tmp/skynet-base/labs/`) immediately after worktree creation to bridge Git-excluded guides into the isolated staging folder securely.
+
+### 3.2. The Subprocess MCP Session Boundary (Execution Block)
 - **Why it fails**: `core_orchestrator.py` statefully communicates with **MCP (Model Context Protocol) servers** (`f1`, `plx`, `moma`, `workspace`) and parent LLM APIs. Spawning a standalone background Python subprocess (`python3 core_orchestrator.py`) inside `/tmp/skynet-base` will **lack the environment variables, socket handles, and pipe descriptors** required to access authenticated MCP servers. The subprocess will crash immediately on model calls.
 - **The Hardening Fix**: The **Parent JetSki Agent** coordinates both execution runs sequentially. JetSki runs the baseline suite pointing to files in `/tmp/skynet-base` using its active authenticated tool pipes, then runs the workspace candidate suite in the active folder. No unsupported background subprocesses are spawned.
 
-### 3.2. Project-Level GCP State Contamination (Cloud Collision Block)
+### 3.3. Project-Level GCP State Contamination (Cloud Collision Block)
 - **Why it fails**: Running System A and System B concurrently or sequentially on the *same GCP sandbox project* will contaminate project-level global state. E.g., if System A enables `compute.googleapis.com`, System B will see it already enabled, masking latency and activation bugs.
 - **The Hardening Fix**: The orchestrator dynamically **provisions two distinct temporary GCP sandbox projects** (`sysa-proj-123` and `sysb-proj-456`) using billing accounts, running System A and System B in complete cloud isolation.
 
-### 3.3. Corporate Workstation Proxy Restrictions (Package Install Block)
+### 3.4. Corporate Workstation Proxy Restrictions (Package Install Block)
 - **Why it fails**: Internal Google Cloudtops block direct PyPI package installations.
 - **The Hardening Fix**: Configure local venv installation hooks inside the checkouts to pull packages from internal Google python mirrors (`go/py-mirror` or corporate caches).
 
-### 3.4. Context Contamination & Hermetic Isolation Guardrails (Cheating Block)
+### 3.5. Context Contamination & Hermetic Isolation Guardrails (Cheating Block)
 - **Why it fails**: During local execution, the agent under test possesses read tools (`read_file`, `grep_search`). If it scans your active workspace directory, it will "cheat" by discovering your PR modifications, breaking evaluation validity.
 - **The Hardening Fix**:
-  - **Workspace Branching**: When running test prompts, the orchestrator spawns the subagent with the **`Workspace: "branch"`** option.
+  - **Workspace Branching**: Spawn subagents with the **`Workspace: "branch"`** option.
   - **Blacklisting**: Disable tool access to `/doc/eval_reports/`, `/tmp/system_*`, or `task.md` inside the test prompts.
   - **Parameter Randomization**: Perturb VPC names, IP ranges, and regions using predefined validated pools at runtime to force active logical thinking.
 
@@ -141,6 +154,9 @@ steps:
   - name: Git Worktree Sandbox Isolation
     action: "Execute git worktree add --detach /tmp/skynet-base origin/main."
 
+  - name: Staging Gitignored Codelabs
+    action: "Execute cp -r labs/ /tmp/skynet-base/labs/ to bridge ignored markdown guides."
+
   - name: Twin GCP Sandboxes Provisioning
     action: |
       1. Provision GCP Project A for Control System A run.
@@ -180,7 +196,7 @@ steps:
 ### Developer 1: The Local Git Staging & Workflow
 - [ ] Implement `/validate-pr` workflow in `.agents/workflows/validate-pr.md`.
 - [ ] Implement parent-coordinated sequential runs inside `core_orchestrator.py` and double-project sandboxing in `sandbox_cleanup.py`.
-- [ ] Implement pristine `git worktree add --detach` and `git worktree remove --force` automation.
+- [ ] Implement pristine `git worktree add --detach` and `git worktree remove --force` automation, along with dynamic copying of ignored directories.
 - [ ] Configure `tester.py` to export step history logs `tester_history.json`.
 
 ### Developer 2: The Evaluator & Standardizer Engine
