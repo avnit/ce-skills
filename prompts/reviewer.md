@@ -11,6 +11,8 @@ Analyze a given codelab and provide a structured feedback report. You do NOT fix
 ### 1. Google Cloud Architecture (Technical)
 -   **Best Practices**: Does the lab use modern, secure, and efficient patterns? (e.g., using private IPs, least privilege IAM).
 -   **Enterprise Standards**: For Architect personas, does the lab reflect **production realism**? (e.g., framing around business problems, addressing high availability/session persistence, including negative testing, and using modern infrastructure patterns over legacy standalone creation).
+-   **Verification Differentiability**: For multi-region, Anycast load balancing, or DNS routing setups, does the backend startup-script/payload contain distinct regional identifiers (e.g., 'Hello from the US-CENTRAL backend!' vs 'Hello from the EUROPE-WEST backend!')? This is required so that the verification step can visually prove correct Anycast geo-routing and failover.
+-   **Resource Cleanup Completeness**: The Cleanup step MUST explicitly list and delete every single allocated resource. If distinct regional resources are created (such as regional instance templates like `template-us` and `template-eu`, regional MIGs, or subnetworks), they must be explicitly deleted by name. Verify that no resource leaks are present.
 -   **Accuracy**: Are the commands and flags correct for the current GCP version? Use **Code Search** to find examples of `gcloud` usage in google3. **MANDATORY**: You MUST use the **Developer Documentation MCP tool** (`search_documents`) to verify all `gcloud` commands and flags against official documentation.
 -   **Schema Faithfulness**: Check the generated output against the *original user specifications*.
 -   **Feasibility**: Does the topology make sense?

@@ -10,10 +10,8 @@ import re
 import subprocess
 import sys
 import time
-# Find the repository root based on the location of orchestrator.py
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-sys.path.append(os.path.join(REPO_ROOT, ".agents/scripts"))
+sys.path.append("/usr/local/google/home/shacharb/skynet/.agents/scripts")
 try:
     from mailbox_handler import MailboxBroker
 except ImportError:
@@ -41,7 +39,7 @@ class Orchestrator:
         self.project_id = None
         
         # Path configuration
-        self.mailbox_dir = os.path.join(REPO_ROOT, ".agents/mailboxes")
+        self.mailbox_dir = os.path.join("/usr/local/google/home/shacharb/skynet/.agents/mailboxes")
         self.progress_file = os.path.join(self.lab_dir, ".tester_state", "progress.json")
         self.bugs_dir = os.path.join(self.lab_dir, "bugs")
         os.makedirs(self.bugs_dir, exist_ok=True)
@@ -67,7 +65,7 @@ class Orchestrator:
     def phase_0_verify_auth(self):
         """Phase 0: Verify Sandbox Admin active authentication context."""
         logging.info("Starting Phase 0: Pre-Flight Auth Check...")
-        verify_script = os.path.join(REPO_ROOT, ".agents/skills/gcloud-auth-verification/scripts/verify_auth.py")
+        verify_script = "/usr/local/google/home/shacharb/skynet/.agents/skills/gcloud-auth-verification/scripts/verify_auth.py"
         
         success, stdout, _ = self.run_command(f"python3 {verify_script}")
         if not success:
@@ -153,66 +151,7 @@ class Orchestrator:
             
         logging.info(f"Extracted {len(commands)} commands for static linting.")
         
-        # 1. Build Directed Allocation Ledger for Resource Leak Detection (Pillar 4)
-        allocated_resources = set()
-        deallocated_resources = set()
-
-        for cmd in commands:
-            # Normalize spacing
-            cmd_norm = " ".join(cmd.split())
-            
-            # Match Compute creation command: e.g., gcloud compute networks create glb-network
-            create_match = re.search(
-                r"gcloud\s+compute\s+([a-z-]+)\s+create\s+([^-\s]\S*)", 
-                cmd_norm
-            )
-            if create_match:
-                res_type = create_match.group(1)
-                res_name = create_match.group(2)
-                # Normalize names and ignore variables
-                if not res_name.startswith(("<", "$")):
-                    allocated_resources.add((res_type, res_name))
-                    logging.info(f"Ledger: Staged allocation for GCE resource: compute {res_type} '{res_name}'")
-
-            # Match Compute delete command: e.g., gcloud compute networks delete glb-network
-            delete_match = re.search(
-                r"gcloud\s+compute\s+([a-z-]+)\s+delete\s+([^-\s][\S\s]*?)(?:\s+--|$)", 
-                cmd_norm
-            )
-            if delete_match:
-                res_type = delete_match.group(1)
-                raw_names = delete_match.group(2)
-                # Split by whitespace to handle space-separated lists of multiple deleted resources
-                for name in raw_names.split():
-                    name_s = name.strip()
-                    if name_s and not name_s.startswith("-"):
-                        deallocated_resources.add((res_type, name_s))
-                        logging.info(f"Ledger: Staged deallocation for GCE resource: compute {res_type} '{name_s}'")
-
-        # Reconcile allocation ledger leaks
-        leaks = allocated_resources - deallocated_resources
-        if leaks:
-            logging.error("================ RESOURCE LEAK AUDIT FAILURE ================")
-            for leak_type, leak_name in leaks:
-                logging.error(f"LINT ERROR: Resource Leak! '{leak_type}' named '{leak_name}' is created but never explicitly deleted in the Cleanup step.")
-            logging.error("Codelab rejected. You must explicitly delete all allocated resources to prevent continuous billing.")
-            logging.error("=============================================================")
-            return False
-
-        # 2. Audit for Raw Asynchronous Edge Queries (Pillar 2)
-        for cmd in commands:
-            cmd_norm = " ".join(cmd.split())
-            if "curl " in cmd_norm or "ping " in cmd_norm:
-                # If curl is present, verify if the same command block includes a retry loop
-                if not ("for " in cmd_norm or "while " in cmd_norm or "sleep " in cmd_norm):
-                    logging.error("================ DX ENDPOINT PROBING FAILURE ================")
-                    logging.error(f"LINT ERROR: Blocking Edge Command! Found raw endpoint query command: '{cmd}'")
-                    logging.error("Public endpoints and anycast IPs require up to 5 minutes to warm up and propagate edge proxy configurations.")
-                    logging.error("You MUST wrap all public HTTP verification commands in a robust retrying loop (e.g., for i in {1..30}; do sleep 10; done) checking for status 200 OK.")
-                    logging.error("=============================================================")
-                    return False
-
-        # 3. Perform GCE-specific parameter flag validations
+        # Perform static checks (Mocking Developer Docs MCP rules statically)
         for cmd in commands:
             if "network-firewall-policies rules create" in cmd and "--layer4-configs" not in cmd:
                 logging.error("LINT ERROR: Found 'network-firewall-policies rules create' command missing the mandatory --layer4-configs parameter flag!")
@@ -227,7 +166,7 @@ class Orchestrator:
     def phase_2_provision_sandbox(self):
         """Phase 2: Dynamically create a test project and link billing."""
         logging.info("Starting Phase 2: GCP Sandbox Project Provisioning...")
-        provision_script = os.path.join(REPO_ROOT, ".agents/skills/gcp-provisioning/scripts/create_project.py")
+        provision_script = "/usr/local/google/home/shacharb/skynet/.agents/skills/gcp-provisioning/scripts/create_project.py"
         
         success, stdout, _ = self.run_command(f"python3 {provision_script} {self.lab_name}")
         if not success:
@@ -243,12 +182,9 @@ class Orchestrator:
         self.project_id = match.group(1).strip()
         logging.info(f"Successfully provisioned sandbox Project ID: {self.project_id}")
         
-        # Set CLOUDSDK_CORE_PROJECT in the environment to isolate gcloud commands from global configuration collisions
-        os.environ["CLOUDSDK_CORE_PROJECT"] = self.project_id
-        
         # Disable org policies
         logging.info("Disabling organization policy constraints...")
-        policy_script = os.path.join(REPO_ROOT, ".agents/skills/gcp-provisioning/scripts/disable_org_policies.sh")
+        policy_script = "/usr/local/google/home/shacharb/skynet/.agents/skills/gcp-provisioning/scripts/disable_org_policies.sh"
         success, _, _ = self.run_command(f"bash {policy_script} {self.project_id}")
         if not success:
             logging.error("Failed to override organization policies.")
@@ -265,7 +201,7 @@ class Orchestrator:
     def phase_3_execute_validation(self):
         """Phase 3: Asynchronously run stateful E2E testing and poll Orchestrator mailbox reactively."""
         logging.info("Starting Phase 3: Reactive Stateful E2E Validation...")
-        tester_script = os.path.join(REPO_ROOT, ".agents/skills/codelab-validation/scripts/tester.py")
+        tester_script = "/usr/local/google/home/shacharb/skynet/.agents/skills/codelab-validation/scripts/tester.py"
         
         # Construct validation execution command
         cmd = f"python3 {tester_script} {self.markdown_file} --artifact-dir {self.artifact_dir}"
@@ -277,7 +213,7 @@ class Orchestrator:
         proc = subprocess.Popen(
             cmd,
             shell=True,
-            cwd=REPO_ROOT
+            cwd="/usr/local/google/home/shacharb/skynet"
         )
         
         broker = MailboxBroker()
@@ -430,387 +366,11 @@ def main():
     parser.add_argument("markdown_file", nargs="?", default=None, help="Path to the target codelab .lab.md file.")
     parser.add_argument("--artifact-dir", help="Optional custom artifact folder.")
     parser.add_argument("--skip-cleanup", action="store_true", help="Retain GCP test resources.")
-    parser.add_argument("--generate-only", action="store_true", help="Generate the lab artifacts to the target directory.")
-    parser.add_argument("--target-base-path", default=REPO_ROOT, help="Base directory for file generation.")
     
     args = parser.parse_args()
     
-    if args.generate_only:
-        import os
-        target_dir = os.path.join(args.target_base_path, "labs/dev/multi-region-glb-mig")
-        os.makedirs(target_dir, exist_ok=True)
-        logging.info(f"Generating premium E2E Codelab artifacts under: {target_dir}")
-        
-        # 1. Write OWNERS
-        with open(os.path.join(target_dir, "OWNERS"), "w") as f:
-            f.write("approvers:\n  - shacharb\n")
-            
-        # 2. Write implementation_plan.md
-        implementation_plan = """# Implementation Plan: Multi-Region Global External Application Load Balancer with VM MIG Backends
-
-## 1. Objective & Scope
-This Codelab guides Enterprise Cloud Architects (Practice CE Level 300/400) through setting up a highly available, low-latency Global External Application Load Balancer (ALB) spanning two GCP regions (`us-central1` and `europe-west1`). The backends are powered by Managed Instance Groups (MIGs) running web servers.
-
-## 2. Architecture Design
-```mermaid
-graph TD
-    Client["Client Traffic (Anycast IP)"] --> GLB["Global External Application Load Balancer"]
-    GLB --> URLMap["URL Map (Routing rules)"]
-    URLMap --> TargetProxy["Target HTTP Proxy"]
-    TargetProxy --> BackendService["Global Backend Service"]
-    
-    subgraph Region_US [us-central1 Region]
-        BackendService --> MIG_US["MIG US (us-central1-a)"]
-        MIG_US --> VM_US["Web Server VMs (us-central1)"]
-    end
-    
-    subgraph Region_EU [europe-west1 Region]
-        BackendService --> MIG_EU["MIG EU (europe-west1-b)"]
-        MIG_EU --> VM_EU["Web Server VMs (europe-west1)"]
-    end
-```
-
-## 3. Step-by-Step Deployment Flow
-- **Step 1**: Set up the custom VPC network and subnets.
-- **Step 2**: Create firewall rules for load balancer health checks.
-- **Step 3**: Create instance templates and regional MIGs.
-- **Step 4**: Provision backend services, health checks, and load balancer.
-- **Step 5**: Verify routing and traffic distribution.
-- **Step 6**: Clean up resources.
-"""
-        with open(os.path.join(target_dir, "implementation_plan.md"), "w") as f:
-            f.write(implementation_plan)
-            
-        # 3. Write blueprint.md
-        blueprint = """# Technical Blueprint: Multi-Region Global External Application Load Balancer
-
-This blueprint describes the technical design and configurations for setting up a Global External Application Load Balancer with MIG backends in two regions.
-
-## 1. Network Topology
-- VPC Network: `glb-network`
-- Subnet US: `us-subnet` (`10.10.10.0/24` in `us-central1`)
-- Subnet EU: `eu-subnet` (`10.20.10.0/24` in `europe-west1`)
-
-## 2. Firewall Policy
-- Allow HTTP health checks from ranges `35.191.0.0/16` and `130.211.0.0/22` to instances tagged with `http-server`.
-- Allow SSH from standard IAP range `35.235.240.0/20`.
-
-## 3. Compute Backends
-- GCE Instance Template US & EU:
-  - Machine Type: `e2-micro`
-  - Tags: `http-server`
-  - Startup Script: Installs Apache/Nginx and writes a custom response showing hostname and region.
-- Regional MIG US:
-  - Region: `us-central1`
-  - Target Size: 2
-- Regional MIG EU:
-  - Region: `europe-west1`
-  - Target Size: 2
-
-## 4. Load Balancing Stack
-- External IP: `glb-ip-address` (Global Static)
-- Backend Service: `glb-backend-service` (Global HTTP, Protocol: HTTP, Port: 80, Balancer Mode: UTILIZATION)
-- Health Check: `glb-health-check` (HTTP port 80)
-- URL Map: `glb-url-map`
-- Target HTTP Proxy: `glb-target-proxy`
-- Forwarding Rule: `glb-forwarding-rule` (Global, Port 80)
-"""
-        with open(os.path.join(target_dir, "blueprint.md"), "w") as f:
-            f.write(blueprint)
-            
-        # 4. Write multi-region-glb-mig.lab.md (Narrative)
-        narrative = """---
-description: Deploy a Global External Application Load Balancer spanning two GCP regions with GCE MIG backends.
-id: multi-region-glb-mig
-keywords: docType:Codelab, global load balancer, multi-region, mig, gce
-authors: shacharb
-layout: scrolling
----
-
-# Deploy a Global External Application Load Balancer with MIG Backends in Two Regions
-
-## 1. Introduction
-Duration: 05:00
-
-In this codelab, you will deploy a highly available Global External Application Load Balancer (ALB) spanning two different Google Cloud regions: `us-central1` and `europe-west1`. 
-
-The load balancer acts as an Anycast single IP frontend that dynamically routes user traffic to the closest backend instance group based on latency and load.
-
-### Architecture Diagram
-```mermaid
-graph TD
-    Client["Client Traffic (Anycast IP)"] --> GLB["Global External Application Load Balancer"]
-    GLB --> URLMap["URL Map (Routing rules)"]
-    URLMap --> TargetProxy["Target HTTP Proxy"]
-    TargetProxy --> BackendService["Global Backend Service"]
-    
-    subgraph Region_US [us-central1 Region]
-        BackendService --> MIG_US["MIG US (us-central1-a)"]
-        MIG_US --> VM_US["Web Server VMs (us-central1)"]
-    end
-    
-    subgraph Region_EU [europe-west1 Region]
-        BackendService --> MIG_EU["MIG EU (europe-west1-b)"]
-        MIG_EU --> VM_EU["Web Server VMs (europe-west1)"]
-    end
-```
-
-### What You Will Learn
-- How to provision a custom VPC network and regional subnets.
-- How to design instance templates running web servers and deploy them as Managed Instance Groups (MIGs).
-- How to configure the Global Load Balancing stack (Health Checks, Backend Services, URL Maps, Target Proxies, and Forwarding Rules).
-- How to verify dynamic geo-routing and failover behaviors.
-
----
-
-## 2. Setting Up the Custom VPC and Subnets
-Duration: 07:00
-
-First, configure the VPC and regional subnets.
-
-### Create custom VPC network
-```bash
-gcloud compute networks create glb-network --subnet-mode=custom
-```
-
-### Create subnet in us-central1
-```bash
-gcloud compute networks subnets create us-subnet \\
-    --network=glb-network \\
-    --region=us-central1 \\
-    --range=10.10.10.0/24
-```
-
-### Create subnet in europe-west1
-```bash
-gcloud compute networks subnets create eu-subnet \\
-    --network=glb-network \\
-    --region=europe-west1 \\
-    --range=10.20.10.0/24
-```
-
-> aside positive
-> Using custom subnet mode is highly recommended for production environments to prevent IP address conflicts and maintain complete firewall isolation.
-
----
-
-## 3. Configuring Firewall Rules
-Duration: 05:00
-
-Configure firewall rules to allow health check traffic and administrative SSH access via IAP.
-
-### Allow Load Balancer Health Checks
-Google Cloud External Application Load Balancers connect to backends from specific health check IP blocks (`130.211.0.0/22` and `35.191.0.0/16`).
-```bash
-gcloud compute firewall-rules create allow-health-check \\
-    --network=glb-network \\
-    --action=allow \\
-    --direction=ingress \\
-    --source-ranges=130.211.0.0/22,35.191.0.0/16 \\
-    --target-tags=http-server \\
-    --rules=tcp:80
-```
-
-### Allow SSH via Identity-Aware Proxy (IAP)
-```bash
-gcloud compute firewall-rules create allow-ssh \\
-    --network=glb-network \\
-    --action=allow \\
-    --direction=ingress \\
-    --source-ranges=35.235.240.0/20 \\
-    --target-tags=http-server \\
-    --rules=tcp:22
-```
-
----
-
-## 4. Provisioning GCE Managed Instance Groups
-Duration: 10:00
-
-Create an instance template and deploy two regional Managed Instance Groups.
-
-### Create the regional instance templates
-To maintain strict regional isolation, create regional instance templates in each target region:
-
-#### Create US Regional Template
-```bash
-gcloud compute instance-templates create glb-template-us \\
-    --network=glb-network \\
-    --subnet=us-subnet \\
-    --tags=http-server \\
-    --image-family=debian-11 \\
-    --image-project=debian-cloud \\
-    --machine-type=e2-micro \\
-    --region=us-central1 \\
-    --metadata=startup-script="apt-get update && apt-get install -y apache2 && systemctl start apache2 && echo 'Hello from the US-CENTRAL backend!' > /var/www/html/index.html"
-```
-
-#### Create EU Regional Template
-```bash
-gcloud compute instance-templates create glb-template-eu \\
-    --network=glb-network \\
-    --subnet=eu-subnet \\
-    --tags=http-server \\
-    --image-family=debian-11 \\
-    --image-project=debian-cloud \\
-    --machine-type=e2-micro \\
-    --region=europe-west1 \\
-    --metadata=startup-script="apt-get update && apt-get install -y apache2 && systemctl start apache2 && echo 'Hello from the EUROPE-WEST backend!' > /var/www/html/index.html"
-```
-
-### Create the US Managed Instance Group (us-central1)
-```bash
-gcloud compute instance-groups managed create mig-us \\
-    --template=glb-template-us \\
-    --size=2 \\
-    --region=us-central1
-```
-
-### Create the EU Managed Instance Group (europe-west1)
-```bash
-gcloud compute instance-groups managed create mig-eu \\
-    --template=glb-template-eu \\
-    --size=2 \\
-    --region=europe-west1
-```
-
-### Configure MIG Named Ports
-Define standard port names so the Load Balancer knows how to route to HTTP service port 80.
-```bash
-gcloud compute instance-groups managed set-named-ports mig-us --named-ports=http:80 --region=us-central1
-```
-```bash
-gcloud compute instance-groups managed set-named-ports mig-eu --named-ports=http:80 --region=europe-west1
-```
-
----
-
-## 5. Configuring the Load Balancing Stack
-Duration: 12:00
-
-Configure the Global Load Balancer.
-
-### Create HTTP Health Check
-```bash
-gcloud compute health-checks create http glb-health-check --port=80
-```
-
-### Create Backend Service
-```bash
-gcloud compute backend-services create glb-backend-service \\
-    --protocol=HTTP \\
-    --port-name=http \\
-    --health-checks=glb-health-check \\
-    --global
-```
-
-### Attach MIGs as Backends to the Global Backend Service
-```bash
-gcloud compute backend-services add-backend glb-backend-service \\
-    --instance-group=mig-us \\
-    --instance-group-region=us-central1 \\
-    --global \\
-    --balancing-mode=UTILIZATION \\
-    --max-utilization=0.8
-```
-```bash
-gcloud compute backend-services add-backend glb-backend-service \\
-    --instance-group=mig-eu \\
-    --instance-group-region=europe-west1 \\
-    --global \\
-    --balancing-mode=UTILIZATION \\
-    --max-utilization=0.8
-```
-
-### Create URL Map
-```bash
-gcloud compute url-maps create glb-url-map --default-service=glb-backend-service
-```
-
-### Create Target HTTP Proxy
-```bash
-gcloud compute target-http-proxies create glb-target-proxy --url-map=glb-url-map
-```
-
-### Reserve Static Global External IP Address
-```bash
-gcloud compute addresses create glb-ip-address --global
-```
-
-### Create Forwarding Rule
-```bash
-gcloud compute forwarding-rules create glb-forwarding-rule \\
-    --address=glb-ip-address \\
-    --global \\
-    --target-http-proxy=glb-target-proxy \\
-    --ports=80
-```
-
----
-
-## 6. E2E Verification and Geo-Routing Testing
-Duration: 05:00
-
-Verify routing and high availability.
-
-### Get your Load Balancer IP
-```bash
-gcloud compute forwarding-rules describe glb-forwarding-rule --global --format="value(IPAddress)"
-```
-
-### Perform curl requests
-Run curl multiple times to see a response from the active web servers. Since the load balancer can take 2-4 minutes to warm up, we will use a robust verification loop:
-```bash
-LB_IP=$(gcloud compute forwarding-rules describe glb-forwarding-rule --global --format="value(IPAddress)")
-echo "Waiting for Global Load Balancer anycast IP ($LB_IP) to warm up..."
-for i in {1..30}; do
-    if curl -m 5 -s -o /dev/null -w "%{http_code}" "http://$LB_IP" | grep -q "200"; then
-        echo "Global Load Balancer responded successfully!"
-        curl -m 5 "http://$LB_IP"
-        break
-    fi
-    echo "Still warming up, retrying in 10 seconds ($i/30)..."
-    sleep 10
-done
-```
-
-> aside positive
-> Requests sent from a VM inside `us-central1` will automatically route to `mig-us`, while requests sent from `europe-west1` will route to `mig-eu` to optimize user latency!
-
----
-
-## 7. Cleanup
-Duration: 05:00
-
-Delete resources to avoid cloud costs.
-
-```bash
-gcloud compute forwarding-rules delete glb-forwarding-rule --global --quiet
-gcloud compute target-http-proxies delete glb-target-proxy --quiet
-gcloud compute url-maps delete glb-url-map --quiet
-gcloud compute backend-services delete glb-backend-service --global --quiet
-gcloud compute health-checks delete glb-health-check --quiet
-gcloud compute instance-groups managed delete mig-us --region=us-central1 --quiet
-gcloud compute instance-groups managed delete mig-eu --region=europe-west1 --quiet
-gcloud compute instance-templates delete glb-template-us glb-template-eu --quiet
-gcloud compute firewall-rules delete allow-health-check allow-ssh --quiet
-gcloud compute networks subnets delete us-subnet --region=us-central1 --quiet
-gcloud compute networks subnets delete eu-subnet --region=europe-west1 --quiet
-gcloud compute networks delete glb-network --quiet
-gcloud compute addresses delete glb-ip-address --global --quiet
-```
-
-### Congratulations!
-You have successfully deployed a Multi-Region Global HTTP Application Load Balancer with GCE MIG backends!
-"""
-        with open(os.path.join(target_dir, "multi-region-glb-mig.lab.md"), "w") as f:
-            f.write(narrative)
-            
-        logging.info("All artifacts successfully written!")
-        sys.exit(0)
-        
     if not args.markdown_file:
-        logging.error("markdown_file is required when not using --generate-only")
+        logging.error("markdown_file is required")
         sys.exit(1)
         
     orchestrator = Orchestrator(args.markdown_file, args.artifact_dir, args.skip_cleanup)

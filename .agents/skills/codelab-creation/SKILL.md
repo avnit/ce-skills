@@ -48,6 +48,8 @@ Follow this interactive checklist to create a codelab:
 
 To elevate codelabs to an enterprise standard, follow the principles outlined in [Enterprise Codelab Standards](references/enterprise_standards.md). This includes:
 - Leading with business problems.
+- **Verification Differentiability**: For multi-region, Anycast load balancing, or DNS routing setups, backend startup-scripts/payloads MUST contain distinct regional visual markers (e.g., 'Hello from the US backend!' vs 'Hello from the EU backend!') to visually prove proper routing in E2E verification tests.
+- **Resource Leak Prevention**: The Clean Up step must be 100% comprehensive. Every allocated resource must be explicitly deleted. If regional resources are created (e.g. regional instance templates or subnetworks), they must be deleted explicitly by name rather than assuming legacy patterns or leaving resource leaks.
 - Including stateful reliability (e.g., Maglev).
 - Implementing negative testing.
 - Adding operational guardrails.
