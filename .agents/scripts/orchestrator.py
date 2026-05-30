@@ -700,9 +700,19 @@ gcloud compute forwarding-rules describe glb-forwarding-rule --global --format="
 ```
 
 ### Perform curl requests
-Run curl multiple times to see a response from the active web servers:
+Run curl multiple times to see a response from the active web servers. Since the load balancer can take 2-4 minutes to warm up, we will use a robust verification loop:
 ```bash
-curl -m 5 http://$(gcloud compute forwarding-rules describe glb-forwarding-rule --global --format="value(IPAddress)")
+LB_IP=$(gcloud compute forwarding-rules describe glb-forwarding-rule --global --format="value(IPAddress)")
+echo "Waiting for Global Load Balancer anycast IP ($LB_IP) to warm up..."
+for i in {1..30}; do
+    if curl -m 5 -s -o /dev/null -w "%{http_code}" "http://$LB_IP" | grep -q "200"; then
+        echo "Global Load Balancer responded successfully!"
+        curl -m 5 "http://$LB_IP"
+        break
+    fi
+    echo "Still warming up, retrying in 10 seconds ($i/30)..."
+    sleep 10
+done
 ```
 
 > aside positive
