@@ -17,7 +17,7 @@ experiment/
 user_deploy/
 reports/
 scratch/
-doc/eval_reports/
+doc/
 
 
 # Python Caches & Virtual Environments
