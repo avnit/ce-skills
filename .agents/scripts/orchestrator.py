@@ -577,6 +577,7 @@ To maintain strict regional isolation, create regional instance templates in eac
 ```bash
 gcloud compute instance-templates create glb-template-us \\
     --network=glb-network \\
+    --subnet=us-subnet \\
     --tags=http-server \\
     --image-family=debian-11 \\
     --image-project=debian-cloud \\
@@ -589,6 +590,7 @@ gcloud compute instance-templates create glb-template-us \\
 ```bash
 gcloud compute instance-templates create glb-template-eu \\
     --network=glb-network \\
+    --subnet=eu-subnet \\
     --tags=http-server \\
     --image-family=debian-11 \\
     --image-project=debian-cloud \\
