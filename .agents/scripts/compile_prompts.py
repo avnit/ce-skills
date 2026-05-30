@@ -5,7 +5,8 @@ import os
 import sys
 
 # Absolute workspace path setup
-WORKSPACE_ROOT = "/usr/local/google/home/shacharb/skynet"
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+WORKSPACE_ROOT = os.path.abspath(os.path.join(_script_dir, "..", ".."))
 PROMPTS_DIR = os.path.join(WORKSPACE_ROOT, "prompts")
 OUTPUT_MANIFEST = os.path.join(WORKSPACE_ROOT, ".agents/state/compiled_subagents.json")
 

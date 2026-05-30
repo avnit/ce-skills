@@ -11,7 +11,10 @@ import subprocess
 import sys
 import time
 
-sys.path.append("/usr/local/google/home/shacharb/skynet/.agents/scripts")
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.abspath(os.path.join(_script_dir, "..", ".."))
+
+sys.path.append(os.path.join(REPO_ROOT, ".agents/scripts"))
 try:
     from mailbox_handler import MailboxBroker
 except ImportError:
@@ -24,6 +27,7 @@ class Orchestrator:
         self.markdown_file = os.path.abspath(markdown_file)
         self.lab_name = os.path.basename(os.path.dirname(self.markdown_file))
         self.lab_dir = os.path.dirname(self.markdown_file)
+        self.repo_root = REPO_ROOT
         
         # Retrieve or generate conversation-id artifact folder
         if artifact_dir:
@@ -39,7 +43,7 @@ class Orchestrator:
         self.project_id = None
         
         # Path configuration
-        self.mailbox_dir = os.path.join("/usr/local/google/home/shacharb/skynet/.agents/mailboxes")
+        self.mailbox_dir = os.path.join(self.repo_root, ".agents/mailboxes")
         self.progress_file = os.path.join(self.lab_dir, ".tester_state", "progress.json")
         self.bugs_dir = os.path.join(self.lab_dir, "bugs")
         os.makedirs(self.bugs_dir, exist_ok=True)
@@ -65,7 +69,7 @@ class Orchestrator:
     def phase_0_verify_auth(self):
         """Phase 0: Verify Sandbox Admin active authentication context."""
         logging.info("Starting Phase 0: Pre-Flight Auth Check...")
-        verify_script = "/usr/local/google/home/shacharb/skynet/.agents/skills/gcloud-auth-verification/scripts/verify_auth.py"
+        verify_script = os.path.join(self.repo_root, ".agents/skills/gcloud-auth-verification/scripts/verify_auth.py")
         
         success, stdout, _ = self.run_command(f"python3 {verify_script}")
         if not success:
@@ -166,7 +170,7 @@ class Orchestrator:
     def phase_2_provision_sandbox(self):
         """Phase 2: Dynamically create a test project and link billing."""
         logging.info("Starting Phase 2: GCP Sandbox Project Provisioning...")
-        provision_script = "/usr/local/google/home/shacharb/skynet/.agents/skills/gcp-provisioning/scripts/create_project.py"
+        provision_script = os.path.join(self.repo_root, ".agents/skills/gcp-provisioning/scripts/create_project.py")
         
         success, stdout, _ = self.run_command(f"python3 {provision_script} {self.lab_name}")
         if not success:
@@ -185,7 +189,7 @@ class Orchestrator:
         
         # Disable org policies
         logging.info("Disabling organization policy constraints...")
-        policy_script = "/usr/local/google/home/shacharb/skynet/.agents/skills/gcp-provisioning/scripts/disable_org_policies.sh"
+        policy_script = os.path.join(self.repo_root, ".agents/skills/gcp-provisioning/scripts/disable_org_policies.sh")
         success, _, _ = self.run_command(f"bash {policy_script} {self.project_id}")
         if not success:
             logging.error("Failed to override organization policies.")
@@ -202,7 +206,7 @@ class Orchestrator:
     def phase_3_execute_validation(self):
         """Phase 3: Asynchronously run stateful E2E testing and poll Orchestrator mailbox reactively."""
         logging.info("Starting Phase 3: Reactive Stateful E2E Validation...")
-        tester_script = "/usr/local/google/home/shacharb/skynet/.agents/skills/codelab-validation/scripts/tester.py"
+        tester_script = os.path.join(self.repo_root, ".agents/skills/codelab-validation/scripts/tester.py")
         
         # Construct validation execution command
         cmd = f"python3 {tester_script} {self.markdown_file} --artifact-dir {self.artifact_dir}"
@@ -214,7 +218,7 @@ class Orchestrator:
         proc = subprocess.Popen(
             cmd,
             shell=True,
-            cwd="/usr/local/google/home/shacharb/skynet"
+            cwd=self.repo_root
         )
         
         broker = MailboxBroker()

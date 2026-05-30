@@ -10,7 +10,8 @@ import datetime
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s INFO: [MailboxProcessor] %(message)s")
 
-WORKSPACE_ROOT = "/usr/local/google/home/shacharb/skynet"
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+WORKSPACE_ROOT = os.path.abspath(os.path.join(_script_dir, "..", ".."))
 MAILBOX_DIR = os.path.join(WORKSPACE_ROOT, ".agents/mailboxes/orchestrator")
 INBOX_DIR = os.path.join(MAILBOX_DIR, "inbox")
 OUTBOX_DIR = os.path.join(MAILBOX_DIR, "outbox")
