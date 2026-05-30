@@ -12,6 +12,10 @@ if [ -z "$PROJECT_ID" ]; then
   exit 1
 fi
 
+# Create a unique temporary directory for this process to prevent multi-process race conditions in shared directories
+TMP_DIR=$(mktemp -d -t org-policy-XXXXXX)
+cd "$TMP_DIR"
+
 # Boolean Policies
 BOOLEAN_POLICIES=(
   "compute.requireShieldedVm"
@@ -59,7 +63,9 @@ for policy in "${LIST_POLICIES[@]}"; do
     gcloud org-policies set-policy current_list.yaml --project="$PROJECT_ID" || echo "Warning: Failed to set policy for $policy"
 done
 
-rm -f boolean_policy.yaml list_policy.yaml current_boolean.yaml current_list.yaml
+# Clean up the isolated temporary directory safely
+cd /tmp
+rm -rf "$TMP_DIR"
 
 echo "Waiting 60 seconds for policy propagation..."
 sleep 60
