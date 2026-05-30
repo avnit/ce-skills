@@ -570,22 +570,37 @@ Duration: 10:00
 
 Create an instance template and deploy two regional Managed Instance Groups.
 
-### Create the Instance Template
-The instance template configures the VMs to automatically spin up Apache and output their zone and hostname.
+### Create the regional instance templates
+To maintain strict regional isolation, create regional instance templates in each target region:
+
+#### Create US Regional Template
 ```bash
-gcloud compute instance-templates create glb-template \\
+gcloud compute instance-templates create glb-template-us \\
     --network=glb-network \\
     --tags=http-server \\
     --image-family=debian-11 \\
     --image-project=debian-cloud \\
     --machine-type=e2-micro \\
+    --region=us-central1 \\
+    --metadata=startup-script="apt-get update && apt-get install -y apache2 && systemctl start apache2 && echo 'Hello from VM!' > /var/www/html/index.html"
+```
+
+#### Create EU Regional Template
+```bash
+gcloud compute instance-templates create glb-template-eu \\
+    --network=glb-network \\
+    --tags=http-server \\
+    --image-family=debian-11 \\
+    --image-project=debian-cloud \\
+    --machine-type=e2-micro \\
+    --region=europe-west1 \\
     --metadata=startup-script="apt-get update && apt-get install -y apache2 && systemctl start apache2 && echo 'Hello from VM!' > /var/www/html/index.html"
 ```
 
 ### Create the US Managed Instance Group (us-central1)
 ```bash
 gcloud compute instance-groups managed create mig-us \\
-    --template=glb-template \\
+    --template=glb-template-us \\
     --size=2 \\
     --region=us-central1
 ```
@@ -593,7 +608,7 @@ gcloud compute instance-groups managed create mig-us \\
 ### Create the EU Managed Instance Group (europe-west1)
 ```bash
 gcloud compute instance-groups managed create mig-eu \\
-    --template=glb-template \\
+    --template=glb-template-eu \\
     --size=2 \\
     --region=europe-west1
 ```
