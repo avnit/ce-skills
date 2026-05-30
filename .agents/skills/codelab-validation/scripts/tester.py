@@ -162,6 +162,8 @@ def get_cmd_hash(cmd: str) -> str:
     return hashlib.sha256(normalize_command(cmd).encode("utf-8")).hexdigest()
 
 def get_active_project():
+    if "CLOUDSDK_CORE_PROJECT" in os.environ:
+        return os.environ["CLOUDSDK_CORE_PROJECT"]
     try:
         result = subprocess.run(["gcloud", "config", "get-value", "project"], capture_output=True, text=True, check=True)
         return result.stdout.strip()

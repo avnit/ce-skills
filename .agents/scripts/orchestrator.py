@@ -180,6 +180,7 @@ class Orchestrator:
             return False
             
         self.project_id = match.group(1).strip()
+        os.environ["CLOUDSDK_CORE_PROJECT"] = self.project_id
         logging.info(f"Successfully provisioned sandbox Project ID: {self.project_id}")
         
         # Disable org policies
