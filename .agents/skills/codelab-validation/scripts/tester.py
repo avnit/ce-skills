@@ -141,7 +141,9 @@ class SubshellRunner:
 def _filter_hermetic_commands(commands: list[str]) -> list[str]:
     clean = []
     for cmd in commands:
-        if "while true" in cmd.lower() or "gcloud compute ssh" in cmd.lower():
+        if "while true" in cmd.lower():
+            continue
+        if "gcloud compute ssh" in cmd.lower() and "--command" not in cmd.lower():
             continue
         clean.append(cmd)
     return clean

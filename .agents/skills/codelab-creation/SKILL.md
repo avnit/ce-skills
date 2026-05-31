@@ -43,10 +43,16 @@ Follow this interactive checklist to create a codelab:
     - **Clean-up Choice Gate**: Present a mandatory choice to the user via `ask_question` to either **delete** the sandboxed test project (to control cloud costs) or **retain** it (to allow the user to manually test or demo).
 - [ ] **Phase 6: Final Delivery**
     - Convert to Google Doc if requested by the user.
+- [ ] **Phase 7: Retrospective & Continuous Improvement**
+    - **Mandatory Post-Mortem**: At the conclusion of the run, the Commander must execute a mandatory retrospective following the [Post-Mortem Retrospective Standard](references/post_mortem_standard.md).
+    - Draft a structured `post_mortem.md` file in the active session brain folder analyzing process adherence, defect causes, and prevention mechanics.
+    - Propose permanent upgrades to upstream repository skills or common gotchas in [Codelab Development Gotchas](references/gotchas.md). **Explicit Human Approval Gate**: Obtain the user's manual approval before applying any updates to repository files.
+
+
 
 ## Enterprise Standards
 
-To elevate codelabs to an enterprise standard, follow the principles outlined in [Enterprise Codelab Standards](references/enterprise_standards.md). This includes:
+To elevate codelabs to an enterprise standard, follow the principles outlined in [Enterprise Codelab Standards](references/enterprise_standards.md) and cross-reference [Codelab Development Gotchas](references/gotchas.md). This includes:
 - Leading with business problems.
 - **Verification Differentiability**: For multi-region, Anycast load balancing, or DNS routing setups, backend startup-scripts/payloads MUST contain distinct regional visual markers (e.g., 'Hello from the US backend!' vs 'Hello from the EU backend!') to visually prove proper routing in E2E verification tests.
 - **Resource Leak Prevention**: The Clean Up step must be 100% comprehensive. Every allocated resource must be explicitly deleted. If regional resources are created (e.g. regional instance templates or subnetworks), they must be deleted explicitly by name rather than assuming legacy patterns or leaving resource leaks.
