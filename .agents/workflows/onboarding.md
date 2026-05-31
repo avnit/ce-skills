@@ -102,5 +102,6 @@ Steer the onboarding execution lifecycle to prepare the active workspace environ
    Write the updated configuration object cleanly back to `.gemini/mcp_config.json` with standard 2-space formatting.
 6. **Compile and Verify OneDoc CLI Tool**: Search for an active Google3 CITC workspace under `/google/src/cloud/<user>/` and run `blaze build //geo/gestalt/experimental/onedoc` to natively compile the standalone `onedoc.par` binary.
 7. **Sync and Onboard Workspace Sidecar Daemons**: Execute the repository sidecar sync utility `bash .agents/scripts/sync_sidecars.sh` to securely copy all version-controlled sidecars and background watcher scripts into the local active Jetski environment, spinning up background daemons automatically.
-8. Present a friendly terminal confirmation block to the user verifying successful file creation, OneDoc compilation, sidecar synchronization, and updates, and mark the overall task flow as `COMPLETED` in `task.md`.
+8. **Verify and Pre-warm Mermaid CLI Validator Dependencies**: Verify that Node.js, `npm`, and `npx` are active in the environment, and pre-warm the `@mermaid-js/mermaid-cli` compiler caching via `npx -y @mermaid-js/mermaid-cli --help`. This pre-downloads Puppeteer's headless Chrome binaries to ensure instant diagram syntax validation during subsequent runs.
+9. Present a friendly terminal confirmation block to the user verifying successful file creation, OneDoc compilation, sidecar synchronization, Mermaid CLI pre-warming, and updates, and mark the overall task flow as `COMPLETED` in `task.md`.
 

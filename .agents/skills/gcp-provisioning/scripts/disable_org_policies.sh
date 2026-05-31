@@ -12,6 +12,25 @@ if [ -z "$PROJECT_ID" ]; then
   exit 1
 fi
 
+# Verify Org Policy API endpoint readiness with retries
+echo "Verifying Org Policy API readiness..."
+API_READY=false
+for i in {1..10}; do
+  if gcloud org-policies list --project="$PROJECT_ID" --limit=1 >/dev/null 2>&1; then
+    echo "Org Policy API is active and ready."
+    API_READY=true
+    break
+  fi
+  echo "Waiting for Org Policy API endpoint to warm up (attempt $i/10)..."
+  sleep 10
+done
+
+if [ "$API_READY" = false ]; then
+  echo "Error: Org Policy API service did not become ready in time."
+  exit 1
+fi
+
+
 # Create a unique temporary directory for this process to prevent multi-process race conditions in shared directories
 TMP_DIR=$(mktemp -d -t org-policy-XXXXXX)
 cd "$TMP_DIR"
