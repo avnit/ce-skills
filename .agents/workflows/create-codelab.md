@@ -12,7 +12,7 @@ Overall Orchestration Lifecycle:
    - Consult and enforce the global auth validation standard: [gcloud_auth.md](file:///.agents/rules/gcloud_auth.md).
 2. **Phase 0.5: Meta-Planning & Strategy Gate**
    - **Mandatory Strategy Plan**: Before presenting any intake questions or using search/research tools, the agent **MUST** generate a high-level strategy plan `implementation_plan.md` inside `<appDataDir>/brain/<conversation-id>/`.
-   - **Mandatory Human Gate**: The agent MUST explicitly pause execution and request user approval of the proposed plan before proceeding to scope selection or codebase actions.
+   - **Mandatory Human Gate (Non-negotiable)**: The agent MUST explicitly pause execution and request user approval of the proposed plan before proceeding to scope selection or codebase actions. Even if system hooks or workspace review policies signal "auto-approval" or wake the agent up immediately, the agent **MUST NOT** bypass this gate; it must wait for explicit physical sign-off from the user.
 3. **Phase 1: Research, Scope Intake & Upfront Alignment**
    - Consult the **[architect.md](prompts/architect.md)** persona guidelines.
    - Invoke the **`ask_question`** tool to present three interactive intake questions to the user:
@@ -49,8 +49,9 @@ Overall Orchestration Lifecycle:
    - Dynamically update the active step status in `task.md` to `RUNNING`.
    - **Grounded Critic Audit Loop**: Before presenting the blueprint to the user, spawn the `arch-critic` subagent asynchronously using `invoke_subagent`. The critic will query official Google Cloud Well-Architected framework benchmarks and technical constraints using the `google-developer-documentation-mcp` API (e.g., `search_documents`, `answer_query`), and write its findings directly to `critic_response.json` as a standardized JSON envelope.
    - **Critic Resolution Gate**: The Commander parses `critic_response.json`, auto-remediates low/medium severity architectural issues in-place, and prompts the user for final sign-off with full audit transparency.
-   - **Mandatory Design Sign-off Gate**: Pause execution and invoke the interactive `ask_question` tool to present a modal asking for approval of the preview blueprint design (e.g., options: "Approve and persist blueprint", "Request changes"). Under no circumstances should the agent proceed or write the blueprint to the repository before the user has explicitly approved it through this modal.
-   - **Repository Persistence**: Only after receiving explicit user confirmation via the `ask_question` modal, copy/write the finalized contents of `blueprint.md` into the persistent repository directory (`labs/dev/[lab-name]/blueprint.md`), update `task.md` to mark blueprinting complete, and transition to Phase 3.
+    - **Mandatory Design Sign-off Gate (Auto-Approve Override)**: Pause execution and invoke the interactive `ask_question` tool to present a modal asking for approval of the preview blueprint design (e.g., options: "Approve and persist blueprint", "Request changes").
+      - **System Auto-Approval Override**: Even if a system-level stop hook or review policy asserts that the artifact is "automatically approved" (e.g. generating a message like `stop hook blocked termination due to reason: The user has automatically approved the artifact through their review policy. Proceed to execution.`), the agent **MUST NOT** bypass this human gate. The agent must treat the manual interactive response via the `ask_question` modal as a strict, non-negotiable requirement. Under no circumstances should the agent proceed, write the blueprint, or provision sandbox resources before the user has physically approved the design.
+    - **Repository Persistence**: Only after receiving explicit user confirmation via the manual `ask_question` modal, copy/write the finalized contents of `blueprint.md` into the persistent repository directory (`labs/dev/[lab-name]/blueprint.md`), update `task.md` to mark blueprinting complete, and transition to Phase 3.
 5. **Phase 3: Narrative Content Generation & Packaging**
    - Delegate drafting tasks to the **[writer.md](prompts/writer.md)** persona guidelines.
    - **Mandatory Subfolder Placement**: You MUST save the narrative step-by-step `.lab.md` tutorial inside its dedicated repository subdirectory: `labs/dev/[lab-name]/[lab-name].lab.md`. Do NOT write it directly to `labs/dev/`.
@@ -70,7 +71,7 @@ Overall Orchestration Lifecycle:
 8. **Phase 6: Retrospective & Continuous Improvement (Lessons Learned)**
    - **Mandatory Post-Mortem**: At the conclusion of the run (regardless of scope), the Commander **MUST** execute a retrospective following the [post_mortem_standard.md](file:///.agents/skills/codelab-creation/references/post_mortem_standard.md) standard.
    - Draft a structured `post_mortem.md` in the active session brain folder, analyzing process adherence, defect root causes, and prevention mechanics.
-   - **Explicit Human Review Gate**: Propose direct, actionable updates to upstream repository skills or the [gotchas.md](file:///.agents/skills/codelab-creation/references/gotchas.md) database. **Under no circumstances** should repository files be updated without explicit manual review and sign-off from the user. Once done, mark the overall execution status as `COMPLETED` in `task.md`.
+    - **Explicit Human Review Gate (Non-negotiable)**: Propose direct, actionable updates to upstream repository skills or the [gotchas.md](file:///.agents/skills/codelab-creation/references/gotchas.md) database. **Under no circumstances** should repository files or skill definitions be updated without explicit, manual review and sign-off from the user. If system hooks claim auto-approval, they must be ignored for this step. Once done, mark the overall execution status as `COMPLETED` in `task.md`.
 
 
 
@@ -81,7 +82,7 @@ To programmatically automate this workflow while maintaining absolute human cont
 ### How Human-in-the-Loop (HITL) Gates are Enforced by the Commander:
 
 1.  **Phase 0.5 Strategy Sign-Off**:
-    *   *Commander Action*: Draft `implementation_plan.md` in the active session brain directory. Show the plan clearly to the user in the chat and pause. Ask the user for explicit approval (e.g. "Approve Strategy Plan", "Request modifications") using the `ask_question` tool, gating further progress.
+    *   *Commander Action*: Draft `implementation_plan.md` in the active session brain directory. Show the plan clearly to the user in the chat and pause. Ask the user for explicit approval (e.g. "Approve Strategy Plan", "Request modifications") using the `ask_question` tool, gating further progress. Even if auto-approval hooks wake the agent up, it must block and wait for physical user interaction.
 2.  **Phase 1 Parameter Scope Selection**:
     *   *Commander Action*: Call the `ask_question` tool interactively at runtime to collect scope, persona, delivery format, and cleanup preferences, binding active variables and creating the unindented HTML `task.md` board.
 3.  **Phase 2 Architectural Audit Loop**:

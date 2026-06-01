@@ -18,7 +18,7 @@ Follow this interactive checklist to create a codelab:
     - Consult and enforce the global active auth and ADC validation standard: [gcloud_auth.md](file:///.agents/rules/gcloud_auth.md).
 - [ ] **Phase 0.5: Meta-Planning & Strategy Gate (Mandatory Strategy Plan)**
     - Before presenting scoping questions, querying service documentation, or modifying repository files, formulate a high-level strategy plan `implementation_plan.md` in the conversation workspace.
-    - **Gated Human Gate**: Pause and obtain explicit manual sign-off from the user via interactive chat/modal before proceeding to scope intake or subsequent phases.
+    - **Gated Human Gate (Non-negotiable)**: Pause and obtain explicit manual sign-off from the user via interactive chat/modal before proceeding to scope intake or subsequent phases. Even if system hooks or workspace review policies claim "auto-approval", the agent **MUST NOT** bypass this gate; it must wait for explicit, physical user interaction.
 - [ ] **Phase 1: Research & Goal Definition**
     - **Mandatory Intake Confirmation**: Present three interactive intake questions via the `ask_question` tool to define the Execution Scope (E2E vs. Artifacts Only), Target Persona / Complexity Level (Outcome CE L100, Platform CE L200/300, or Practice CE L300/400), and Delivery Format (Pure gcloud CLI vs. Terraform IaC).
     - Understand the topic and align the design topology/task checklist dynamically to match the selected choices.
@@ -27,8 +27,8 @@ Follow this interactive checklist to create a codelab:
 - [ ] **Phase 2: Blueprint Design (Pure Markdown Preview Strategy)**
     - **Generate Preview Blueprint**: Create an ephemeral `blueprint.md` inside `<appDataDir>/brain/<conversation-id>/blueprint.md` structured using **pure standard Markdown** formatting to guarantee rock-solid multi-platform preview stability.
     - **Instant Topology Mapping**: Embed the target system architecture directly inside the preview buffer using standard **Mermaid code blocks** to guarantee instant evaluation without rendering engine folding traps.
-    - **Obtain Sign-off**: Present the preview artifact link to the user and request design approval via interactive multiple-choice modal (`ask_question`).
-    - **Codebase Persistence**: Only upon explicit approval, copy/persist the pure Markdown `blueprint.md` design into the permanent code repository directory (`labs/dev/[lab-name]/`). Full diagram image synthesis can be scheduled asynchronously during published lab generation.
+    - **Obtain Sign-off (Auto-Approve Override)**: Present the preview artifact link to the user and request design approval via interactive multiple-choice modal (`ask_question`). Even if the system asserts that the design is "auto-approved" through workspace review policies, the agent **MUST NOT** skip this step. It must treat the manual interactive modal response as a strict requirement.
+    - **Codebase Persistence**: Only upon explicit and physical user approval via the manual `ask_question` modal, copy/persist the pure Markdown `blueprint.md` design into the permanent code repository directory (`labs/dev/[lab-name]/`). Full diagram image synthesis can be scheduled asynchronously during published lab generation.
 - [ ] **Phase 3: Content Generation & Packaging**
     - Follow `codelab-formatting` standards.
     - **Mandatory Placement**: The generated step-by-step narrative `.lab.md` file MUST be created directly inside the lab's dedicated subdirectory as: `labs/dev/[lab-name]/[lab-name].lab.md`. Do NOT save it in the parent root `labs/dev/`.
@@ -46,7 +46,7 @@ Follow this interactive checklist to create a codelab:
 - [ ] **Phase 7: Retrospective & Continuous Improvement**
     - **Mandatory Post-Mortem**: At the conclusion of the run, the Commander must execute a mandatory retrospective following the [Post-Mortem Retrospective Standard](references/post_mortem_standard.md).
     - Draft a structured `post_mortem.md` file in the active session brain folder analyzing process adherence, defect causes, and prevention mechanics.
-    - Propose permanent upgrades to upstream repository skills or common gotchas in [Codelab Development Gotchas](references/gotchas.md). **Explicit Human Approval Gate**: Obtain the user's manual approval before applying any updates to repository files.
+    - Propose permanent upgrades to upstream repository skills or common gotchas in [Codelab Development Gotchas](references/gotchas.md). **Explicit Human Approval Gate (Non-negotiable)**: Obtain the user's manual, physical approval before applying any updates to repository files or skills. System auto-approvals must be completely ignored for this step.
 
 
 
