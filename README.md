@@ -70,7 +70,6 @@ Skills are code-backed capability layers pairing instruction manifests (`SKILL.m
 | [gcp-billing-reports/](file:///.agents/skills/gcp-billing-reports/SKILL.md) | Partitioned spend list | Aggregates detailed billing exports using penny-rounding logic for optimized executive lists. |
 | [gcp-provisioning/](file:///.agents/skills/gcp-provisioning/SKILL.md) | Project automation | Provisions test projects, validates standard billing attachments, and strips organization policies. |
 | [gcp-release-notes/](file:///.agents/skills/gcp-release-notes/SKILL.md) | Updates caching | Queries GCP release note repositories utilizing sub-second caching routines for real-time lookups. |
-| [gcp_well_architected_reviewer/](file:///.agents/skills/gcp_well_architected_reviewer/SKILL.md) | CISO Compliance reviews | Performs compliance checks generating NIST reports natively using Cloudtop integrations. |
 | [git-update/](file:///.agents/skills/git-update/SKILL.md) | Stage, Commit, Push | Guides local changes updates, remote fetches, and merge checks seamlessly. |
 | [lab-video-automation/](file:///.agents/skills/lab-video-automation/SKILL.md) | Automated UI execution | Controls visible Chrome profile execution windows using Playwright to support external screen recording setups, paired with optional Gemini self-healing recovery routines. |
 | [qwiklabs-to-codelab/](file:///.agents/skills/qwiklabs-to-codelab/SKILL.md) | Tutorial Conversion | Enforces deterministic self-paced conversion from Qwiklabs pages or Docs files. |
