@@ -22,11 +22,13 @@ This workflow orchestrates the comprehensive, sequential Solutions Engineering p
 ### 3. Phase 3: Google Architecture Design
 - Execute `prompts/discovery_analyst.md` with `--format design_blueprint` to output the **Design Blueprint** (`design_blueprint.md`) detailing best practices and a Mermaid flow.
 - Save to `meeting/<customer_name>/design_blueprint.md`.
+- **Pre-Approval Local Render**: Immediately extract the Mermaid code block from the newly created `design_blueprint.md` and compile it locally using the `creating-gcp-diagrams` skill (Phase 2, Section 3 - compile via `mermaid-cli`). Do NOT use the `-p` flag (padding) in `mermaid-cli` as it triggers configuration errors.
+- Save the rendered image as `meeting/<customer_name>/assets/design_diagram.png` and embed it directly inside `design_blueprint.md` as a standard markdown image link so it renders beautifully in standard IDE preview.
 
-### 4. Phase 4: Gate A - Design Blueprint Approval & Image Rendering
-- **Visual Confirmation Gate**: Pause execution and invoke the **`ask_question`** tool to ask the user to review and approve the Design Blueprint and Mermaid diagram.
-- Upon approval:
-    - Execute the `creating-gcp-diagrams` skill to convert the Mermaid text block from `design_blueprint.md` into a static PNG file (e.g. stored under `meeting/<customer_name>/assets/diagram.png`).
+### 4. Phase 4: Gate A - Design & Topology Visual Confirmation
+- **Visual Confirmation Gate**: Pause execution and invoke the **`ask_question`** tool to ask the user to review and approve the Design Blueprint (which now contains the pre-rendered visual diagram).
+- **Mandatory High-Fidelity Upgrades**: Upon approval, the agent **MUST** immediately execute Phase 3 of the diagramming skill (`creating-gcp-diagrams`), spawning the Diagram Specialist Sub-Agent to compile the final, brand-aligned, icon-anchored high-definition visual asset.
+- **Zero-Overhead Automatic Ingestion**: Save this high-definition PNG directly to the **same path** (`meeting/<customer_name>/assets/design_diagram.png`), overwriting the pre-approval low-def placeholder. This guarantees that the final `design_blueprint.md` and any downstream documents (like `one_pager.md`) automatically and natively render the premium visual asset without updating any text references.
 
 ### 5. Phase 5: One-Pager & Test Plan Compilation
 - Execute `prompts/discovery_analyst.md` with `--format one_pager` to compile the **Customer One-Pager** (`one_pager.md`), incorporating the link to the static PNG diagram.
