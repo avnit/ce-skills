@@ -1,5 +1,6 @@
 # Core Configurations (Sensitive - NEVER SYNC)
 gcp_config.txt
+policy.yaml
 
 # Node.js / Dependencies
 node_modules/
