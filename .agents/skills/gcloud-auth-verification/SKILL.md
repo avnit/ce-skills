@@ -76,3 +76,6 @@ Based on the user's response:
 
 When planning deployment works, list this authentication check as the primary gate in your plan:
 1. **Phase 0 (Pre-Flight Auth Check)**: Run `.agents/skills/gcloud-auth-verification/scripts/verify_auth.py` and present interactive `ask_question` selection.
+
+> aside negative
+> **GKE Client ADC Warning**: The GKE `gke-gcloud-auth-plugin` helper defaults to using Application Default Credentials (ADC) rather than the active `gcloud` user context if `--use_application_default_credentials` is passed. On multi-identity workstations, verify the active ADC identity has `container.admin` and `viewer` permissions bound in the sandbox project to avoid 403 API errors during cluster command executions.

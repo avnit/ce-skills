@@ -50,3 +50,17 @@ gcloud compute networks subnets create backend-subnet \
     --enable-private-ip-google-access
 ```
 This satisfies Google Cloud Well-Architected security pillars and allows secure, private, internal routing directly to Google APIs.
+
+---
+
+## 4. GKE Autopilot Security Constraints (Warden Policies) & Node Boot Latencies
+
+### The Gotcha
+1. GKE Autopilot clusters restrict container capabilities (e.g. adding `NET_ADMIN` will trigger GKE Warden admission webhook violations).
+2. Autopilot provisions physical nodes dynamically. System pods (including `konnectivity-agent` and `kube-dns`) have a startup latency of 1-2 minutes. Executing commands (`kubectl exec`) before this delay will fail with `No agent available` or `pod does not have a host assigned`.
+
+### The Fix
+1. Omit root privileges and custom capabilities from GKE Autopilot manifests.
+2. In automated scripts, always wait for pod readiness explicitly using:
+   `kubectl wait --for=condition=Ready pod/<pod-name> --timeout=300s`
+   and avoid passing TTY flags (`-it`) in non-interactive terminal runs.
