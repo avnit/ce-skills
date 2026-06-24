@@ -11,16 +11,19 @@ layout: paginated
 Duration: 15:00
 
 ## 1. Introduction
+
 Duration: 02:00
 
 In this codelab, you will learn how to build a simple Model Context Protocol (MCP) server and deploy it to Google Cloud Run.
 
 ### What you'll learn
+
 - How to create an MCP server with FastMCP.
 - How to deploy it to Cloud Run.
 - How to test it.
 
 ## 2. Setup
+
 Duration: 03:00
 
 First, create a new directory and initialize a Python project.
@@ -33,6 +36,7 @@ pip install fastmcp
 ```
 
 ## 3. Create the Server
+
 Duration: 05:00
 
 Create a file named `server.py` with the following content:
@@ -55,6 +59,7 @@ if __name__ == "__main__":
 ```
 
 ## 4. Deploy to Cloud Run
+
 Duration: 05:00
 
 Create a `Dockerfile`:
@@ -81,6 +86,7 @@ gcloud run deploy hello-mcp-server \
 > Verification: You should see the service URL in the output.
 
 ## 5. Conclusion
+
 Duration: 01:00
 
 Congratulations! You have deployed your first MCP server to Cloud Run.

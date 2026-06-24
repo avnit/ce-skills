@@ -258,7 +258,7 @@ def verify_active_account():
             print("    gcloud config set account <ldap>@google.com\n", file=sys.stderr)
             return False
         return True
-    except Exception as e:
+    except Exception:
         return True
 
 def send_email_api(to, subject, body_or_path, is_html=False, attachment=None):

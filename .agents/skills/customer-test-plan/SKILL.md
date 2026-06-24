@@ -6,7 +6,7 @@ description: >-
 
 # Customer Test Plan (Stage 5)
 
-This skill defines the methodology for authoring the **Test Plan** (`test_plan.md`). To completely eliminate duplicated effort and establish rigid validation governance, a pre-sales Consulting Engineering Test Plan **MUST NOT** duplicate deployment logic into custom shell scripts. 
+This skill defines the methodology for authoring the **Test Plan** (`test_plan.md`). To completely eliminate duplicated effort and establish rigid validation governance, a pre-sales Consulting Engineering Test Plan **MUST NOT** duplicate deployment logic into custom shell scripts.
 
 Instead, it acts as a **Structured Test Harness Manifest** that links directly to the generated **DevSite Codelab** (`.lab.md` file) and leverages our unified **`codelab-validation`** execution engine (`tester.py`) to automate sandbox provisioning, resource deployments, and E2E verification natively.
 
@@ -27,7 +27,7 @@ Use the unified discovery and solutions architect system prompt defined in [disc
 
 Every Test Plan generated for a customer MUST conform to this unified integration standard:
 
-```markdown
+````markdown
 # Validation Test Plan & Harness Manifest: [Customer Name] - [Project Name]
 
 This Test Plan acts as the structured validation harness manifest. It binds our technical design directly to the hands-on **DevSite Codelab** and utilizes our unified **Codelab Validation Engine** (`tester.py`) to orchestrate E2E sandbox testing.
@@ -35,6 +35,7 @@ This Test Plan acts as the structured validation harness manifest. It binds our 
 ---
 
 ## 1. Target Validation Assets
+
 - **Reference Design**: `[design_blueprint.md](design_blueprint.md)`
 - **Execution Codelab**: `[customer-a-storage.lab.md](../../labs/dev/customer-a-storage/customer-a-storage.lab.md)`
 - **Verification Engine**: `[codelab-validation/tester.py](../../.agents/skills/codelab-validation/scripts/tester.py)`
@@ -51,17 +52,21 @@ python3 .agents/skills/codelab-validation/scripts/tester.py \
     labs/dev/customer-a-storage/customer-a-storage.lab.md \
     --artifact-dir /Users/shacharb/.gemini/jetski/brain/[conversation-id]
 ```
+````
 
 ### What the Validation Engine Automates:
+
 1. **Interactive Scoping**: Reads the codelab steps, parses variables (e.g., Project ID, region), and prompts for confirmation.
 2. **Sandbox Provisioning**: Connects to the pre-sales environment, links billing, and disables restrictive organization policies.
 3. **Dynamic Provisioning**: Allocates VPC Private Service Access (PSA), creates GCS HNS buckets recursively, and deploys the GKE cluster nodes.
 4. **Stateful Dynamic Claims**: Provisions GKE Filestore Enterprise (RWX) and Hyperdisk (RWO) volumes and mounts them inside microservice Pods.
 5. **Functional E2E Assertions**: Sync-writes test payloads inside pods and triggers managed Storage Transfer Service (STS) batch ingress jobs, asserting file delivery.
 6. **Automated Environmental Teardown**: Triggers project resource deletion upon validation success to ensure zero ongoing cost leakage.
+
 ```
 ---
 
 ## Gotchas & Operational Standards
 
 - **Single Source of Truth**: By routing testing through `tester.py` targeting the `.lab.md` file, any bug discovered during validation (Category A Syntax Errors) is immediately fixed inside the codelab source file itself. This ensures that both the customer tutorial and the automated testing scripts remain 100% correct and identical.
+```

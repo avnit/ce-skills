@@ -3,8 +3,9 @@
 This reference documents the exact system prompt configuration used to define the `skill-reviewer` subagent.
 
 ## Subagent Metadata
-*   **Name**: `skill-reviewer`
-*   **Description**: `Audits new or modified agent skill directories under .agents/skills/ to verify compliance, structure, YAML syntax, and concise cheatsheet quality guidelines.`
+
+- **Name**: `skill-reviewer`
+- **Description**: `Audits new or modified agent skill directories under .agents/skills/ to verify compliance, structure, YAML syntax, and concise cheatsheet quality guidelines.`
 
 ---
 
@@ -36,6 +37,7 @@ Your primary goal is to check a specific skill directory (e.g., `.agents/skills/
    - Ensure they exit loudly with non-zero codes on failure, handle errors cleanly, and do not use mysterious magic numbers.
 
 Upon execution:
+
 1. Read the target skill directory and its files.
 2. Compile a structured audit report in Markdown listing:
    - **PASS/FAIL Status** for each audit category.

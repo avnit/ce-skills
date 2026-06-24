@@ -162,7 +162,7 @@ def get_gcloud_token():
     try:
         token = subprocess.check_output(["gcloud", "auth", "print-access-token"], text=True).strip()
         return token
-    except Exception as e:
+    except Exception:
         return None
 
 def check_mcp_servers():
@@ -423,7 +423,7 @@ def main():
     print(f"    {cdp_msg}\n")
 
     mcp_ok, mcp_results = check_mcp_servers()
-    print(f"[*] MCP Servers Connectivity Check:")
+    print("[*] MCP Servers Connectivity Check:")
     if not mcp_ok:
         print(f"    FAIL: {mcp_results}\n")
         generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc_msg, cdp_ok, cdp_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path)

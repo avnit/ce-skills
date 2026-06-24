@@ -58,7 +58,7 @@ def create_google_doc_api(src_path, title):
                 doc_url += "/edit"
                 
             # Automatically push the Markdown content to populate the created blank document
-            print(f"⚡ Synchronizing local Markdown content via OneDoc push...")
+            print("⚡ Synchronizing local Markdown content via OneDoc push...")
             push_result = subprocess.run(
                 [onedoc_path, "push", src_path],
                 capture_output=True,

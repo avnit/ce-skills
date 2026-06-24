@@ -26,6 +26,7 @@ python3 .agents/skills/gcp-provisioning/scripts/create_project.py <lab_name> [ro
 ```
 
 **What it does:**
+
 - Generates a unique project ID based on `lab_name` and `round_number` (or timestamp).
 - Creates the project in the folder specified in `gcp_config.txt`.
 - Links the project to the billing account specified in `gcp_config.txt` (with retries).
@@ -40,6 +41,7 @@ bash .agents/skills/gcp-provisioning/scripts/disable_org_policies.sh PROJECT_ID
 ```
 
 **What it does:**
+
 - Disables common boolean constraints (e.g., `requireShieldedVm`, `disableServiceAccountKeyCreation`).
 - Sets list policies to `ALLOW` all values (e.g., `vmExternalIpAccess`).
 

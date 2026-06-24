@@ -9,51 +9,59 @@ This workflow orchestrates the comprehensive, sequential Solutions Engineering p
 ## Pipeline Stages
 
 ### 1. Phase 1: Scope Intake & Setup
+
 - Ingest the raw customer transcript file, call notes, or Google Doc link.
 - Initialize the unindented HTML `task.md` tracker in the agent's brain. Mark Step 1 `RUNNING`.
 - Load `prompts/discovery_analyst.md`.
 
 ### 2. Phase 2: Customer Requirements & Gap Analysis
+
 - Mark Step 2 `RUNNING`.
 - Execute `prompts/discovery_analyst.md` with `--format blueprint` to output the Lightweight **Artifact Blueprint** (`artifact_blueprint.md`).
 - Execute `prompts/discovery_analyst.md` with `--format gap_analysis` to output the **Knowledge Gap Analysis** (`gap_analysis.md`).
 - Save both files under `meeting/<customer_name>/`.
 
 ### 3. Phase 3: Google Architecture Design
+
 - Execute `prompts/discovery_analyst.md` with `--format design_blueprint` to output the **Design Blueprint** (`design_blueprint.md`) detailing best practices and a Mermaid flow.
 - Save to `meeting/<customer_name>/design_blueprint.md`.
 - **Pre-Approval Local Render**: Immediately extract the Mermaid code block from the newly created `design_blueprint.md` and compile it locally using the `creating-gcp-diagrams` skill (Phase 2, Section 3 - compile via `mermaid-cli`). Do NOT use the `-p` flag (padding) in `mermaid-cli` as it triggers configuration errors.
 - Save the rendered image as `meeting/<customer_name>/assets/design_diagram.png` and embed it directly inside `design_blueprint.md` as a standard markdown image link so it renders beautifully in standard IDE preview.
 
 ### 4. Phase 4: Gate A - Design & Topology Visual Confirmation
+
 - **Visual Confirmation Gate**: Pause execution and invoke the **`ask_question`** tool to ask the user to review and approve the Design Blueprint (which now contains the pre-rendered visual diagram).
 - **Mandatory High-Fidelity Upgrades**: Upon approval, the agent **MUST** immediately execute Phase 3 of the diagramming skill (`creating-gcp-diagrams`), spawning the Diagram Specialist Sub-Agent to compile the final, brand-aligned, icon-anchored high-definition visual asset.
 - **Zero-Overhead Automatic Ingestion**: Save this high-definition PNG directly to the **same path** (`meeting/<customer_name>/assets/design_diagram.png`), overwriting the pre-approval low-def placeholder. This guarantees that the final `design_blueprint.md` and any downstream documents (like `one_pager.md`) automatically and natively render the premium visual asset without updating any text references.
 
 ### 5. Phase 5: One-Pager & Test Plan Compilation
+
 - Execute `prompts/discovery_analyst.md` with `--format one_pager` to compile the **Customer One-Pager** (`one_pager.md`), incorporating the link to the static PNG diagram.
 - Execute `prompts/discovery_analyst.md` with `--format test_plan` to compile the lightweight, functional **Test Plan** (`test_plan.md`).
 - Save both files under `meeting/<customer_name>/`.
 
 ### 6. Phase 6: Gate B - Interactive Testing & Validation
+
 - **Validation Inquiry Gate**: Pause execution and call **`ask_question`** to ask the user if they want to run E2E verification testing.
 - If yes:
-    - Execute the `gcloud-auth-verification` skill to verify credentials.
-    - Invoke Gcp Provisioning (`create-project` workflow or `gcp-provisioning` skill) to spin up a sandbox project.
-    - Execute E2E testing based on `test_plan.md` using the centralized validation engine `tester.py`.
-    - **CRITICAL SAFETY RULE**: You **MUST** append the `--skip-cleanup` flag to the `tester.py` execution command to ensure the validation engine does not automatically teardown or delete the resources at the end of the test run.
+  - Execute the `gcloud-auth-verification` skill to verify credentials.
+  - Invoke Gcp Provisioning (`create-project` workflow or `gcp-provisioning` skill) to spin up a sandbox project.
+  - Execute E2E testing based on `test_plan.md` using the centralized validation engine `tester.py`.
+  - **CRITICAL SAFETY RULE**: You **MUST** append the `--skip-cleanup` flag to the `tester.py` execution command to ensure the validation engine does not automatically teardown or delete the resources at the end of the test run.
 
 ### 7. Phase 7: Gate C - Downstream Strategic Deliverables
+
 - Once validated, pause and call **`ask_question`** to present checkboxes allowing the user to request:
-    - Hourly pricing estimation (invokes `codelab-pricing-estimator` skill)
-    - Sandbox audit logs / validation report (invokes `codelab_audit_logging` skill)
-    - Standalone official codelab generation of the solution (invokes the `/create-codelab` workflow).
-        - **CRITICAL REUSABILITY STANDARD**: The generated codelab **MUST** be completely generic. Use a generic solution name (e.g., `gke-filestore-hyperdisk-ingress`) for the folder and files under `labs/dev/`.
-        - **ZERO CUSTOMER-SPECIFIC INFORMATION**: Ensure that **no customer-specific names, project IDs, or VPC identifiers** (such as "Customer_A", "customer-a-vpc") leak into the published codelab. All customer-specific files and identifiers must remain strictly isolated inside the `meeting/<customer_name>/` folder.
-        - **NO SKIPPED STEPS**: Do not modify files in-place or skip standard steps. You **MUST** trigger the full `/create-codelab` workflow from Phase 0.5 through Phase 5, feeding the approved `design_blueprint.md` as the intake source. Ensure the output implements all enterprise-ready standards (business problem framing, clean commented configurations, negative testing steps, and warning callouts).
+  - Hourly pricing estimation (invokes `codelab-pricing-estimator` skill)
+  - Sandbox audit logs / validation report (invokes `codelab_audit_logging` skill)
+  - Standalone official codelab generation of the solution (invokes the `/create-codelab` workflow).
+    - **CRITICAL REUSABILITY STANDARD**: The generated codelab **MUST** be completely generic. Use a generic solution name (e.g., `gke-filestore-hyperdisk-ingress`) for the folder and files under `labs/dev/`.
+    - **ZERO CUSTOMER-SPECIFIC INFORMATION**: Ensure that **no customer-specific names, project IDs, or VPC identifiers** (such as "Customer_A", "customer-a-vpc") leak into the published codelab. All customer-specific files and identifiers must remain strictly isolated inside the `meeting/<customer_name>/` folder.
+    - **NO SKIPPED STEPS**: Do not modify files in-place or skip standard steps. You **MUST** trigger the full `/create-codelab` workflow from Phase 0.5 through Phase 5, feeding the approved `design_blueprint.md` as the intake source. Ensure the output implements all enterprise-ready standards (business problem framing, clean commented configurations, negative testing steps, and warning callouts).
 
 ### 8. Phase 8: Gate D - Lifecycle Teardown & Cleanup
+
 - Pause and call **`ask_question`** to ask the user whether to persitent-keep or delete/teardown the provisioned sandbox environment.
 - If delete:
-    - Run the Cleanup section of the codelab without the `--skip-cleanup` restriction, or programmatically call `codelab-cleanup` to delete the GCP project and all associated resources (VPC, GKE, subnets, and storage buckets).
+  - Run the Cleanup section of the codelab without the `--skip-cleanup` restriction, or programmatically call `codelab-cleanup` to delete the GCP project and all associated resources (VPC, GKE, subnets, and storage buckets).
 - Update `task.md` steps to `DONE` and output a completion report.

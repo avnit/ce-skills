@@ -5,7 +5,7 @@ description: Parses Google Cloud Codelab markdown tutorials to extract terminal 
 
 # Skill: Demo-Magic Human Simulation
 
-The **Demo-Magic Human Simulation Skill** automates the creation of dynamic command-line presentations from standard Google Cloud Codelab markdown files (`.lab.md`). 
+The **Demo-Magic Human Simulation Skill** automates the creation of dynamic command-line presentations from standard Google Cloud Codelab markdown files (`.lab.md`).
 
 Instead of manually copying and pasting terminal commands during live demonstrations or screen recordings, this skill parses tutorial instructions, strips out inline terminal sample outputs using smart negative filtering, and generates a fully self-contained, standalone executable bash script. When executed, the generated script simulates realistic human typing speeds character-by-character and pauses for the presenter to press `ENTER` before firing each instruction.
 
@@ -33,6 +33,7 @@ python3 .agents/skills/demo-magic-simulation/scripts/generate_demo.py \
 ```
 
 **Default Generated Output Paths**:
+
 - Standalone Script: `labs/dev/multi-vpc-dns-forwarding/demo/multi-vpc-dns-forwarding_demo.sh`
 - Cloud Shell Wrapper: `labs/dev/multi-vpc-dns-forwarding/demo/multi-vpc-dns-forwarding_demo_cloudshell_launcher.sh`
 
@@ -50,27 +51,30 @@ python3 .agents/skills/demo-magic-simulation/scripts/generate_demo.py \
     --vars BUCKET_NAME="my-demo-bucket" CLUSTER_NAME="demo-cluster"
 ```
 
-| Flag | Description | Default Value |
-| :--- | :--- | :--- |
-| `--lab` | Absolute or relative path to the source `.lab.md` file. | **Required** |
-| `--output` | Custom destination path for the generated bash script. | `<lab_dir>/demo/<lab_basename>_demo.sh` |
-| `--speed` | Simulated human typing speed (characters per second). | `20` |
-| `--prompt` | Custom prompt prefix displayed before simulated commands. | `"$ "` |
-| `--region` | Default GCP region parameter injected into script setup. | `"us-central1"` |
-| `--zone` | Default GCP zone parameter injected into script setup. | `"us-central1-a"` |
-| `--vars` | Additional system parameter overrides in `KEY=VALUE` format. | `[]` |
+| Flag       | Description                                                  | Default Value                           |
+| :--------- | :----------------------------------------------------------- | :-------------------------------------- |
+| `--lab`    | Absolute or relative path to the source `.lab.md` file.      | **Required**                            |
+| `--output` | Custom destination path for the generated bash script.       | `<lab_dir>/demo/<lab_basename>_demo.sh` |
+| `--speed`  | Simulated human typing speed (characters per second).        | `20`                                    |
+| `--prompt` | Custom prompt prefix displayed before simulated commands.    | `"$ "`                                  |
+| `--region` | Default GCP region parameter injected into script setup.     | `"us-central1"`                         |
+| `--zone`   | Default GCP zone parameter injected into script setup.       | `"us-central1-a"`                       |
+| `--vars`   | Additional system parameter overrides in `KEY=VALUE` format. | `[]`                                    |
 
 ---
 
 ## 🎬 Running the Generated Presentation
 
 ### Option A: Local Execution
+
 Navigate to your generated demo folder and execute the standalone script directly:
+
 ```bash
 ./labs/dev/multi-vpc-dns-forwarding/demo/multi-vpc-dns-forwarding_demo.sh
 ```
 
 ### Option B: Google Cloud Shell Web Terminal (Single-Block Paste)
+
 Open the companion `_cloudshell_launcher.sh` file generated inside your `demo/` folder. It contains a single copy-pasteable heredoc block that writes out the file, applies execution permissions, and triggers the simulation automatically:
 
 ```bash
@@ -81,11 +85,13 @@ EOF
 chmod +x multi-vpc-dns-forwarding_demo.sh
 ./multi-vpc-dns-forwarding_demo.sh
 ```
+
 Simply copy the block, paste it directly into your Cloud Shell console, and the demonstration starts instantly. Because the heredoc uses quoted `'EOF'`, variables like `$PROJECT_ID` remain fully dynamic and automatically adopt your active Cloud Shell session's project mapping upon execution.
 
 ---
 
 ### Presentation Flow
+
 1. The prompt prefix appears.
 2. The script automatically simulates typing the command out character-by-character as a human.
 3. The simulation pauses, waiting for you to press **`ENTER`**.

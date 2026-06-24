@@ -14,7 +14,7 @@ Codelabs in `google3` require a specific directory structure. All files within t
 //google3/third_party/devsite/{tenant}/{lang}/codelabs/{id}/
 ├── index.lab.md        # Main content
 ├── OWNERS              # Ownership and approval
-├── METADATA            # Buganizer and and freshness 
+├── METADATA            # Buganizer and and freshness
 └── img/                # Images
     └── screenshot.png
 ```

@@ -74,12 +74,12 @@ from your_script import your_api_function
     with open(os.path.join(skill_dir, "SKILL.md"), "w", encoding="utf-8") as f:
         f.write(skill_md_content)
         
-    print(f"🚀 Success! Pre-populated skill directory initialized at:")
+    print("🚀 Success! Pre-populated skill directory initialized at:")
     print(f"   {skill_dir}/")
-    print(f"   ├── SKILL.md")
-    print(f"   ├── scripts/")
-    print(f"   ├── references/")
-    print(f"   └── assets/")
+    print("   ├── SKILL.md")
+    print("   ├── scripts/")
+    print("   ├── references/")
+    print("   └── assets/")
 
 def main():
     parser = argparse.ArgumentParser(description="Initialize a clean, pre-populated skill directory under .agents/skills/")

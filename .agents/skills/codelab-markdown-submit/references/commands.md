@@ -15,16 +15,16 @@ gcert
 
 Use `claat` to verify the rendering of your `.lab.md` files:
 
--   **`claat export -f html index.lab.md`**: Run this inside the codelab directory. It will generate an `index.html` and other assets. Check the stdout for parsing errors.
--   **`claat serve`**: Start a local web server (defaults to port 9090). This renders the codelab in a browser just as it would appear on DevSite.
+- **`claat export -f html index.lab.md`**: Run this inside the codelab directory. It will generate an `index.html` and other assets. Check the stdout for parsing errors.
+- **`claat serve`**: Start a local web server (defaults to port 9090). This renders the codelab in a browser just as it would appear on DevSite.
 
 ## PIPER/CL Lifecycle (hg/fig)
 
 As Markdown codelabs are source code, use the standard Piper commands:
 
--   **`hg citc {workspace_name}`**: Create a workspace.
--   **`hg add index.lab.md OWNERS`**: Add new files.
--   **`hg upload`**: Create the CL and upload to Piper.
+- **`hg citc {workspace_name}`**: Create a workspace.
+- **`hg add index.lab.md OWNERS`**: Add new files.
+- **`hg upload`**: Create the CL and upload to Piper.
 
 ## DevSite Staging (devsite2)
 

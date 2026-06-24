@@ -9,11 +9,13 @@ This workflow guides the Solutions Architect co-design plane to conduct customer
 ---
 
 ## 🚨 CRITICAL INTERACTION MANDATE
+
 To maintain strict integration compatibility with the CE Workbench graphical dashboard interface, **plain text chat prompting is strictly prohibited**. All intake scoping parameters, Q&A discovery selections, override justifications, and peer retry clarifications MUST be collected exclusively using the native `ask_question` tool modal.
 
 ## 🔄 Operational Workflow Lifecycle
 
 ### Phase 1: Customer Scoping Intake
+
 1. Present the active Google Cloud credentialed account and verify that the correct Argolis sandbox identity is active using the `gcloud-auth-verification` skill.
 2. Ask the human Customer Engineer (CE) if they want to:
    - **Option A: Interactive Scoping Wizard**: Walk through a live discovery session step-by-step.
@@ -27,6 +29,7 @@ To maintain strict integration compatibility with the CE Workbench graphical das
    - Business Requirements & Overall Architecture Goal
 
 ### Phase 2: Interactive WAF Discovery Loop
+
 1. Load the active session cache from `session_cache.json`. If an active cache exists for this customer, ask the CE if they wish to resume progress to prevent interview restarts.
 2. Query the active, registered **`waf-mcp-dev`** MCP server:
    - Execute the `@mcp:waf-mcp-dev:get_questionnaire_tree` tool, passing technical area, size, priority, and compliance frameworks.
@@ -39,6 +42,7 @@ To maintain strict integration compatibility with the CE Workbench graphical das
    - Update and save `session_cache.json` after each submission.
 
 ### Phase 3: CISO Evaluation & Loopback Breaker
+
 1. Compile the narrative summaries (Executive Summary, decisions, Mermaid diagrams) into clean JSON data.
 2. Merge the JSON data with `ADR_TEMPLATE.md` using the custom Jinja-free template compiler.
 3. Execute the **Principal CISO Reviewer (Agent B)** critique loop over the draft:
@@ -50,5 +54,6 @@ To maintain strict integration compatibility with the CE Workbench graphical das
    - **If FAIL continues (Retries >= 2):** Trip the circuit breaker. Publish the ADR immediately, flagged with a prominent `⚠️ PENDING HUMAN ESCALATION` banner.
 
 ### Phase 4: ADR Delivery & Artifact Staging
+
 1. Write the finalized markdown report to `reports/WAF_ADR_<customer_name>.md`.
 2. Present the full summary in the chat, highlighting open issues and including direct links to the generated report.

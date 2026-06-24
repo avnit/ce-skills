@@ -32,16 +32,17 @@ You can use the provided script to gather evidence automatically:
 ```
 
 Example:
+
 ```bash
 ./.agents/skills/codelab_audit_logging/scripts/gather_evidence.py gke-service-ext-1775761721 ./evidence.md
 ```
 
 This will create an `evidence.md` file with a table of the last 5000 audit log entries.
 
-***
+---
 
 ## Gotchas & Pitfalls
 
-*   **Log Latency**: Google Cloud Audit Logs can take up to 1-2 minutes to appear. If a resource was just created, wait or retry the script after 60 seconds.
-*   **IAM Permissions**: Reading activity logs requires `roles/logging.viewer` or `roles/viewer` on the target project. Ensure the active admin credentials possess this role.
-*   **Filter Truncation**: The script limits retrieval to the last 5000 logs (defined by `DEFAULT_LOG_LIMIT`). For long-running complex setups, refine your resource filters to prevent relevant creation events from being rotated out.
+- **Log Latency**: Google Cloud Audit Logs can take up to 1-2 minutes to appear. If a resource was just created, wait or retry the script after 60 seconds.
+- **IAM Permissions**: Reading activity logs requires `roles/logging.viewer` or `roles/viewer` on the target project. Ensure the active admin credentials possess this role.
+- **Filter Truncation**: The script limits retrieval to the last 5000 logs (defined by `DEFAULT_LOG_LIMIT`). For long-running complex setups, refine your resource filters to prevent relevant creation events from being rotated out.

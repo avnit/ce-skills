@@ -13,7 +13,6 @@ tags: web
 duration: 10:00
 description: A deeper description of the tutorial.
 feedback_link: http://go/devsite-bug
-
 ---
 ```
 

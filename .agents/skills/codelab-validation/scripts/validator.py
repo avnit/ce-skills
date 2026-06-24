@@ -543,7 +543,7 @@ def main():
         if args.keep_project:
             print("[Validator] --keep-project was passed. Retaining project.")
         else:
-            print(f"[Validator] To delete this project, execute the following command:")
+            print("[Validator] To delete this project, execute the following command:")
             print(f"  python3 .agents/skills/codelab-cleanup/scripts/cleanup_projects.py --delete {project_id} --force")
             print("="*60 + "\n")
             

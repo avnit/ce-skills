@@ -2,7 +2,6 @@
 import argparse
 import json
 import os
-import re
 import subprocess
 import sys
 
@@ -283,7 +282,7 @@ def audit_project(project_id, save_path):
         "# Deployed Sandbox Pricing Audit Report",
         "",
         f"*   **Target GCP Project**: `{project_id}`",
-        f"*   **Deterministic Audit State**: Verified via Cloud Asset Inventory",
+        "*   **Deterministic Audit State**: Verified via Cloud Asset Inventory",
         f"*   **Hourly Running Cost**: ${total_hourly_cost:.3f}",
         "",
         "## Active Billable Resources",

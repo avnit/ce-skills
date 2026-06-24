@@ -30,16 +30,16 @@ Skills shouldn't contain heavy abstractions like libraries. If code is needed, a
 
 **Create a skill when:**
 
-*   The agent cannot reliably do the job without it, even with good prompts.
-*   The workflow is real, recurring, and stable (not hypothetical or volatile).
-*   The procedure has branching logic, scripts, or domain-specific knowledge.
-*   Consistency matters — getting it wrong has real consequences.
+- The agent cannot reliably do the job without it, even with good prompts.
+- The workflow is real, recurring, and stable (not hypothetical or volatile).
+- The procedure has branching logic, scripts, or domain-specific knowledge.
+- Consistency matters — getting it wrong has real consequences.
 
 **Don't create a skill when:**
 
-*   It's a one-off task (inline instructions in the conversation are fine).
-*   The agent already handles it reliably without help.
-*   The procedure changes frequently (skills work best when workflows stabilize).
+- It's a one-off task (inline instructions in the conversation are fine).
+- The agent already handles it reliably without help.
+- The procedure changes frequently (skills work best when workflows stabilize).
 
 ---
 
@@ -57,8 +57,8 @@ Every skill resides under the **`.agents/skills/`** directory and follows this s
 
 ### SKILL.md Structure
 
-*   **Frontmatter** (YAML): Contains `name` (kebab-case, e.g., `gcp-billing-reports`) and `description` (third-person capability statement, under 1024 chars). These are the **only** things the agent reads to trigger a skill.
-*   **Body** (Markdown): Procedural cheatsheet instructions loaded AFTER the skill triggers. Keep under **500 lines** to save context window tokens.
+- **Frontmatter** (YAML): Contains `name` (kebab-case, e.g., `gcp-billing-reports`) and `description` (third-person capability statement, under 1024 chars). These are the **only** things the agent reads to trigger a skill.
+- **Body** (Markdown): Procedural cheatsheet instructions loaded AFTER the skill triggers. Keep under **500 lines** to save context window tokens.
 
 ---
 
@@ -70,27 +70,32 @@ To automatically initialize a clean, pre-populated skill directory, execute the 
 python3 .agents/skills/skill-creator/scripts/init_skill.py --name <your-skill-name>
 ```
 
-*   `<your-skill-name>`: The name of your new skill in **kebab-case** (e.g. `gke-ingress-pvc`). The script will automatically create the structural folders and pre-populate `SKILL.md`.
+- `<your-skill-name>`: The name of your new skill in **kebab-case** (e.g. `gke-ingress-pvc`). The script will automatically create the structural folders and pre-populate `SKILL.md`.
 
 ---
 
 ## Design & Writing Principles
 
 ### 1. Concise is Key
+
 The context window is shared with system prompts and conversation history. Prefer concise examples over verbose explanations. Challenge each piece: "Does the agent really need this?"
 
 ### 2. Verify, Don't Trust
+
 Include runnable validation commands, expected outputs, or concrete success criteria. If the agent cannot test whether it followed the instructions correctly, the instruction is too vague.
 
 ### 3. Avoid Menus of Alternatives
+
 Provide **one default** with a clear escape hatch, not a list of choices:
-*   ✅ "Use `pdfplumber` for text extraction. For scanned PDFs requiring OCR, use `pytesseract` instead."
-*   ❌ "You can use `pypdf`, or `pdfplumber`, or `PyMuPDF`..."
+
+- ✅ "Use `pdfplumber` for text extraction. For scanned PDFs requiring OCR, use `pytesseract` instead."
+- ❌ "You can use `pypdf`, or `pdfplumber`, or `PyMuPDF`..."
 
 ### 4. Design Scripts like Tiny CLIs
-*   Run from the command line with deterministic stdout.
-*   Fail loudly with clear error codes (never return empty results silently).
-*   Handle errors explicitly inside the script; do not punt them back to the agent.
+
+- Run from the command line with deterministic stdout.
+- Fail loudly with clear error codes (never return empty results silently).
+- Handle errors explicitly inside the script; do not punt them back to the agent.
 
 ---
 
@@ -104,11 +109,11 @@ Provide **one default** with a clear escape hatch, not a list of choices:
     git push origin <your_branch>
     ```
 
-***
+---
 
 ## Automated Skill Reviewer Subagent
 
 For automated compliance and quality audits of your skill directory, you can define and invoke the specialized **`skill-reviewer`** subagent:
-*   **System Prompt Reference**: See [skill_reviewer_prompt.md](references/skill_reviewer_prompt.md) for details.
-*   **How to Invoke**: Call `invoke_subagent` with the subagent name set to `skill-reviewer` and provide the target skill path in the prompt.
 
+- **System Prompt Reference**: See [skill_reviewer_prompt.md](references/skill_reviewer_prompt.md) for details.
+- **How to Invoke**: Call `invoke_subagent` with the subagent name set to `skill-reviewer` and provide the target skill path in the prompt.

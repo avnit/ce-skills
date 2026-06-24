@@ -94,15 +94,16 @@ The runtime environment relies entirely on standard Python packages supported na
 
 ### Core Prerequisites
 
-| Dependency | Purpose | Key Configuration |
-| :--- | :--- | :--- |
-| **Python 3.11+** | Execution engine runtime | Asynchronous processing via `asyncio` |
-| **Playwright** | CDP attachment & terminal controller | Attaches over DevTools protocol streams |
-| **Pydantic v2** | Strict schema verification | Validation of automation runbook instruction units |
+| Dependency       | Purpose                              | Key Configuration                                  |
+| :--------------- | :----------------------------------- | :------------------------------------------------- |
+| **Python 3.11+** | Execution engine runtime             | Asynchronous processing via `asyncio`              |
+| **Playwright**   | CDP attachment & terminal controller | Attaches over DevTools protocol streams            |
+| **Pydantic v2**  | Strict schema verification           | Validation of automation runbook instruction units |
 
 ### Setup Instructions
 
 Initialize the dependencies inside your active Python environment:
+
 ```bash
 pip install -r .agents/skills/lab-video-automation/resources/requirements.txt
 playwright install chromium
@@ -115,14 +116,16 @@ playwright install chromium
 Codelabs contain multiple text snippets. Executing sample terminal output examples as live shell commands breaks execution flows. The refactored engine isolates these logic steps cleanly.
 
 ### Extraction Protocol
-1. Fenced code blocks encapsulated by ````bash` or ````console` are extracted.
+
+1. Fenced code blocks encapsulated by ``bash` or ``console` are extracted.
 2. A **Negative Filter** checks sequences against sample output strings (e.g., `Credentialed accounts:`, `Status: ACTIVE`, `Output:`). Matching blocks are automatically discarded.
 3. Approved blocks are assigned a hermetic SHA-256 block hash aligning perfectly with core codelab test runners.
 4. Individual commands inside the block are parsed (concatenating trailing backslashes `\`, normalizing space tokens).
 5. The compiled map is serialized to disk as a standardized JSON runbook (`<lab_basename>.runbook.json`).
 
 ### Sample JSON Runbook Structure
-```json
+
+````json
 {
   "source_lab": "/path/to/lab.md",
   "target_project": "target-project-id",
@@ -138,13 +141,14 @@ Codelabs contain multiple text snippets. Executing sample terminal output exampl
     }
   ]
 }
-```
+````
 
 ---
 
 ## 🚀 Phase 5: Playwright Automation & Terminal Interaction
 
 Standard web fill functions fail on xterm canvases. The script anchors active cursor focus via pointer clicks and injects keystroke streams sequentially:
+
 ```python
 # Ensure the terminal canvas layer is focused
 await terminal.click(force=True)
@@ -159,12 +163,15 @@ await page.keyboard.press("Enter")
 ## ⏱️ Phase 6: Guardrail Engine, Checkpoints, & Status Tracking
 
 ### 1. Stateful Checkpoint Resumption (.state tracking)
+
 To eliminate the need to start codelabs from scratch upon encountering intermittent transient infrastructure lags, the engine tracks block completion state via `<lab_basename>.state`. If an operation fails midway, restarting the identical execution command bypasses already executed SHA-256 block hashes automatically.
 
 ### 2. Real-Time UI Dashboards (`test_status.md`)
+
 As commands inject, the engine dynamically updates a local markdown UI status tracker inside the lab source directory. External observers or automated test tools can open `test_status.md` to see visual checklist status indicators (`[x]` completed, `[/]` in-progress, `[!]` failed).
 
 ### 3. Heuristic Exceptions & Prompt Monitoring
+
 - **Pristine Delta Slicing**: Isolates terminal output appended immediately after pressing Enter. Scans the precise delta string for custom CLI exceptions (`ERROR:`, `Permission denied`, `invalid argument`), raising clean runtime breaks immediately.
 - **Interactive Deadlock Prevention**: Proactively intercepts terminal outputs matching stalled confirmation prompts (e.g., `[Y/n]`, `Enter passphrase:`), automatically streaming appropriate affirmative overrides (`y`) to prevent stalled video recordings.
 - **Visual Typing Pacing**: Applies customizable simulated typing character delays (`delay=50`) and visual post-command padding blocks (`post_command_padding_ms=2000`) ensuring screen recordings remain perfectly legible to target users.
@@ -183,7 +190,9 @@ As commands inject, the engine dynamically updates a local markdown UI status tr
 ## 📖 Operational Runbook
 
 ### 1. Pre-Compilation Dry-Run Audit
+
 Compile the decoupled JSON instruction runbook and verify generated block hashes without connecting Playwright automation streams:
+
 ```bash
 python3 .agents/skills/lab-video-automation/scripts/execute_lab.py \
     --lab labs/dev/multi-vpc-dns-forwarding/multi-vpc-dns-forwarding.lab.md \
@@ -192,7 +201,9 @@ python3 .agents/skills/lab-video-automation/scripts/execute_lab.py \
 ```
 
 ### 2. Executing the Multi-Profile Live Automation Engine
+
 Attach Playwright to your active local Google Chrome window debugging endpoint to drive screen recording automation sequences:
+
 ```bash
 python3 .agents/skills/lab-video-automation/scripts/execute_lab.py \
     --lab labs/dev/multi-vpc-dns-forwarding/multi-vpc-dns-forwarding.lab.md \
@@ -202,7 +213,9 @@ python3 .agents/skills/lab-video-automation/scripts/execute_lab.py \
 ```
 
 ### 3. Forcing Full Codelab Resets
+
 Ignore previously cached state logs to execute the video automation cycle cleanly from the beginning:
+
 ```bash
 python3 .agents/skills/lab-video-automation/scripts/execute_lab.py \
     --lab labs/dev/multi-vpc-dns-forwarding/multi-vpc-dns-forwarding.lab.md \

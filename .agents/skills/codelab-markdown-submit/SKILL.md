@@ -18,7 +18,8 @@ This skill provides procedures for the "Documentation-as-Code" workflow for DevS
 Markdown codelabs use the `.lab.md` extension and are compiled into the DevSite UI. Unlike standard documentation pages, they require specific metadata and directory structures to render the step-by-step navigation.
 
 ### What this skill provides
-1.  **Placement**: Where to put your files in `google3` 
+
+1.  **Placement**: Where to put your files in `google3`
 2.  **Standards**: Metadata and directory requirements (OWNERS, img/)
 3.  **Validation**: How to check your work before submitting
 4.  **Submission**: The CL lifecycle (hg/fig) and staging (devsite2)
@@ -39,6 +40,7 @@ Markdown codelabs use the `.lab.md` extension and are compiled into the DevSite 
 7.  **CL Description**: Add the staging link to the CL description to help reviewers.
 
 ## References
+
 - [metadata.md](references/metadata.md) - Required YAML fields
 - [structure.md](references/structure.md) - Mandatory files (OWNERS, img/)
 - [commands.md](references/commands.md) - Command recipes for claat and devsite2

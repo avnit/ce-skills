@@ -1,6 +1,3 @@
-import json
-import os
-import re
 
 def generate_html_table(title, objective, overall_status, steps):
     """

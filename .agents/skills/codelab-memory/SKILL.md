@@ -16,6 +16,7 @@ python3 .agents/skills/codelab-memory/scripts/query_rag.py --query "your search 
 ```
 
 **When to use:**
+
 - **Phase 1 (Research)**: Search for gotchas related to the topic.
 - **Phase 4 (Validation)**: If a test fails, search for the error message to see if there is a known solution.
 
@@ -28,5 +29,6 @@ python3 .agents/skills/codelab-memory/scripts/query_rag.py --learn --problem "De
 ```
 
 **When to use:**
+
 - After successfully fixing a non-obvious error during validation.
 - After receiving critical feedback from the user that represents a general rule.

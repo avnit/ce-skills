@@ -5,6 +5,7 @@ description: Orchestrate local E2E Prompt Evaluation of System A (Base branch) a
 This workflow automates the process of local prompt regression testing within a pure Git and GitHub local repository environment in JetSki. To guarantee 100% sterile execution and prevent "cheating" (context contamination) or concurrent environment collisions, both System A (Baseline) and System B (Candidate) are executed strictly inside isolated Git worktrees checked out from fully pushed remote commits, utilizing decoupled local mailboxes and process-level `CLOUDSDK_CORE_PROJECT` project isolation.
 
 ## Dynamic Isolation and Thread-Safety Contract
+
 1. **Commit-First Testing**: Validations are executed strictly against fully committed and pushed branch commits. No uncommitted active workspace files are allowed in the sandboxes.
 2. **decoupled Local Mailboxes**: The validation framework (`.agents/`) is staged locally in each worktree so that step caches, status trackings, and mailboxes (`.agents/mailboxes/`) are completely private and decoupled per run.
 3. **Active Project Isolation**: To prevent concurrent `gcloud config set project` collisions between parallel process trees sharing the same Unix user, the orchestrator dynamically binds the provisioned GCP project ID at the process environment level using the environment variable:
@@ -13,6 +14,7 @@ This workflow automates the process of local prompt regression testing within a 
 ---
 
 Required parameters from the user:
+
 1. **Golden Prompt Suite**: A local path to the test suite JSON (e.g., `.agents/scripts/tiny_golden_prompts.json`).
 2. **Target Base Ref**: The git branch to compare against (default: `origin/main`).
 

@@ -74,7 +74,7 @@ def calculate_trajectory_score(workspace_path):
         if os.path.exists(progress_file):
             try:
                 with open(progress_file, 'r') as f:
-                    prog = json.load(f)
+                    _prog = json.load(f)
                 # Mock stability check
                 if bugs_count > 0:
                     stability = max(0.3, 1.0 - (0.1 * bugs_count))
@@ -223,7 +223,7 @@ def parse_directory_runs(dir_path):
                     js = json.loads(content)
                     if js.get("status") == "FAILED" or js.get("error_logs"):
                         is_fail = True
-                except:
+                except Exception:
                     pass
             
             if is_fail:
@@ -326,7 +326,7 @@ def main():
                 diff = compute_dict_diff(dict_a, dict_b)
                 if diff:
                     structural_diff[fname] = diff
-            except:
+            except Exception:
                 # If parsing fails (e.g. not valid JSON), do a simple line-based similarity check
                 cleaned_a = re.sub(r'\s+', ' ', content_a).strip()
                 cleaned_b = re.sub(r'\s+', ' ', content_b).strip()
@@ -378,7 +378,7 @@ def main():
     if regression_gate_status == "PASSED":
         summary_findings = "Parity checks passed. System B achieves high quality and matches execution logic of System A without regression."
     else:
-        summary_findings = f"System B exhibits degradations: "
+        summary_findings = "System B exhibits degradations: "
         if verdict_quality == "FAILED":
             summary_findings += f"Quality rating ({qual_b*100:.1f}%) is below target ({args.min_quality*100:.1f}%). "
         if verdict_determinism == "FAILED":

@@ -20,7 +20,9 @@ python3 .agents/skills/git-update/scripts/git_update.py -m "Your commit message"
 ```
 
 ### Automated / Headless CI Execution (Non-Interactive Mode)
+
 To execute synchronizations autonomously without hanging on manual standard input confirmation barriers, pass the `--yes` flag:
+
 ```bash
 python3 .agents/skills/git-update/scripts/git_update.py -m "Your commit message" -y
 ```
@@ -28,6 +30,7 @@ python3 .agents/skills/git-update/scripts/git_update.py -m "Your commit message"
 ---
 
 ## Agent Implementation Directives
+
 Whenever executing this skill on behalf of the user, **agents MUST initialize and maintain a standardized HTML task tracking table (`task.md`)** completely flush left without leading spaces. Update row progression states dynamically as each git cascade step resolves.
 
 ---
@@ -41,7 +44,7 @@ Whenever executing this skill on behalf of the user, **agents MUST initialize an
 
 ## Arguments
 
-*   `-m`, `--message`: The commit message (required).
-*   `--main-branch`: The name of the main branch to merge from (default: `main`).
-*   `--path`: The path to stage and commit (default: `.`).
-*   `-y`, `--yes`: Automatically confirm all permission requests (non-interactive override).
+- `-m`, `--message`: The commit message (required).
+- `--main-branch`: The name of the main branch to merge from (default: `main`).
+- `--path`: The path to stage and commit (default: `.`).
+- `-y`, `--yes`: Automatically confirm all permission requests (non-interactive override).

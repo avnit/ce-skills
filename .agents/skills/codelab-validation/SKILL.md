@@ -50,7 +50,7 @@ Every invocation starts by checking `.tester_state/progress.json`.
          submitted, specific data is loaded).
        - **Environment Configuration**: Does it imply specific settings or
          permissions? (e.g., IAM roles, APIs enabled, quotas).
-     If found, record:
+         If found, record:
      - `prerequisites`: A list of strings describing conditions that must be met.
    - If no prerequisites, set `prerequisites` to [].
 
@@ -74,39 +74,36 @@ Every invocation starts by checking `.tester_state/progress.json`.
 
 **`pending`** (no prerequisite, or prerequisite is null):
 → Execute the step. Set status to `done`.
-  - Set `execution_summary` to key outcome (e.g. "Resource X created").
-  - Advance.
+
+- Set `execution_summary` to key outcome (e.g. "Resource X created").
+- Advance.
 
 **`pending`** (has prerequisites):
 → Verify that all prerequisites are met.
 → If met: execute the step. Set `done`.
-  - Set `execution_summary` to key outcome.
-  - Advance.
-→ **Blocked State Strategy**:
-  1. Determine if the environment supports persistence (Check if
-     `~/.gemini/smith/` exists).
-  2. If yes: You **MUST** immediately invoke the **smith-monitoring** skill to
-     register a persistent monitor for this blocker. Set status to `blocked`.
-  3. If no (Standard JetSki):
-    → **Check if human intervention is required** (e.g., "Submit the CL"):
-      - If yes: Notify the user, set status to `blocked`.
-        - **Provide ALL related links** (e.g., CL link, console URL).
-        - Set `blocked_reason` to "waiting for user".
-        - Set `execution_summary` to specific request (e.g., "Waiting for CL 123456 submission").
-        - Wait.
-    → Else: set status to `blocked`.
-        - Set `blocked_reason` to "prerequisite not met".
-        - Set `execution_summary` to failure detail (e.g., "Cluster not ready: some error detail").
-        - Record `last_check` timestamp.
+
+- Set `execution_summary` to key outcome.
+- Advance.
+  → **Blocked State Strategy**:
+
+1. Determine if the environment supports persistence (Check if
+   `~/.gemini/smith/` exists).
+2. If yes: You **MUST** immediately invoke the **smith-monitoring** skill to
+   register a persistent monitor for this blocker. Set status to `blocked`.
+3. If no (Standard JetSki):
+   → **Check if human intervention is required** (e.g., "Submit the CL"):
+   - If yes: Notify the user, set status to `blocked`. - **Provide ALL related links** (e.g., CL link, console URL). - Set `blocked_reason` to "waiting for user". - Set `execution_summary` to specific request (e.g., "Waiting for CL 123456 submission"). - Wait.
+     → Else: set status to `blocked`. - Set `blocked_reason` to "prerequisite not met". - Set `execution_summary` to failure detail (e.g., "Cluster not ready: some error detail"). - Record `last_check` timestamp.
 
 **`blocked`**:
 → Verify prerequisites again.
 → Met: execute the step. Set `done`.
-  - Set `execution_summary` to key outcome.
-  - Advance.
-→ Not met: increment `check_attempts`. Stay `blocked`.
-→ 3+ consecutive failures: set `failed`.
-  - Set `execution_summary` to "Repeated prerequisite failure".
+
+- Set `execution_summary` to key outcome.
+- Advance.
+  → Not met: increment `check_attempts`. Stay `blocked`.
+  → 3+ consecutive failures: set `failed`.
+- Set `execution_summary` to "Repeated prerequisite failure".
 
 **`done`**:
 → Advance to next step.
@@ -135,37 +132,39 @@ To provide the user with real-time visual status feedback directly in their IDE 
 
 When asked, or when validation completes, or when report error in bug:
 
--   Read all state files.
--   Produce `report/validation-report.md`:
-    -   Summary table: step | title | status | execution_summary | blocked
-        duration.
-    -   Overall verdict: COMPLETED or FAILED.
-    -   For failed/blocked steps: details and last output.
-    -   Codelab Improvements: Suggestions to make the codelab more robust.
+- Read all state files.
+- Produce `report/validation-report.md`:
+  - Summary table: step | title | status | execution_summary | blocked
+    duration.
+  - Overall verdict: COMPLETED or FAILED.
+  - For failed/blocked steps: details and last output.
+  - Codelab Improvements: Suggestions to make the codelab more robust.
 
 ### 🚨 Error Classification & Handling Protocol
 
 When a terminal command fails during validation execution, you **MUST** immediately classify the failure category to execute the correct remediation path:
 
 #### 1. Category A: API & Command Syntax Errors
-*   **Indicators**: `gcloud` error codes representing invalid flags, unknown commands, missing arguments, YAML syntax mismatches, or `command not found`.
-*   **Protocol (Immediate Self-Healing)**: **DO NOT RETRY.** Retrying a syntax error is useless. You MUST immediately:
-    1. Pause command execution.
-    2. Search documentation natively (`search_documents` or `search_web`) to retrieve the exact working command syntax and flag parameters.
-    3. Directly edit and fix the command block inside the `.lab.md` file in your workspace.
-    4. Return the complete, fixed file in the `fixed_content` schema field.
-    5. Immediately resume/re-execute the step with the corrected command.
+
+- **Indicators**: `gcloud` error codes representing invalid flags, unknown commands, missing arguments, YAML syntax mismatches, or `command not found`.
+- **Protocol (Immediate Self-Healing)**: **DO NOT RETRY.** Retrying a syntax error is useless. You MUST immediately:
+  1. Pause command execution.
+  2. Search documentation natively (`search_documents` or `search_web`) to retrieve the exact working command syntax and flag parameters.
+  3. Directly edit and fix the command block inside the `.lab.md` file in your workspace.
+  4. Return the complete, fixed file in the `fixed_content` schema field.
+  5. Immediately resume/re-execute the step with the corrected command.
 
 #### 2. Category B: Transient Infrastructure & Propagation Blocks
-*   **Indicators**: Active API enablement delays (e.g., *"API Compute is being enabled..."*), `503 Service Unavailable`, network creation timeouts, or resource state conflicts (e.g., Spanner/MIG resource exists but is not yet active).
-*   **Protocol (Stateful Polling & Retry)**: You MUST execute state-based polling up to **3 times**:
-    1. Update the step status to `blocked`.
-    2. Set `blocked_reason` to "waiting for resource propagation".
-    3. Wait for 60 seconds.
-    4. Re-verify/re-execute the command.
-    5. If the blocker persists after 3 consecutive attempts, set the status to `failed`, stop execution, and file a bug in the issues tracker as defined in the Bug Reporting section.
 
-- If the failure persists or is unrecoverable, **stop execution**, file a bug using the
+- **Indicators**: Active API enablement delays (e.g., _"API Compute is being enabled..."_), `503 Service Unavailable`, network creation timeouts, or resource state conflicts (e.g., Spanner/MIG resource exists but is not yet active).
+- **Protocol (Stateful Polling & Retry)**: You MUST execute state-based polling up to **3 times**:
+  1. Update the step status to `blocked`.
+  2. Set `blocked_reason` to "waiting for resource propagation".
+  3. Wait for 60 seconds.
+  4. Re-verify/re-execute the command.
+  5. If the blocker persists after 3 consecutive attempts, set the status to `failed`, stop execution, and file a bug in the issues tracker as defined in the Bug Reporting section.
+
+* If the failure persists or is unrecoverable, **stop execution**, file a bug using the
   **Issues Tracker or Logging System**
   (e.g., log the error to a local file, or use an available issue tracker. Google-internal users can use `/google/bin/releases/issues-cli/issues create --title "[Codelab Failure] <Title>" --description "<Details>" --component_id 2022529`),
   and **notify the user with the bug link**.

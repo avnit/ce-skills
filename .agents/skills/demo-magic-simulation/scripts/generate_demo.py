@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import os
 import sys
 import argparse
 import re
@@ -213,7 +212,7 @@ def parse_codelab(lab_path: Path, output_path: Path, speed: int, prompt: str, re
     # Make executable directly via chmod
     try:
         output_path.chmod(0o755)
-    except Exception as e:
+    except Exception:
         pass
         
     # Compile secondary side-by-side Cloud Shell copy-paste launcher block inside the same demo folder

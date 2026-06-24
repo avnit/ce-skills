@@ -5,14 +5,16 @@ description: Orchestrate the end-to-end automated conversion of hosted Qwiklabs 
 Consult the **qwiklabs-to-codelab** skill to steer the multi-phase content extraction, boilerplate filtering, and document compilation sequence ensuring 100% technical execution consistency.
 
 Required parameters from the user:
+
 1. Target Input Source: Google Doc link, plain text submission/file path, or a target hosted laboratory web URL for live capture (e.g., `https://partner.cloudskillsboost.google/focuses/...`).
 
 Overall Orchestration Lifecycle:
+
 1. **Phase 0: Interactive Parameter Elicitation Gate**
    - **Interactive Parameter Inquiry**: Before initiating the capture or parser, the orchestrator MUST invoke the **`ask_question`** tool to present a parameter configuration modal to the user:
-     *   **Authors**: Prompt the user to specify the author list (propose `Practice CE` as the recommended choice).
-     *   **Codelab ID & Suggested Folder Name**: Proactively suggest a clean, lowercase hyphenated directory name and identifier based on the source lab title, and allow the user to modify or accept it.
-     *   **Suggested Keywords**: Proactively suggest a set of technical keywords based on the lab technology, and allow the user to modify or accept them.
+     - **Authors**: Prompt the user to specify the author list (propose `Practice CE` as the recommended choice).
+     - **Codelab ID & Suggested Folder Name**: Proactively suggest a clean, lowercase hyphenated directory name and identifier based on the source lab title, and allow the user to modify or accept it.
+     - **Suggested Keywords**: Proactively suggest a set of technical keywords based on the lab technology, and allow the user to modify or accept them.
 2. **Phase 1: Source Intake & Ingestion Sequence**
    - Consult the **qwiklabs-to-codelab** skill instructions alongside core repository formatting standards.
    - **Live Browser Extraction**: If the user provides a specific hosted web URL, immediately invoke the **`browser_subagent`** tool to retrieve target content using these explicit parameters:

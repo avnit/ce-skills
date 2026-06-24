@@ -3,7 +3,6 @@ import subprocess
 import sys
 import os
 import re
-import random
 import time
 
 CONFIG_FILE = "gcp_config.txt"
@@ -136,7 +135,7 @@ def main():
         print(f"Attempting to link billing account (attempt {i+1}/{retries})...")
         billing_cmd = f"gcloud beta billing projects link {project_id} --billing-account={config['billing_account']}"
         if run_command(billing_cmd, args.dry_run):
-            print(f"Successfully ran billing link command. Waiting 10 seconds for propagation...")
+            print("Successfully ran billing link command. Waiting 10 seconds for propagation...")
             if not args.dry_run:
                 time.sleep(10)
             if is_billing_enabled(project_id, dry_run=args.dry_run):

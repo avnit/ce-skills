@@ -24,8 +24,8 @@ file a bug with the following details:
 **Execution report**:
 
 - Includes the content of final report generated in **Generating a Report** section:
-    - Summary table of steps and status.
-    - Overall verdict.
-    - Details and last output for failed/blocked steps.
-    - Codelab Improvements (if any).
+  - Summary table of steps and status.
+  - Overall verdict.
+  - Details and last output for failed/blocked steps.
+  - Codelab Improvements (if any).
 - **IMPORTANT**: Include the actual content of the report, not just a link to the file.

@@ -14,7 +14,7 @@ Before executing any workflow run, deploying workloads, provisioning resources, 
    - Run `python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py` to retrieve the active and credentialed accounts.
 
 2. **Mandatory ask_question Modal**:
-   - You **MUST** present the active credentialed account options to the user using the **`ask_question`** tool. 
+   - You **MUST** present the active credentialed account options to the user using the **`ask_question`** tool.
    - Populate the modal choices dynamically (Keep active, Switch to existing accounts, Authenticate new account, Configure ADC).
    - If the user selects a different existing account, you **MUST** proactively execute `gcloud config set account <ACCOUNT>` on their behalf before running the workflow.
 

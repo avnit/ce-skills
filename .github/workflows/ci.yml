@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Prettier
         run: npm install -g prettier
@@ -43,16 +43,13 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
-        with:
-          enable-cache: true
 
       - name: Set up Python
         run: uv python install 3.12
 
       - name: Ruff Linter Check
         run: |
-          uv pip install ruff
-          uv run ruff check .agents/scripts/ .agents/skills/*/scripts/
+          uvx ruff check .agents/scripts/ .agents/skills/*/scripts/
 
   # --------------------------------------------------------------------
   # 3. JIT Prompt Manifest Check — Ensures compiled_subagents.json isn't stale
@@ -66,7 +63,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Recompile Prompts Manifest
         run: |
@@ -95,14 +92,22 @@ jobs:
 
       - name: Fmt Check (Recursive)
         run: |
-          terraform fmt -check -recursive labs/dev/
+          if [ -d "labs/dev" ]; then
+            terraform fmt -check -recursive labs/dev/
+          else
+            echo "labs/dev directory not found, skipping terraform fmt."
+          fi
 
       # Loop recursively through all GKE/Filestore subdirectories containing HCL to validate syntax
       - name: Validate Terraform (All Dev Labs)
         run: |
-          for dir in $(find labs/dev -type f -name "*.tf" -exec dirname {} \; | sort -u); do
-            echo "Initializing and validating Terraform in: $dir"
-            cd $GITHUB_WORKSPACE/$dir
-            terraform init -backend=false
-            terraform validate
-          done
+          if [ -d "labs/dev" ]; then
+            for dir in $(find labs/dev -type f -name "*.tf" -exec dirname {} \; | sort -u); do
+              echo "Initializing and validating Terraform in: $dir"
+              cd $GITHUB_WORKSPACE/$dir
+              terraform init -backend=false
+              terraform validate
+            done
+          else
+            echo "labs/dev directory not found, skipping terraform validate."
+          fi

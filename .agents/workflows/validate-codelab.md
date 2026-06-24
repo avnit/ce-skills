@@ -5,6 +5,7 @@ description: Orchestrate the end-to-end automated testing and validation of a co
 This workflow automates the process of extracting commands and validating a codelab end-to-end. It handles source downloading/parsing, sandboxed project provisioning, stateful step-by-step command execution via the `tester.py` engine, report compilation, and interactive cleanup.
 
 Required parameters from the user:
+
 1. **Codelab Source**: A local path to a markdown file (e.g., `labs/dev/swp-basics/swp-basics.lab.md`) OR a public HTTP/HTTPS URL to a hosted codelab or markdown content.
 2. **Project Strategy**: Choice of provisioning a brand-new temporary GCP sandbox project (recommended for isolation) OR specifying an existing active GCP project ID.
 

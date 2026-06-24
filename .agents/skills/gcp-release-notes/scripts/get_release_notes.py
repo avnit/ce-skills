@@ -126,7 +126,7 @@ def list_products():
                 # Parse product names from markdown table
                 for line in content.splitlines():
                     line = line.strip()
-                    if line.startswith('|') and not 'Product Name' in line and not ':---' in line:
+                    if line.startswith('|') and 'Product Name' not in line and ':---' not in line:
                         parts = line.split('|')
                         if len(parts) > 1:
                             prod = parts[1].strip()
@@ -286,7 +286,7 @@ def search_notes(topic, release_type, start_date, limit, output_format, save_pat
             alignments.append(":---")
             
         lines = [
-            f"## Google Cloud Release Notes: Search Results",
+            "## Google Cloud Release Notes: Search Results",
             "",
             f"*   **Topic/Keyword**: \"{topic or 'ALL'}\"",
             f"*   **Release Type Filter**: {release_type or 'ALL'}",

@@ -8,6 +8,7 @@ description: Dynamically binds the active developer's Systems Engineering Person
 The user environment is operating under the following primary Customer Engineering role:
 
 ## Active Role Focus: Practice CE
+
 - **Primary Objectives**: Focuses on deep specialized technical domains like Networking, Infrastructure, Security, Data, and AI. Artifacts prioritize deep technical design, precise topology diagrams, exact CLI flags, and granular configurations.
 - **Mapped Architectural Configurations (Mandatory Prompts Binding)**:
   - Target Audience: `Cloud Architect / Enterprise Operator`

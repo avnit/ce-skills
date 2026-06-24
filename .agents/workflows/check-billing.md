@@ -9,6 +9,7 @@ This workflow guides you through compiling and reviewing your Month-to-Date (MTD
 ## Operational Workflow
 
 ### Phase 1: Identity & Credentials Verification
+
 1.  **Active Account**: BigQuery billing export queries require access to the `billing-350700` billing project. Verify your active identity:
     ```bash
     python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py
@@ -16,6 +17,7 @@ This workflow guides you through compiling and reviewing your Month-to-Date (MTD
 2.  The active account should be one with BigQuery read access over Argolis resources (e.g. your primary sandbox admin or corporate employee account).
 
 ### Phase 2: Run Billing Report
+
 1.  Prompt the user to select the type of billing report they wish to compile:
     - **`project` (Default)**: Shows MTD spend broken down by GCP Project. (Most useful for spotting resource leakage).
     - **`service`**: Shows MTD spend broken down by GCP Service (Compute Engine, Cloud SQL, etc.).
@@ -29,6 +31,7 @@ This workflow guides you through compiling and reviewing your Month-to-Date (MTD
 3.  Display the rendered Markdown tables from the report cleanly in the chat to present the cost review.
 
 ### Phase 3: Cost Control Cleanup Actions
+
 1.  Scan the generated Project MTD Cost table for any unused or high-cost sandbox projects (e.g. projects costing $10+ that are no longer active).
 2.  If any are identified, ask the user if they would like to execute the **`codelab-cleanup`** workflow to delete the project and immediately halt further billing:
     ```bash
@@ -36,6 +39,7 @@ This workflow guides you through compiling and reviewing your Month-to-Date (MTD
     ```
 
 ### Phase 4: Email Report Delivery (Interactive)
+
 1.  Invoke the `ask_question` tool to prompt the user if they would like to email the compiled billing report to themselves or colleagues:
     - **Question**: "Would you like to email this beautifully compiled MTD Billing Report as an HTML card?"
     - **Options**:

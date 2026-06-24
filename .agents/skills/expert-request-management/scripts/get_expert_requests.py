@@ -156,9 +156,9 @@ def compile_expert_requests(year, output_format, save_path):
         # Generate title and metadata
         title = f"## Service CloudBI: Expert Requests Pivot Dashboard [{year}]"
         metadata = [
-            f"*   **Target Database**: `concord-prod.service_cloudbi`",
-            f"*   **Region Filter**: NORTHAM",
-            f"*   **Opportunity Stages**: Qualify, Refine, Tech Eval, Proposal, Implementation",
+            "*   **Target Database**: `concord-prod.service_cloudbi`",
+            "*   **Region Filter**: NORTHAM",
+            "*   **Opportunity Stages**: Qualify, Refine, Tech Eval, Proposal, Implementation",
             f"*   **Report Compiled At**: {datetime.now().strftime('%Y-%m-%d %I:%M %p')}",
             "",
             "---"

@@ -107,7 +107,7 @@ def main():
         
         print(merge_res.stdout)
         if merge_res.returncode != 0:
-            print(f"Merge conflict or error occurred. Please resolve manually.", file=sys.stderr)
+            print("Merge conflict or error occurred. Please resolve manually.", file=sys.stderr)
             print(merge_res.stderr, file=sys.stderr)
             sys.exit(merge_res.returncode)
         print("Merge completed successfully.")

@@ -30,25 +30,32 @@ Every file authored by sub-agents must be routed explicitly into its correspondi
 When executing a workspace organization sweep, follow this explicit interactive protocol:
 
 ### 📋 Step 1: Audit Workspace Root
+
 Run the local audit script to discover flat root files and untracked directories programmatically:
+
 ```bash
 python3 .agents/skills/workspace-organizer/scripts/audit_workspace.py
 ```
+
 - **Mandatory Root File Whitelist (Ignore Rules)**: Under no circumstances should the audit script or agent propose to relocate or delete critical configuration and system files that are mandated to sit directly in the repository root. You MUST automatically whitelist and ignore:
-  * `gcp_config.txt` (GCP Provisioning Credentials)
-  * `.gitignore` (Git Exclusion List)
-  * `.antigravityignore` (Platform Exclusion List)
-  * `README.md` (Repository Overview)
+  - `gcp_config.txt` (GCP Provisioning Credentials)
+  - `.gitignore` (Git Exclusion List)
+  - `.antigravityignore` (Platform Exclusion List)
+  - `README.md` (Repository Overview)
 
 ### 📊 Step 2: Author Live Audit Report Artifact
+
 **CRITICAL DECOUPLED UI RULE**: Do NOT output complex comparative markdown tables directly into terminal responses or `ask_question` title fields, as interactive UI modals strip and collapse line breaks and grid syntax, making them unreadable.
 Instead, author a dedicated live full markdown artifact file (`workspace_audit_report.md`) saved to the active conversation artifacts directory (`<appDataDir>/brain/<conversation-id>/workspace_audit_report.md`). Structure the file beautifully with standard Markdown formatting:
+
 - **Executive Summary**: Total flat files discovered.
 - **Findings Grid**: Clear table listing `Asset Name`, `Current Location`, `Proposed Action` (Move, Delete, Ignore), and `Target Namespace Folder`.
 - **Visual Guidance**: GitHub alerts highlighting specific file risks or dependencies.
 
 ### 🛑 Step 3: Require Explicit User Approval Gateway
+
 Invoke the **`ask_question`** tool to solicit explicit multiple-choice consent. Point the question title directly to the live markdown report file using clickable links so the user can read the grid natively in their IDE preview tab:
+
 - `question`: "Please review the live Workspace Audit Report artifact ([workspace_audit_report.md](file:///<appDataDir>/brain/<conversation-id>/workspace_audit_report.md)). How would you like to address these flat repository findings?"
 - `options`:
   - "(Recommended) Yes, I approve the complete mitigation plan. Execute the proposed moves and cleanups."
@@ -57,4 +64,5 @@ Invoke the **`ask_question`** tool to solicit explicit multiple-choice consent. 
 - `is_multi_select`: false
 
 ### 🚀 Step 4: Execute Actions Safely
+
 Only upon receiving explicit user confirmation via the `ask_question` tool response, execute the finalized commands sequentially in the terminal. Update the active tracking file (`task.md`) to reflect the completed relocations.

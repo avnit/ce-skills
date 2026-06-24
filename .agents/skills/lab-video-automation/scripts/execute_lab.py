@@ -30,10 +30,9 @@ import re
 import sys
 import json
 import glob
-import urllib.request
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Tuple
 from pydantic import BaseModel, Field
-from playwright.async_api import async_playwright, Page, TimeoutError as PlaywrightTimeoutError
+from playwright.async_api import async_playwright, Page
 
 # Configure standard stream logging
 logging.basicConfig(
@@ -249,8 +248,8 @@ class ParsingEngine:
                 extracted_commands: List[str] = []
                 current_cmd = ""
                 
-                for l in lines:
-                    l_str = l.strip()
+                for line in lines:
+                    l_str = line.strip()
                     if not l_str or l_str.startswith('#'):
                         continue
                         
@@ -558,7 +557,7 @@ class ExecutionEngine:
                         
                         for p_cnt in range(max_polls):
                             content = await terminal.inner_text()
-                            lines = [l.strip() for l in content.split('\n') if l.strip()]
+                            lines = [line.strip() for line in content.split('\n') if line.strip()]
                             
                             if lines:
                                 last_line = lines[-1]

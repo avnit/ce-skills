@@ -12,6 +12,7 @@ This skill provides tools to list and delete Google Cloud projects created durin
 This skill relies on the same configuration as `gcp-provisioning`. Ensure you have a `gcp_config.txt` file in your working directory or in the skill directory of `gcp-provisioning`.
 
 The file must contain:
+
 ```text
 folder_id=YOUR_FOLDER_ID
 ```
@@ -25,9 +26,10 @@ python3 .agents/skills/codelab-cleanup/scripts/cleanup_projects.py --list
 ```
 
 **What it does:**
-*   Reads `folder_id` from `gcp_config.txt`.
-*   Queries GCP for all projects in that folder.
-*   Displays the name, project ID, project number, creation time, and state.
+
+- Reads `folder_id` from `gcp_config.txt`.
+- Queries GCP for all projects in that folder.
+- Displays the name, project ID, project number, creation time, and state.
 
 ## Deleting a Project
 
@@ -38,8 +40,9 @@ python3 .agents/skills/codelab-cleanup/scripts/cleanup_projects.py --delete PROJ
 ```
 
 **What it does:**
-*   Prompts for confirmation before proceeding.
-*   Triggers the deletion of the specified project.
+
+- Prompts for confirmation before proceeding.
+- Triggers the deletion of the specified project.
 
 To force deletion without confirmation (use with caution):
 
@@ -54,7 +57,8 @@ To clean up all projects in the configured folder (use with extreme caution):
 ```bash
 python3 .agents/skills/codelab-cleanup/scripts/cleanup_projects.py --delete-all
 ```
-*   This will list all projects and ask for a final confirmation before deleting all of them.
+
+- This will list all projects and ask for a final confirmation before deleting all of them.
 
 ---
 
@@ -67,12 +71,12 @@ python3 .agents/skills/codelab-cleanup/scripts/sweeper.py --age 4 --force
 ```
 
 **What it does:**
-*   Queries all active projects under the configured `folder_id`.
-*   Calculates each project's active age in UTC against its `createTime` property.
-*   Automatically deletes projects older than the `--age` limit (default: 4 hours) when `--force` is active.
-*   By default, running without `--force` performs a safe **Dry-Run** print audit without making deletion API calls.
+
+- Queries all active projects under the configured `folder_id`.
+- Calculates each project's active age in UTC against its `createTime` property.
+- Automatically deletes projects older than the `--age` limit (default: 4 hours) when `--force` is active.
+- By default, running without `--force` performs a safe **Dry-Run** print audit without making deletion API calls.
 
 ### Sidecar Background Daemon Scheduling
 
 The sweeper is packaged with a standard `sidecar.json` configuration which can be registered inside background agent schedulers to trigger automated cleanup runs on an hourly loop dynamically.
-

@@ -9,6 +9,7 @@ Steer automated structural audits across the repository to identify misplaced fi
 ## Overall Orchestration Lifecycle
 
 ### Phase 1: Scope Intake & Target Definition
+
 1. Consult the **workspace-organizer** skill manifest (`.agents/skills/workspace-organizer/SKILL.md`) to load established directory boundaries and file placement patterns.
 2. Invoke the **`ask_question`** tool to present an interactive intake modal allowing the user to configure the exact cleanup scope:
    - **Question 1 (Audit Scope Target)**:
@@ -26,6 +27,7 @@ Steer automated structural audits across the repository to identify misplaced fi
      - `is_multi_select`: false
 
 ### Phase 2: Classification & Re-structuring
+
 1. Initialize the live task tracking board (`task.md`) to reflect structural audit progress.
 2. Run classification heuristics mapping identified flat assets to appropriate target buckets:
    - Programmatic execution hooks (`scripts/`)

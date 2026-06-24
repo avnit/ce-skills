@@ -30,47 +30,57 @@ Use this exact structure to output the analysis to the user:
 # Customer Knowledge Gap Analysis: [Customer Name]
 
 ## 1. Executive Summary
+
 [1-2 paragraphs outlining the customer's business goals, discovery session context, and high-level summary of the most critical knowledge and operational gaps identified].
 
 ## 2. Knowledge Gap Domains
 
 ### 🏗️ Architecture & Infrastructure Operationalization
+
 - **Customer Current Capability**: [Current understanding of GCP architectures, sizing, persistent storage, VPC structures]
 - **Target Capability Required**: [What they need to understand to successfully deploy and run the target architecture]
 
 ### 🔒 Security, Governance & Identity Lifecycle
+
 - **Customer Current Capability**: [Current security understanding, managed STS, Workload Identity, secrets lifecycle]
-- **Target Capability Required**: 
+- **Target Capability Required**:
 
 ### 🚀 Developer Velocity & CI/CD Pipelines
+
 - **Customer Current Capability**: [Current pipeline patterns, automated validation, GCS layout strategies]
-- **Target Capability Required**: 
+- **Target Capability Required**:
 
 ---
 
 ## 3. Gap Analysis & Severity Matrix
 
-| Knowledge / Operational Domain | Customer Current Capability | Target Capability Required | Gap Severity (High/Med/Low) | Recommended Enablement or GCP Solution |
-| :--- | :--- | :--- | :--- | :--- |
-| e.g., GKE Shared Storage | Understads basic NFS/EFS but lacks experience with GKE Filestore CSI driver. | Managing regional HA Filestore storage mounts in GKE. | High | GKE storage classes training & Google Cloud Architecture Framework storage docs |
-| | | | | |
+| Knowledge / Operational Domain | Customer Current Capability                                                  | Target Capability Required                            | Gap Severity (High/Med/Low) | Recommended Enablement or GCP Solution                                          |
+| :----------------------------- | :--------------------------------------------------------------------------- | :---------------------------------------------------- | :-------------------------- | :------------------------------------------------------------------------------ |
+| e.g., GKE Shared Storage       | Understads basic NFS/EFS but lacks experience with GKE Filestore CSI driver. | Managing regional HA Filestore storage mounts in GKE. | High                        | GKE storage classes training & Google Cloud Architecture Framework storage docs |
+|                                |                                                                              |                                                       |                             |                                                                                 |
 
 ---
 
 ## 4. Recommended Improvements & Action Roadmap
 
 ### 🚨 P0: Critical Enablement & Solutions (Must Address First)
+
 #### 1. [Title of Recommendation]
+
 - **Why**: [Operational risk of not addressing this knowledge gap]
 - **GCP Enablement & Tooling**: [Specific training resources, managed GCP services, or best practice whitepapers]
 - **Implementation Highlights**: [Brief technical enablement/setup overview]
 
 ### 📈 P1: Enhancements & Secondary Enablement
+
 #### 1. [Title of Recommendation]
+
 ...
 
 ### 📚 P2: Long-Term / Optional Enablement
+
 #### 1. [Title of Recommendation]
+
 ...
 
 ---
