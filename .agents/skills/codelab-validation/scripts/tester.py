@@ -254,12 +254,33 @@ class StatefulCodelabTester:
             with open(progress_file, "r") as f:
                 progress = json.load(f)
             
+            # Parse the fresh codelab first to get any new commands/edits!
+            fresh_steps = self.parse_codelab()
+            
             self.steps = []
-            for num in range(1, progress["total_steps"] + 1):
+            for idx, fresh_step in enumerate(fresh_steps):
+                num = fresh_step["num"]
                 step_file = os.path.join(self.tester_state_dir, f"step-{num:03d}.json")
                 if os.path.exists(step_file):
-                    with open(step_file, "r") as sf:
-                        self.steps.append(json.load(sf))
+                    try:
+                        with open(step_file, "r") as sf:
+                            cached_step = json.load(sf)
+                        
+                        # If the step was already successfully completed, preserve its DONE status and outputs
+                        if cached_step.get("status") == "DONE":
+                            fresh_step["status"] = "DONE"
+                            fresh_step["output"] = cached_step.get("output", "")
+                            fresh_step["error"] = cached_step.get("error", "")
+                        # If it was failed or pending, we keep the fresh step's new commands and set status to FAILED/PENDING
+                        else:
+                            fresh_step["status"] = cached_step.get("status", "FAILED")
+                    except Exception:
+                        pass
+                
+                self.steps.append(fresh_step)
+            
+            # Re-save the state to ensure the step-XXX.json files on disk are updated with the fresh commands!
+            self.save_state(current_idx=max(0, progress.get("current_step", 1) - 1))
         else:
             logging.info("[Tester] No existing state found. Initializing...")
             self.steps = self.parse_codelab()
@@ -425,9 +446,20 @@ class StatefulCodelabTester:
 
         runner = SubshellRunner(cwd=self.lab_dir)
         try:
+            logging.info("[Tester Debug] Active Project ID from self.project_id: %s", self.project_id)
+            status, gcloud_config_out = runner.run_command("gcloud config list")
+            logging.info("[Tester Debug] subshell gcloud config list (status=%d):\n%s", status, gcloud_config_out)
+            status, gcloud_auth_out = runner.run_command("gcloud auth list")
+            logging.info("[Tester Debug] subshell gcloud auth list (status=%d):\n%s", status, gcloud_auth_out)
+
             if executed_hashes and os.path.exists(env_file):
                 logging.info("[Tester] Restoring environment from active cache...")
                 runner.run_command(f"source {env_file}")
+            
+            # Export all custom variables from variables.json into the subshell environment as a baseline
+            for key, val in custom_vars.items():
+                if val and not key.startswith("<"):
+                    runner.set_env(key, val)
             
             runner.set_env("PROJECT_ID", self.project_id)
             

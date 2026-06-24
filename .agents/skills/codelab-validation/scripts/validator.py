@@ -112,7 +112,7 @@ def scan_placeholders(markdown_path):
     return sorted(list(placeholders))
 
 
-def setup_active_lab(src, validate_dir, active_lab_path):
+def setup_active_lab(src, validate_dir, active_lab_path, resume=False):
     """Prepares the active lab guide inside the dedicated lab validate_dir from local path or web URL."""
     # Resolve absolute path first if local
     local_src = None
@@ -124,7 +124,10 @@ def setup_active_lab(src, validate_dir, active_lab_path):
             
     # Clear old state and run files in the dedicated directory to ensure a clean execution environment
     if os.path.exists(validate_dir):
-        print(f"[Validator] Cleaning up previous run state from {validate_dir}...")
+        if resume:
+            print(f"[Validator] Resuming previous run. Preserving state files in {validate_dir}...")
+        else:
+            print(f"[Validator] Cleaning up previous run state from {validate_dir}...")
         for item in os.listdir(validate_dir):
             item_path = os.path.join(validate_dir, item)
             # Do not delete the source file itself or variables.json!
@@ -132,6 +135,8 @@ def setup_active_lab(src, validate_dir, active_lab_path):
                 continue
             if item == "variables.json":
                 continue
+            if resume and (item == ".tester_state" or item.endswith(".state") or item.endswith(".env")):
+                continue  # Preserve the state folder and environment cache files!
             try:
                 if os.path.isdir(item_path):
                     shutil.rmtree(item_path)
@@ -406,6 +411,7 @@ def main():
     parser.add_argument("--artifact-dir", help="Destination folder for visual task board.md.")
     parser.add_argument("--skip-cleanup", action="store_true", help="Skip codelab cleanup steps.")
     parser.add_argument("--keep-project", action="store_true", help="Skip deleting the provisioned GCP project.")
+    parser.add_argument("--resume", action="store_true", help="Resume validation from the last failed step without cleaning up the state or recreating resources.")
     
     args = parser.parse_args()
     
@@ -442,7 +448,7 @@ def main():
     print(f"[Validator] Target Lab File: {active_lab_path}")
     
     # 1. Resolve active lab source inside dynamic validate_dir
-    setup_active_lab(args.src, validate_dir, active_lab_path)
+    setup_active_lab(args.src, validate_dir, active_lab_path, resume=args.resume)
     
     # Scan dynamic variable placeholders
     placeholders = scan_placeholders(active_lab_path)
@@ -477,26 +483,37 @@ def main():
     temp_project_created = False
     
     if not project_id:
-        print("[Validator] No project-id specified. Provisioning temporary GCP project...")
-        round_number = str(random.randint(100000, 999999))
-        temp_project_id = f"val-lab-{round_number}"
-        
-        # Execute create_project.py
-        create_cmd = f"python3 .agents/skills/gcp-provisioning/scripts/create_project.py val-lab {round_number}"
-        success, output = run_command(create_cmd, "Provisioning test project")
-        if not success:
-            print("[Validator] Project provisioning failed. Exiting.")
-            sys.exit(1)
+        if args.resume:
+            # Try to read active gcloud project
+            try:
+                active_proj = subprocess.check_output(["gcloud", "config", "get-value", "project"], text=True).strip()
+                if active_proj and active_proj.startswith("val-lab-"):
+                    project_id = active_proj
+                    print(f"[Validator] Resuming: Automatically detected active temporary project: {project_id}")
+            except Exception:
+                pass
+                
+        if not project_id:
+            print("[Validator] No project-id specified. Provisioning temporary GCP project...")
+            round_number = str(random.randint(100000, 999999))
+            temp_project_id = f"val-lab-{round_number}"
             
-        project_id = temp_project_id
-        temp_project_created = True
-        print(f"[Validator] Temporary project created successfully: {project_id}")
-        
-        # Disable Org Policies
-        policy_cmd = f"bash .agents/skills/gcp-provisioning/scripts/disable_org_policies.sh {project_id}"
-        success, output = run_command(policy_cmd, "Disabling Org Policies")
-        if not success:
-            print("[Validator] Disabling Org Policies failed. Continuing anyway...")
+            # Execute create_project.py
+            create_cmd = f"python3 .agents/skills/gcp-provisioning/scripts/create_project.py val-lab {round_number}"
+            success, output = run_command(create_cmd, "Provisioning test project")
+            if not success:
+                print("[Validator] Project provisioning failed. Exiting.")
+                sys.exit(1)
+                
+            project_id = temp_project_id
+            temp_project_created = True
+            print(f"[Validator] Temporary project created successfully: {project_id}")
+            
+            # Disable Org Policies
+            policy_cmd = f"bash .agents/skills/gcp-provisioning/scripts/disable_org_policies.sh {project_id}"
+            success, output = run_command(policy_cmd, "Disabling Org Policies")
+            if not success:
+                print("[Validator] Disabling Org Policies failed. Continuing anyway...")
     else:
         print(f"[Validator] Using existing project: {project_id}")
         

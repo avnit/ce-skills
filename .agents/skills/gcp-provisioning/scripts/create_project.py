@@ -157,6 +157,7 @@ def main():
     print("Enabling core APIs...")
     apis = [
         "compute.googleapis.com",
+        "iap.googleapis.com",
         "networkconnectivity.googleapis.com",
         "logging.googleapis.com",
         "artifactregistry.googleapis.com",
