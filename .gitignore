@@ -61,3 +61,4 @@ startup.sh
 # Exclude active agent runtime states and mailboxes
 .agents/state/
 .agents/mailboxes/
+demo/
