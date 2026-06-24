@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+import argparse
+import os
+import subprocess
+import sys
+
+# ANSI Color codes for premium terminal DX
+BLUE = "\033[94m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+RED = "\033[91m"
+RESET = "\033[0m"
+BOLD = "\033[1m"
+
+def print_banner():
+    print(f"{BOLD}{BLUE}" + "=" * 65)
+    print("   ⚙️  CE Agentic Automation Framework: Unified CLI Console  ⚙️")
+    print("=" * 65 + f"{RESET}")
+
+def run_script(script_path, extra_args=[]):
+    """Runs a python script forwarding parameters natively."""
+    script_abs = os.path.join(os.path.dirname(os.path.abspath(__file__)), script_path)
+    if not os.path.exists(script_abs):
+        print(f"{BOLD}{RED}❌ Error: Target execution script not found at [{script_abs}]{RESET}")
+        sys.exit(1)
+        
+    cmd = [sys.executable, script_abs] + extra_args
+    try:
+        result = subprocess.run(cmd, shell=False, check=False)
+        sys.exit(result.returncode)
+    except KeyboardInterrupt:
+        print(f"\n{BOLD}{YELLOW}⚠️ Process aborted by developer.{RESET}")
+        sys.exit(130)
+    except Exception as e:
+        print(f"{BOLD}{RED}❌ Exception executing script: {e}{RESET}")
+        sys.exit(1)
+
+def handle_onboard():
+    print(f"{BOLD}{BLUE}Onboarding active developer sandbox setup...{RESET}\n")
+    print("This process interactively generates the local credentials file 'gcp_config.txt'.")
+    try:
+        folder_id = input(f"{BOLD}Enter Target Google Cloud Folder ID (12-digit number): {RESET}").strip()
+        billing_account = input(f"{BOLD}Enter Target Billing Account ID (e.g. 010101-A1A1A1-B2B2B2): {RESET}").strip()
+        cloudtop_host = input(f"{BOLD}Enter Cloudtop Hostname (optional, e.g. user-dev-glinux.c.googlers.com): {RESET}").strip()
+        
+        if not folder_id or not billing_account:
+            print(f"\n{BOLD}{RED}❌ Onboarding Failed: Folder ID and Billing Account are mandatory properties!{RESET}")
+            sys.exit(1)
+            
+        # Save gcp_config.txt
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gcp_config.txt")
+        with open(config_path, "w") as f:
+            f.write(f"# Generated dynamically via ce-scale onboarding\n")
+            f.write(f"folder_id={folder_id}\n")
+            f.write(f"billing_account={billing_account}\n")
+            if cloudtop_host:
+                f.write(f"cloudtop_host={cloudtop_host}\n")
+                
+        print(f"\n{BOLD}{GREEN}✅ Success! Dynamic credentials written to {config_path}{RESET}")
+        print("You can now validate your configuration using: `./ce-scale validate`")
+    except KeyboardInterrupt:
+        print(f"\n{BOLD}{YELLOW}⚠️ Onboarding aborted by user.{RESET}")
+        sys.exit(130)
+
+def main():
+    print_banner()
+    
+    parser = argparse.ArgumentParser(
+        description="Unified Orchestration CLI Console for Customer Engineering Agentic Automation Skills.",
+        usage="""./ce-scale <subcommand> [args]
+        
+Available Subcommands:
+  onboard         Interactively configure target Folder, Billing Account, and Cloudtop Host.
+  validate        Run system checks verifying gcp_config.txt and MCP server connectivities.
+  test             deterministic command validation testing on a Codelab markdown file.
+  sweep           Scan and sweep expired sandbox projects (>4 hours) from your folder.
+  cleanup         Manually manage, list, or delete specific sandboxed test projects.
+"""
+    )
+    
+    parser.add_argument("subcommand", help="Subcommand to execute.")
+    args, extra = parser.parse_known_args()
+    
+    sub = args.subcommand.strip().lower()
+    
+    if sub == "onboard":
+        handle_onboard()
+    elif sub == "validate":
+        run_script(".agents/skills/system-validation/scripts/verify_system.py", extra)
+    elif sub == "test":
+        run_script(".agents/skills/codelab-validation/scripts/tester.py", extra)
+    elif sub == "sweep":
+        run_script(".agents/skills/codelab-cleanup/scripts/sweeper.py", extra)
+    elif sub == "cleanup":
+        run_script(".agents/skills/codelab-cleanup/scripts/cleanup_projects.py", extra)
+    else:
+        print(f"{BOLD}{RED}❌ Unknown Subcommand: '{sub}'{RESET}")
+        parser.print_help()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

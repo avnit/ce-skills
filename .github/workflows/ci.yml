@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main, shacharb, shacharb-subagents]
+  pull_request:
+    branches: [main, shacharb, shacharb-subagents]
+
+# Cancel in-progress runs on the same branch when a new commit is pushed.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # --------------------------------------------------------------------
+  # 1. Markdown / DevSite Style — Formatting checks
+  # --------------------------------------------------------------------
+  lint-markdown:
+    name: Markdown / Codelab formatting check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Prettier
+        run: npm install -g prettier
+
+      - name: Prettier Check (Markdown & YAML)
+        run: prettier --check "**/*.{md,yml,yaml}"
+
+  # --------------------------------------------------------------------
+  # 2. Python — .agents scripts & tools (ruff lints)
+  # --------------------------------------------------------------------
+  lint-py-agents:
+    name: Python .agents — ruff check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Ruff Linter Check
+        run: |
+          uv pip install ruff
+          uv run ruff check .agents/scripts/ .agents/skills/*/scripts/
+
+  # --------------------------------------------------------------------
+  # 3. JIT Prompt Manifest Check — Ensures compiled_subagents.json isn't stale
+  # --------------------------------------------------------------------
+  validate-subagent-manifest:
+    name: JIT subagents manifest up-to-date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Recompile Prompts Manifest
+        run: |
+          # Correct absolute path simulation for CI CWD
+          export WORKSPACE_ROOT=$GITHUB_WORKSPACE
+          python3 .agents/scripts/compile_prompts.py
+
+      - name: Verify Manifest is Up-to-Date (Git Diff Gate)
+        run: |
+          git diff --exit-code .agents/state/compiled_subagents.json
+
+  # --------------------------------------------------------------------
+  # 4. Terraform — fmt + validate (checks all lab directories recursively)
+  # --------------------------------------------------------------------
+  terraform-check:
+    name: Labs Terraform fmt + validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+
+      - name: Fmt Check (Recursive)
+        run: |
+          terraform fmt -check -recursive labs/dev/
+
+      # Loop recursively through all GKE/Filestore subdirectories containing HCL to validate syntax
+      - name: Validate Terraform (All Dev Labs)
+        run: |
+          for dir in $(find labs/dev -type f -name "*.tf" -exec dirname {} \; | sort -u); do
+            echo "Initializing and validating Terraform in: $dir"
+            cd $GITHUB_WORKSPACE/$dir
+            terraform init -backend=false
+            terraform validate
+          done

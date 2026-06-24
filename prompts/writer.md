@@ -8,7 +8,7 @@ Generate the codelab content and save it as `[id].lab.md` in the target lab dire
 
 ## Standards (Strict Adherence)
 
-You MUST adhere strictly to all formatting standards, metadata conventions, and syntax rules detailed in the **codelab-formatting** skill ([SKILL.md](file:///Users/shacharb/Downloads/ce-scale/_agents/skills/codelab-formatting/SKILL.md)).
+You MUST adhere strictly to all formatting standards, metadata conventions, and syntax rules detailed in the **codelab-formatting** skill ([SKILL.md](file:///.agents/skills/codelab-formatting/SKILL.md)).
 
 Key guidelines to keep top-of-mind:
 -   **Formatting**: Consult the `codelab-formatting` skill for the exact YAML block delimiters, duration formats (`MM:SS`), and info box styles (`> aside positive`).
@@ -33,6 +33,12 @@ To elevate the codelab to the absolute highest standard, follow these process sh
 
 ## Audience Persona Modeling
 Adapt the complexity, level of automation, and verification style based on the target audience specified in the `blueprint.md`:
+
+### Systems Engineer Persona Rule Alignment (Mandatory)
+In addition to the target audience specified in `blueprint.md`, evaluate the active user context for any loaded Systems Engineer Persona binding rule (`.agents/rules/persona.md`). If present, you MUST dynamically align your writing style, technical scale, and narrative depth to match that active persona:
+- **Practice CE Active**: Emphasize deep, specialized technical domain expertise. Prioritize precise topology design explanations, exact CLI flag justifications, and granular configurations. Ensure highly scaled, production HA layouts are used.
+- **Platform CE Active**: Emphasize landing zones, cross-product integration, enterprise governance, strategic outcomes, and declarative infrastructure state management (IaC).
+- **Outcome CE Active**: Emphasize rapid time-to-value, low-latency copy-paste speed-runs, highly automated setups, and immediate visual validation screenshots/outcomes. Keep setups as lightweight as possible.
 
 ### Developer / Fast Learner Persona
 -   **Goal:** Learn a specific feature quickly with minimal friction.
@@ -67,57 +73,7 @@ In this section, you must cover:
 -   **Audience statement**: A sentence describing who this codelab is for.
 
 ## Mandatory Setup Section
-You MUST use the following boilerplate for the "Setup and Requirements" section (Section 2). Do not deviate from this text unless specifically requested.
-
-```markdown
-## 2. Setup and Requirements
-Duration: 0:05
-
-### Self-paced environment setup
-1.  Sign-in to the [Google Cloud Console](https://console.cloud.google.com/) and create a new project or reuse an existing one. (If you don't already have a Gmail or Google Workspace account, you will need to [create one](https://accounts.google.com/SignUp).)
-
-    *   The **Project name** is the display name for this project's participants. It is a character string not used by Google APIs. You can update it at any time.
-    *   The **Project ID** is unique across all Google Cloud projects and is immutable (cannot be changed after it has been set). The Cloud Console auto-generates a unique string; usually you don't care what it is. In most codelabs, you'll need to reference the Project ID (it's typically identified as `PROJECT_ID`). If you don't like the generated ID, you may generate another random one. Alternatively, you can try your own, and see if it's available. It cannot be changed after this step and remains for the duration of the project.
-    *   For your information, there is a third value, a **Project Number**, which some APIs use. Learn more about all three of these values in the [documentation](https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects).
-
-2.  Next, you'll need to enable billing in the Cloud Console to use Cloud resources/APIs. Running through this codelab shouldn't cost much, if anything at all. To shut down resources to avoid incurring billing beyond this tutorial, you can delete the resources you created or delete the whole project. New users of Google Cloud are eligible for the [$300 USD Free Trial](https://cloud.google.com/free) program.
-
-### Activate Cloud Shell
-1.  From the Cloud Console, click **Activate Cloud Shell** ![Cloud Shell Icon](img/cloud-shell-icon.png).
-
-2.  If you've never started Cloud Shell before, you're presented with an intermediate screen describing what it is. If that's the case, click **Continue**.
-
-3.  It should only take a few moments to provision and connect to Cloud Shell.
-
-    The virtual machine is loaded with all the development tools you'll need. It offers a persistent 5GB home directory, and runs on the Google Cloud, greatly enhancing network performance and authentication. All of your work in this codelab can be done within the browser.
-
-4.  Once connected to Cloud Shell, you should see that you are already authenticated and that the project is set to your `PROJECT_ID`.
-
-    ```bash
-    gcloud auth list
-    ```
-
-    **Command output**
-    ```
-    Credentialed accounts:
-     - <myaccount>@<mydomain>.com (active)
-    ```
-
-    ```bash
-    gcloud config list project
-    ```
-
-    **Command output**
-    ```
-    [core]
-    project = <PROJECT_ID>
-    ```
-
-    **Note:** If the project is not set, you can set it with this command:
-    ```bash
-    gcloud config set project <PROJECT_ID>
-    ```
-```
+You MUST load and use the exact "Setup and Requirements" markdown boilerplate defined in the template resource: `.agents/skills/codelab-formatting/resources/setup_boilerplate.md` as Section 2 of the generated codelab. Do not modify, deviate, or translate any text block inside this boilerplate.
 
 ## Mandatory Concluding Sections
 You MUST include the following sections at the very end of the codelab.

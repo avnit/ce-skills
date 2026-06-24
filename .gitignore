@@ -1,5 +1,6 @@
 # Core Configurations (Sensitive - NEVER SYNC)
 gcp_config.txt
+policy.yaml
 
 # Node.js / Dependencies
 node_modules/
@@ -15,6 +16,9 @@ meeting/
 artifacts/
 experiment/
 user_deploy/
+reports/
+scratch/
+doc/
 
 
 # Python Caches & Virtual Environments
@@ -49,9 +53,11 @@ credentials.json
 *.enc
 *.resolved*
 *.metadata.json
+startup.sh
 
 # Exclude localized active MCP configurations to block credential leaks
 .gemini/
 
-
-
+# Exclude active agent runtime states and mailboxes
+.agents/state/
+.agents/mailboxes/

@@ -60,7 +60,22 @@ Steer the onboarding execution lifecycle to prepare the active workspace environ
 
    ## Active Role Focus: [Practice CE / Platform CE / Outcome CE]
    - **Primary Objectives**: [Insert specific objective summary mapping chosen persona].
-   - **Artifact Constraints**: Tailor all technical reports, blueprint guides, and execution scripts to prioritize the specific metrics, delivery style, and detail granularity defined by this role.
+   - **Mapped Architectural Configurations (Mandatory Prompts Binding)**:
+     - **Practice CE Mappings**:
+       * Target Audience: `Cloud Architect / Enterprise Operator`
+       * Technical Level Depth: `Level 300 (Advanced Stateful & Resiliency Patterns)` or `Level 400 (Expert Deep Dive)`
+       * Delivery Tooling Preference: `Hybrid Setup (Terraform networking, gcloud workloads)` or `Pure gcloud CLI`
+       * Execution Realism: Highly scaled, production HA networks, terminal-first, with negative security testing.
+     - **Platform CE Mappings**:
+       * Target Audience: `Cloud Architect / Enterprise Operator`
+       * Technical Level Depth: `Level 200 (Intermediate Functional Walkthrough)` or `Level 300 (Advanced)`
+       * Delivery Tooling Preference: `Terraform IaC (Optimized for declarative GitOps)`
+       * Execution Realism: Broad landing zones, strategic IAM governance, and declarative state management.
+     - **Outcome CE Mappings**:
+       * Target Audience: `Developer / Fast Learner`
+       * Technical Level Depth: `Level 100 (Foundational Quick-Start)`
+       * Delivery Tooling Preference: `Pure gcloud CLI (Optimized for rapid console validation)`
+       * Execution Realism: Simple network setup, minimal VM footprints, copy-paste speed-runs, and rapid visual UI confirmations.
    ```
 3. **Author Credential Configuration**: Author the final `gcp_config.txt` file directly into the workspace root directory populated cleanly in standard `key=value` formatting:
    ```text
@@ -74,5 +89,19 @@ Steer the onboarding execution lifecycle to prepare the active workspace environ
      "X-goog-user-project": "CUSTOM_KNOWLEDGE_PROJECT_ID"
    }
    ```
-   If the user selects the recommended repository baseline default, keep `"codelab-creator-central"` gracefully intact. Write the configuration object cleanly back to `.gemini/mcp_config.json` with standard 2-space formatting.
-5. Present a friendly terminal confirmation block to the user verifying successful file creation and updates, and mark the overall task flow as `COMPLETED` in `task.md`.
+   If the user selects the recommended repository baseline default, keep `"codelab-creator-central"` gracefully intact.
+5. **Inject Google Workspace MCP Server**: Verify if the `"workspace"` server configuration block is present in `.gemini/mcp_config.json`. If missing, insert the following configuration under `"mcpServers"`:
+   ```json
+   "workspace": {
+     "$typeName": "exa.cascade_plugins_pb.CascadePluginCommandTemplate",
+     "command": "/google/bin/releases/codemind-mcp-servers/workspace_server.par",
+     "args": [],
+     "env": {}
+   }
+   ```
+   Write the updated configuration object cleanly back to `.gemini/mcp_config.json` with standard 2-space formatting.
+6. **Compile and Verify OneDoc CLI Tool**: Search for an active Google3 CITC workspace under `/google/src/cloud/<user>/` and run `blaze build //geo/gestalt/experimental/onedoc` to natively compile the standalone `onedoc.par` binary.
+7. **Sync and Onboard Workspace Sidecar Daemons**: Execute the repository sidecar sync utility `bash .agents/scripts/sync_sidecars.sh` to securely copy all version-controlled sidecars and background watcher scripts into the local active Jetski environment, spinning up background daemons automatically.
+8. **Verify and Pre-warm Mermaid CLI Validator Dependencies**: Verify that Node.js, `npm`, and `npx` are active in the environment, and pre-warm the `@mermaid-js/mermaid-cli` compiler caching via `npx -y @mermaid-js/mermaid-cli --help`. This pre-downloads Puppeteer's headless Chrome binaries to ensure instant diagram syntax validation during subsequent runs.
+9. Present a friendly terminal confirmation block to the user verifying successful file creation, OneDoc compilation, sidecar synchronization, Mermaid CLI pre-warming, and updates, and mark the overall task flow as `COMPLETED` in `task.md`.
+
