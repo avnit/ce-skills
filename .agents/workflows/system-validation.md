@@ -15,7 +15,7 @@ Steering Workflow:
    ```bash
    python3 .agents/skills/system-validation/scripts/verify_system.py <appDataDir>/brain/<conversation-id>/system_validation_report.md
    ```
-4. Analyze the exit code and standard output across all seven check categories (GCP config, Persona binding, CitC CompanyDoc view, Sidecar sync, Python packages, OneDoc CLI, and MCP connectivity):
+4. Analyze the exit code and standard output across all six check categories (GCP config, Persona binding, CitC CompanyDoc view, Sidecar sync, Python packages, and MCP connectivity):
    - **If Exit Code is `0`**: Report a successful validation run cleanly to the user.
    - **If Exit Code is `1`**: Report the specific validation failures, recommend triggering `/onboarding` to re-run automated configuration or list precise manual remediation actions needed, and provide the user with the link to the setup guide:
      - [CE-Scale JetSki Configuration](https://docs.google.com/document/d/1KKsh2394jSC_GX5zAsu-JiABjWM6x2SWR5FIa5TrvIY/edit?resourcekey=0-I92ALWXlSgB4_PxS9kbTLw&tab=t.3wn5ohhiptk4)

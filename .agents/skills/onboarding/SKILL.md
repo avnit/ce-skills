@@ -9,7 +9,7 @@ This skill provides deterministic automation for onboarding developer workstatio
 
 ## When to use this skill
 
-Use this skill during the `/onboarding` workflow or whenever a user needs to configure their local `gcp_config.txt` credentials, bind their engineering persona (`.agents/rules/persona.md`), configure local MCP servers (`.gemini/mcp_config.json`), compile internal CLI tools (`onedoc`), or synchronize background sidecar scripts.
+Use this skill during the `/onboarding` workflow or whenever a user needs to configure their local `gcp_config.txt` credentials, bind their engineering persona (`.agents/rules/persona.md`), configure local MCP servers (`.gemini/mcp_config.json`), or synchronize background sidecar scripts.
 
 ## Usage Instructions
 
@@ -42,5 +42,5 @@ The script executes the following deterministic operations:
 2. **Credential Configuration**: Writes `gcp_config.txt` containing clean `key=value` pairs.
 3. **MCP Configuration Injection**: Updates `.gemini/mcp_config.json` to inject `X-goog-user-project` headers for `google-developer-documentation-mcp` and ensures the `workspace` MCP server binary is registered.
 4. **Piper CompanyDoc Readiness Check**: Verifies if an active CitC/Fig workspace under `/google/src/cloud/$USER/*` includes the `/company` view.
-5. **Tool Compilation & Sidecar Sync**: Executes `blaze build //geo/gestalt/experimental/onedoc`, pre-warms Mermaid CLI caching, and triggers `sync_sidecars.sh`.
+5. **Sidecar & Cache Sync**: Pre-warms Mermaid CLI caching and triggers `sync_sidecars.sh`.
 6. **Community Group Membership**: Prompts and verifies membership in `ce-skills-users@google.com` via self-service web link or CLI `membership_tool` using tickets under Buganizer Component ID `2150801`.

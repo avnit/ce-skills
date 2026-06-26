@@ -2,7 +2,7 @@
 """
 Automated onboarding script for JetSki developer environments.
 Generates gcp_config.txt, persona.md, updates mcp_config.json, checks CitC CompanyDoc readiness,
-compiles OneDoc, and synchronizes sidecars.
+and synchronizes sidecars.
 """
 
 import argparse
@@ -141,16 +141,7 @@ The user environment is operating under the following primary Customer Engineeri
     else:
         print(f"ℹ️ Offline/External environment detected. Skipping live Piper check for '{args.piper_workspace}'.")
 
-    # 5. Compile OneDoc (if in internal Google environment)
-    if os.path.exists("/google/src/cloud"):
-        print("🔨 Compiling OneDoc CLI tool...")
-        res = subprocess.run(["blaze", "build", "//geo/gestalt/experimental/onedoc"], capture_output=True, text=True)
-        if res.returncode == 0:
-            print("✅ Successfully compiled standalone onedoc.par binary.")
-        else:
-            print(f"⚠️ Notice: blaze build //geo/gestalt/experimental/onedoc returned code {res.returncode}. Skipping compilation.")
-
-    # 6. Sync Sidecars
+    # 5. Sync Sidecars
     sync_script = os.path.join(workspace_root, ".agents", "scripts", "sync_sidecars.sh")
     if os.path.exists(sync_script):
         print("🔄 Synchronizing workspace sidecar daemons...")
