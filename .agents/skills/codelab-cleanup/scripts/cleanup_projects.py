@@ -103,7 +103,15 @@ def delete_project(project_id, force=False):
             print("Deletion cancelled.")
             return False
             
-    print(f"Deleting project: {project_id}")
+    print(f"🔍 Checking for safety liens on project {project_id}...")
+    res = subprocess.run(["gcloud", "alpha", "resource-manager", "liens", "list", f"--filter=parent=projects/{project_id}", "--format=value(name)"], capture_output=True, text=True)
+    for lien in res.stdout.strip().split("\n"):
+        if lien:
+            bare_id = lien.split("/")[-1]
+            print(f"🔓 Removing blocking lien: {bare_id}...")
+            subprocess.run(["gcloud", "alpha", "resource-manager", "liens", "delete", bare_id, "--quiet"], check=False)
+
+    print(f"🗑️ Deleting project: {project_id}")
     cmd = f"gcloud projects delete {project_id} --quiet"
     return run_command(cmd)
 

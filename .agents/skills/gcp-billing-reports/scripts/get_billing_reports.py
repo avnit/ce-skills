@@ -71,7 +71,9 @@ def load_gcp_config():
 
 def execute_query(query):
     """Executes a BigQuery query using standard bq CLI with max_rows bypass."""
-    cmd_args = ["bq", "query", "--use_legacy_sql=false", "--max_rows=100000", "--format=json", query]
+    config = load_gcp_config()
+    billing_proj = config.get("billing_project", "billing-350700")
+    cmd_args = ["bq", "query", f"--project_id={billing_proj}", "--use_legacy_sql=false", "--max_rows=100000", "--format=json", query]
     success, stdout, stderr = run_command(cmd_args)
     
     if not success:
@@ -243,9 +245,24 @@ Examples:
             print("❌ Error: Could not find 'billing_account' or 'billing_table' in gcp_config.txt.", file=sys.stderr)
             print("💡 Fix: Please create a gcp_config.txt containing folder_id and billing_account.", file=sys.stderr)
             sys.exit(1)
-        # Calculate standard detailed resource billing table
-        suffix = billing_account.replace("-", "_")
-        table_name = f"billing-350700.billing.gcp_billing_export_resource_v1_{suffix}"
+        if billing_account == "010101-A1A1A1-B2B2B2" or "A1A1A1" in billing_account:
+            print("⚠️ Placeholder billing account detected. Attempting automatic BigQuery table resolution...")
+            billing_proj = config.get("billing_project", "billing-350700")
+            success, stdout, stderr = run_command(["bq", "ls", f"--project_id={billing_proj}", "--format=json", "billing"])
+            if success and stdout:
+                try:
+                    tables = json.loads(stdout)
+                    for t in tables:
+                        tid = t.get("tableReference", {}).get("tableId", "")
+                        if tid.startswith("gcp_billing_export_resource_v1_"):
+                            table_name = f"{billing_proj}.billing.{tid}"
+                            break
+                except Exception:
+                    pass
+        if not table_name:
+            suffix = billing_account.replace("-", "_")
+            billing_proj = config.get("billing_project", "billing-350700")
+            table_name = f"{billing_proj}.billing.gcp_billing_export_resource_v1_{suffix}"
         
     date_filter = get_date_filter(args.month)
     month_display = args.month if args.month else datetime.now().strftime("%Y-%m (MTD)")
