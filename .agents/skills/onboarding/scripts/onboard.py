@@ -39,6 +39,8 @@ def main():
     parser.add_argument("--persona", required=True, choices=list(PERSONA_TEMPLATES.keys()), help="Primary Systems Engineering Persona")
     parser.add_argument("--folder-id", required=True, help="Google Cloud Folder ID for sandbox provisioning")
     parser.add_argument("--billing-account", required=True, help="Google Cloud Billing Account ID")
+    parser.add_argument("--billing-project", default="billing-350700", help="BigQuery Billing Project ID")
+    parser.add_argument("--billing-table", default="", help="BigQuery Billing Export Table ID")
     parser.add_argument("--cloudtop-host", default="", help="Optional Cloudtop VM hostname")
     parser.add_argument("--knowledge-project", default="codelab-creator-central", help="Developer Knowledge API Quota Project ID")
     parser.add_argument("--piper-workspace", default="ce-skills", help="Preferred Piper/CitC workspace name for CompanyDoc publishing")
@@ -50,9 +52,16 @@ def main():
     
     # 1. Generate gcp_config.txt
     gcp_config_path = os.path.join(workspace_root, "gcp_config.txt")
+    billing_table = args.billing_table
+    if not billing_table and args.billing_account:
+        suffix = args.billing_account.replace("-", "_")
+        billing_table = f"{args.billing_project}.billing.gcp_billing_export_resource_v1_{suffix}"
+        
     with open(gcp_config_path, "w", encoding="utf-8") as f:
         f.write(f"folder_id={args.folder_id}\n")
         f.write(f"billing_account={args.billing_account}\n")
+        f.write(f"billing_project={args.billing_project}\n")
+        f.write(f"billing_table={billing_table}\n")
         if args.cloudtop_host:
             f.write(f"cloudtop_host={args.cloudtop_host}\n")
         f.write(f"piper_workspace={args.piper_workspace}\n")
