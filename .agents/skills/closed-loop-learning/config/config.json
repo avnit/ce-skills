@@ -1,0 +1,14 @@
+{
+  "storage": {
+    "backend_type": "firebase",
+    "firebase_project_id": "hyperstack-dev",
+    "firebase_database_id": "losed-loop-learning",
+    "firebase_incoming_collection": "incoming_lessons",
+    "local_mock_directory": "~/.gemini/jetski/knowledge/closed_loop_learning/lessons"
+  },
+  "vertex_ai": {
+    "project_id": "hyperstack-dev",
+    "location": "us-central1",
+    "extraction_model": "gemini-1.5-pro-preview-0409"
+  }
+}
