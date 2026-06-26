@@ -63,3 +63,7 @@ The script will:
 5. Execute `g4 open` / `g4 add` to register files in Piper version control.
 6. Create a pending changelist (CL) and generate the direct shareable **g3doc Live Preview URL**:
    `https://g3doc.corp.google.com/company/.../filename.md?cl=<cl_number>`
+
+## Additional Documentation
+
+For a comprehensive walkthrough of prerequisites, bridging mechanics, and Critique CL review rules (including personal exemption vs team LGTM policies), see [publishing_guide.md](file:///usr/local/google/home/shacharb/skynet/.agents/skills/publish-artifact/references/publishing_guide.md).
