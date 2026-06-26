@@ -1,55 +1,65 @@
 ---
 name: publish-artifact
-description: Publishes generated artifacts (codelabs, one-pagers, blueprints, etc.) to the central ce-skills-artifacts repository under a structured user-centric path.
+description: Publishes generated artifacts (codelabs, one-pagers, blueprints, diagrams, etc.) to internal g3doc CompanyDoc (//depot/company/...) supporting team-wide and personal publishing options with instant live preview links.
 ---
 
-# Publish Artifact Skill
+# Publish Artifact Skill (g3doc CompanyDoc)
 
-This skill allows you to automate the publishing of local artifacts to the remote `ce-skills-artifacts` repository (`https://github.com/cloud-gtm/ce-skills-artifacts.git`).
+This skill automates publishing local workspace artifacts to internal **g3doc CompanyDoc** (`//depot/company/...`) in Piper / Google3.
 
-The repository is organized to keep everyone's artifacts structured and easily discoverable:
-`<username>/<category>/<subject>/`
+The CompanyDoc repository is structured into two distinct publishing scopes to keep engineering artifacts discoverable and well-governed:
+
+1. **Team-wide Publishing**: `//depot/company/teams/<team_name>/<category>/<subject>/`
+2. **Personal Publishing**: `//depot/company/users/<username>/<category>/<subject>/`
 
 ## When to use this skill
 
-Use this skill when the user explicitly asks to publish, upload, or push an artifact they've created (e.g., a one-pager, codelab, or design blueprint) to the artifacts repository.
+Use this skill when the user explicitly asks to publish, upload, or sync an artifact they've created (e.g., a design document, blueprint, one-pager, or codelab) to CompanyDocs / g3doc.
 
 ## Usage Instructions
 
-To publish an artifact, you need to execute the publishing script with the appropriate arguments.
-
-1. First, ensure the artifact(s) to be published exist in the local workspace.
-2. Run the publishing script using the `run_command` tool:
+To publish an artifact, execute the publishing script using the `run_command` tool:
 
 ```bash
-bash .agents/skills/publish-artifact/scripts/publish.sh -f "<path_to_local_artifact>" -c "<category>" -s "<subject>"
+bash .agents/skills/publish-artifact/scripts/publish.sh -f "<path_to_local_artifact>" -c "<category>" -s "<subject>" -p "<personal|team>" [-t "<team_name>"]
 ```
 
 ### Script Arguments:
 
-- `-f <file_path>`: (Required) The absolute or relative path to the local artifact file you want to publish.
-- `-c <category>`: (Required) The category of the artifact. Examples: `customers`, `codelabs`, `diagrams`, `whitepapers`.
-- `-s <subject>`: (Required) The specific subject name (e.g., the customer name like `customer_x`, or the codelab topic).
+- `-f|--file <file_path>`: (Required) The absolute or relative path to the local artifact file or directory.
+- `-c|--category <category>`: (Required) The category classification. Examples: `blueprints`, `codelabs`, `diagrams`, `whitepapers`, `customers`.
+- `-s|--subject <subject>`: (Required) The specific topic identifier (e.g., `closed_loop_learning` or `customer_x`).
+- `-p|--scope <personal|team>`: (Optional, defaults to `personal`) Whether to publish under `company/users/$USER` or `company/teams/$TEAM`.
+- `-t|--team <team_name>`: (Required if scope is `team`) The target team directory name under `company/teams/` (e.g., `practice-ce`, `cloud-gtm`, or `ce-skills`).
 
-### Example
+### Examples
 
-If the user wants to publish `demo/one-pager.md` for "Customer X":
+**Example 1: Personal Publishing**
+Publishing `doc/system_design.md` to user's personal CompanyDoc space:
 
 ```bash
-bash .agents/skills/publish-artifact/scripts/publish.sh -f "demo/one-pager.md" -c "customers" -s "customer_x"
+bash .agents/skills/publish-artifact/scripts/publish.sh -f "doc/system_design.md" -c "blueprints" -s "closed_loop_learning" -p "personal"
 ```
+
+_Staged Path_: `//depot/company/users/<ldap>/blueprints/closed_loop_learning/system_design.md`
+
+**Example 2: Team-wide Publishing**
+Publishing `demo/one-pager.md` to the `practice-ce` team space:
+
+```bash
+bash .agents/skills/publish-artifact/scripts/publish.sh -f "demo/one-pager.md" -c "whitepapers" -s "customer_x" -p "team" -t "practice-ce"
+```
+
+_Staged Path_: `//depot/company/teams/practice-ce/whitepapers/customer_x/one-pager.md`
 
 ## How it works internally
 
 The script will:
 
-1. Clone the `ce-skills-artifacts.git` repository into a temporary directory if not already present.
-2. Determine the current user (`$USER`).
-3. Create the target directory structure: `<username>/<category>/<subject>/`.
-4. Copy the specified file into the target directory.
-5. `git add`, `git commit -m "Publish artifact <filename> for <subject>"`.
-6. `git push --set-upstream fork <branch_name>`
-7. Use `gh pr create` to automatically open a Pull Request against the main repository.
-8. Clean up the temporary clone.
-
-**Important Note**: This script relies on the GitHub CLI (`gh`). The user must be authenticated with `gh auth login` for the fork and PR creation to succeed. The script will output the link to the generated Pull Request. Because this uses a Pull Request workflow, the user does NOT need `Write` access to the `cloud-gtm/ce-skills-artifacts` repository—any organization member with read access can successfully publish artifacts.
+1. Locate an available CitC workspace containing a `/company` mount (e.g., `/google/src/cloud/$USER/ce-skills/company`).
+2. Resolve target destination directory based on `--scope` (`users/$USER` vs `teams/$TEAM`).
+3. Copy the artifact files into the target CitC directory.
+4. **G3doc Formatting**: For markdown files (`*.md`), inspect headers and automatically inject standard g3doc metadata blocks (`<!--* freshness: ... *-->` and `[TOC]`) if missing.
+5. Execute `g4 open` / `g4 add` to register files in Piper version control.
+6. Create a pending changelist (CL) and generate the direct shareable **g3doc Live Preview URL**:
+   `https://g3doc.corp.google.com/company/.../filename.md?cl=<cl_number>`

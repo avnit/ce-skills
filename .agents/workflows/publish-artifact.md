@@ -1,48 +1,51 @@
 ---
-description: Orchestrate the end-to-end publishing of local files or directories to the centralized ce-skills-artifacts repository via an automated Pull Request, interactive review, and merge.
+description: Orchestrate the end-to-end publishing of local files or directories to internal g3doc CompanyDoc (//depot/company/...) supporting team-wide and personal publishing options with instant live preview links.
 ---
 
-# Workflow: Publish Artifacts to CE Skills Repository
+# Workflow: Publish Artifacts to g3doc CompanyDoc
 
-This workflow guides you through publishing, structuring, and syncing local artifact files or directories (such as Codelabs, One-Pagers, Diagrams, or Blueprints) to the centralized `ce-skills-artifacts` repository (`https://github.com/cloud-gtm/ce-skills-artifacts.git`) using an automated Pull Request model.
+This workflow guides you through publishing, structuring, and syncing local artifact files or directories (such as Codelabs, One-Pagers, Diagrams, or Blueprints) to internal **g3doc CompanyDoc** (`//depot/company/...`) supporting both team-wide and personal publishing options via automated Critique Changelists (CLs).
 
 ## Operational Workflow
 
 ### Phase 1: Clarify Parameters & Scoping
 
-1. If the user has not explicitly provided the artifact path, category, and subject, ask directly or use the `ask_question` tool to determine:
-   - **File/Folder Path**: The relative or absolute path to the file or directory to publish (e.g., `Customer_a` or `demo/one-pager.md`).
-   - **Category**: The artifact classification (e.g., `customers`, `codelabs`, `diagrams`, `whitepapers`).
-   - **Subject**: The specific subject identifier (e.g., customer name like `Customer_a`, or codelab topic).
+1. Use the `ask_question` tool to determine the publishing scope and artifact details:
+   - **Publishing Scope**: Ask the user to choose between:
+     - **Option 1: Team-wide Publish** (`company/teams/<team_name>/<category>/<subject>/`)
+     - **Option 2: Personal Publish** (`company/users/<username>/<category>/<subject>/`)
+   - **Team Name**: If Option 1 (Team-wide) is selected, ask for the target team folder (e.g., `practice-ce`, `cloud-gtm`, or `ce-skills`).
+   - **File/Folder Path**: The relative or absolute path to the file or directory to publish (e.g., `doc/system_design.md` or `demo/one-pager.md`).
+   - **Category**: The artifact classification (e.g., `customers`, `codelabs`, `diagrams`, `blueprints`, `whitepapers`).
+   - **Subject**: The specific subject identifier (e.g., customer name or feature topic like `closed_loop_learning`).
 
 ### Phase 2: Pre-flight Dependencies Check
 
-1. Ensure the GitHub CLI (`gh`) is authenticated on the workstation:
+1. Verify that the user has an active CitC (Clients-in-the-Cloud) workspace accessible under `/google/src/cloud/$USER/`:
    ```bash
-   gh auth status
+   ls -d /google/src/cloud/$USER/*/company 2>/dev/null | head -n 1
    ```
-   If not authenticated, instruct the user to run `gh auth login`.
+   If no CitC workspace with a `company` mount is found, instruct the user to create one using `g4 client`.
 
 ### Phase 3: Execute Publishing Skill
 
-1. Execute the `publish-artifact` skill script using the `run_command` tool to create the branch, copy the files into the `<username>/<category>/<subject>/` structure, and create a Pull Request:
+1. Execute the `publish-artifact` skill script using the `run_command` tool to stage the files in Piper, automatically inject required g3doc metadata (`freshness` tags and `[TOC]`), and prepare the changelist:
    ```bash
-   .agents/skills/publish-artifact/scripts/publish.sh -f "<path_to_artifact>" -c "<category>" -s "<subject>"
+   bash .agents/skills/publish-artifact/scripts/publish.sh -f "<path_to_artifact>" -c "<category>" -s "<subject>" -p "<personal|team>" [-t "<team_name>"]
    ```
-2. Capture the output from the script, which will include the direct link to the newly created Pull Request (e.g., `https://github.com/cloud-gtm/ce-skills-artifacts/pull/<PR_NUMBER>`).
+2. Capture the script output, which will output the direct **g3doc Critique CL Preview Link** (e.g., `https://g3doc.corp.google.com/company/...?cl=<CL_NUMBER>`).
 
-### Phase 4: Interactive Approval & Merge
+### Phase 4: Interactive Review & Mail CL
 
-1. Display the Pull Request URL prominently to the user.
-2. Use the `ask_question` tool to ask the user to review the PR and decide if they want to merge it:
-   - **Question**: "I have created Pull Request #<PR_NUMBER> to publish your artifact. Would you like me to automatically merge this Pull Request into main now?"
+1. Display the generated **g3doc Preview Link** prominently to the user so they can click and review the rendered documentation.
+2. Use the `ask_question` tool to ask the user if they want to mail/submit the Critique CL:
+   - **Question**: "I have staged your artifact in Piper and generated CL #<CL_NUMBER>. Would you like me to mail this CL for review or submit it?"
    - **Options**:
-     - "Yes, merge PR #<PR_NUMBER> into main"
-     - "No, leave open for manual review"
-3. If the user selects "Yes, merge":
-   - Execute the GitHub CLI merge command:
+     - "Mail CL #<CL_NUMBER> for review"
+     - "Leave CL open in workspace for manual editing"
+3. If the user selects "Mail CL":
+   - Execute the appropriate mail command in the CitC workspace directory:
      ```bash
-     gh pr merge <PR_NUMBER> --merge --delete-branch
+     g4 mail <CL_NUMBER>
      ```
-     _(Note: If branch protection requires administrative override, append `--admin` to the command)._
-   - Confirm to the user that the artifact is now merged and live on `main`!
+   - Confirm to the user that the CL is mailed and provide the Critique review link (`http://cl/<CL_NUMBER>`)!
