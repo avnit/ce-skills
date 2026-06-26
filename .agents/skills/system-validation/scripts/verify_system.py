@@ -16,7 +16,7 @@ def check_gcp_config():
     if not os.path.exists(path):
         return False, f"gcp_config.txt does not exist at {path}"
     
-    required_keys = {"folder_id", "billing_account"}
+    required_keys = {"folder_id", "billing_account", "billing_project"}
     found_keys = {}
     try:
         with open(path, "r") as f:
@@ -39,7 +39,8 @@ def check_gcp_config():
             return False, f"Value for required key '{k}' in gcp_config.txt is empty."
             
     piper_ws = found_keys.get("piper_workspace", "ce-skills")
-    return True, f"gcp_config.txt verified (folder_id={found_keys['folder_id']}, piper_workspace={piper_ws})."
+    b_table = found_keys.get("billing_table", "Auto-discovered")
+    return True, f"gcp_config.txt verified (folder_id={found_keys['folder_id']}, billing_project={found_keys['billing_project']}, billing_table={b_table}, piper_workspace={piper_ws})."
 
 def check_persona_binding():
     path = os.path.join(REPO_ROOT, ".agents/rules/persona.md")
