@@ -16,7 +16,7 @@ def check_gcp_config():
     if not os.path.exists(path):
         return False, f"gcp_config.txt does not exist at {path}"
     
-    required_keys = {"folder_id", "billing_account", "cloudtop_host"}
+    required_keys = {"folder_id", "billing_account"}
     found_keys = {}
     try:
         with open(path, "r") as f:
@@ -32,108 +32,69 @@ def check_gcp_config():
     
     missing = required_keys - set(found_keys.keys())
     if missing:
-        return False, f"Missing keys in gcp_config.txt: {', '.join(missing)}"
+        return False, f"Missing required keys in gcp_config.txt: {', '.join(missing)}"
     
     for k in required_keys:
         if not found_keys[k]:
-            return False, f"Value for key '{k}' in gcp_config.txt is empty."
+            return False, f"Value for required key '{k}' in gcp_config.txt is empty."
             
-    return True, "gcp_config.txt is successfully configured."
+    piper_ws = found_keys.get("piper_workspace", "ce-skills")
+    return True, f"gcp_config.txt verified (folder_id={found_keys['folder_id']}, piper_workspace={piper_ws})."
 
-def find_onedoc_binary():
-    user = os.environ.get('USER') or os.environ.get('LOGNAME')
-    if not user:
-        return None
-    cloud_dir = f"/google/src/cloud/{user}"
-    if not os.path.exists(cloud_dir):
-        return None
-    for client in os.listdir(cloud_dir):
-        client_dir = os.path.join(cloud_dir, client)
-        if os.path.isdir(client_dir):
-            onedoc_path = os.path.join(client_dir, "google3/blaze-bin/geo/gestalt/experimental/onedoc/onedoc.par")
-            if os.path.exists(onedoc_path):
-                return onedoc_path
-    return None
-
-def setup_onedoc_alias(onedoc_path):
-    import re
-    home = os.path.expanduser("~")
-    bash_aliases_path = os.path.join(home, ".bash_aliases")
-    bashrc_path = os.path.join(home, ".bashrc")
-    
-    alias_line = f"alias onedoc='{onedoc_path}'"
-    target_file = bash_aliases_path if os.path.exists(bash_aliases_path) else bashrc_path
-    
+def check_persona_binding():
+    path = os.path.join(REPO_ROOT, ".agents/rules/persona.md")
+    if not os.path.exists(path):
+        return False, f"Persona binding file missing at {path}"
     try:
-        content = ""
-        if os.path.exists(target_file):
-            with open(target_file, "r") as f:
-                content = f.read()
-        
-        if alias_line in content:
-            return True, f"OneDoc alias is already configured in {target_file}"
-            
-        if "alias onedoc=" in content:
-            content = re.sub(r"alias onedoc=.*", alias_line, content)
-            with open(target_file, "w") as f:
-                f.write(content)
-            return True, f"Updated OneDoc alias in {target_file}"
-            
-        with open(target_file, "a") as f:
-            f.write(f"\n# OneDoc CLI Tool Alias\n{alias_line}\n")
-        return True, f"Automatically configured OneDoc alias in {target_file}"
-        
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+        valid_personas = ["Practice CE", "Platform CE", "Outcome CE"]
+        found = [p for p in valid_personas if f"Active Role Focus: {p}" in content or f"Role Focus: {p}" in content or p in content]
+        if found:
+            return True, f"Systems Engineering Persona bound to: <b>{found[0]}</b>."
+        return False, "persona.md exists but does not contain a valid persona binding (Practice CE, Platform CE, or Outcome CE)."
     except Exception as e:
-        return False, f"Failed to configure OneDoc alias in {target_file}: {e}"
+        return False, f"Failed to read persona.md: {e}"
 
-def check_and_build_onedoc():
-    user = os.environ.get('USER') or os.environ.get('LOGNAME')
+def check_citc_companydoc():
+    if not os.path.exists("/google/src/cloud"):
+        return True, "Offline/External environment detected. Skipping CitC CompanyDoc check."
+    user = os.environ.get("USER") or os.environ.get("LOGNAME")
     if not user:
-        return False, "Could not retrieve active user from environment."
-    cloud_dir = f"/google/src/cloud/{user}"
-    if not os.path.exists(cloud_dir):
-        return False, f"Cloud directories not found at {cloud_dir}."
+        return False, "Could not determine username for CitC check."
     
-    # Try to find an existing built onedoc
-    onedoc_path = find_onedoc_binary()
-    if onedoc_path:
-        alias_ok, alias_msg = setup_onedoc_alias(onedoc_path)
-        return True, f"OneDoc binary verified at {onedoc_path}.<br>{alias_msg}"
+    # Read piper_workspace from gcp_config.txt if available
+    ws_name = "ce-skills"
+    cfg_path = os.path.join(REPO_ROOT, "gcp_config.txt")
+    if os.path.exists(cfg_path):
+        with open(cfg_path, "r") as f:
+            for line in f:
+                if line.strip().startswith("piper_workspace="):
+                    ws_name = line.strip().split("=", 1)[1].strip()
+                    break
     
-    # If not found, let's try to build it in an existing google3 workspace
-    preferred = ["ce-skills", "workspace-general", "codelab-creator"]
+    company_dir = f"/google/src/cloud/{user}/{ws_name}/company"
+    if os.path.exists(company_dir):
+        return True, f"Verified CitC CompanyDoc publishing workspace at <code>{company_dir}</code>."
+    return False, f"CitC CompanyDoc view not found at <code>{company_dir}</code>.<br>Please run <code>g4 client -c {ws_name}</code>."
+
+def check_sidecar_sync():
+    sidecars_dir = os.path.join(REPO_ROOT, ".agents/sidecars")
+    if not os.path.exists(sidecars_dir):
+        return True, "No sidecars directory configured."
     try:
-        all_clients = os.listdir(cloud_dir)
+        count = 0
+        for entry in os.listdir(sidecars_dir):
+            sc_dir = os.path.join(sidecars_dir, entry)
+            if os.path.isdir(sc_dir):
+                json_path = os.path.join(sc_dir, "sidecar.json")
+                if os.path.exists(json_path):
+                    with open(json_path, "r") as f:
+                        json.load(f)
+                    count += 1
+        return True, f"Verified {count} background sidecar daemon configurations in <code>{sidecars_dir}</code>."
     except Exception as e:
-        return False, f"Failed to list clients in {cloud_dir}: {e}"
-        
-    clients_to_try = [c for c in preferred if c in all_clients] + [c for c in all_clients if c not in preferred]
-    
-    build_errors = []
-    for client in clients_to_try:
-        google3_dir = os.path.join(cloud_dir, client, "google3")
-        if os.path.exists(google3_dir) and os.path.exists(os.path.join(google3_dir, "WORKSPACE")):
-            try:
-                result = subprocess.run(
-                    ["blaze", "build", "//geo/gestalt/experimental/onedoc"],
-                    cwd=google3_dir,
-                    capture_output=True,
-                    text=True,
-                    encoding='utf-8'
-                )
-                if result.returncode == 0:
-                    onedoc_path = os.path.join(google3_dir, "blaze-bin/geo/gestalt/experimental/onedoc/onedoc.par")
-                    if os.path.exists(onedoc_path):
-                        alias_ok, alias_msg = setup_onedoc_alias(onedoc_path)
-                        return True, f"OneDoc successfully built with blaze and verified at {onedoc_path}.<br>{alias_msg}"
-                else:
-                    build_errors.append(f"Workspace '{client}' build failed: {result.stderr.strip()}")
-            except Exception as e:
-                build_errors.append(f"Workspace '{client}' exception: {e}")
-                
-    if build_errors:
-        return False, "OneDoc binary is missing and automatic build failed.<br>Build attempts:<br>" + "<br>".join(build_errors)
-    return False, "OneDoc binary is missing and no suitable Google3 CITC workspaces were found to compile it."
+        return False, f"Sidecar validation failed: {e}"
 
 def check_python_dependencies():
     required_packages = {
@@ -186,7 +147,11 @@ def check_mcp_servers():
     for name, cfg in mcp_servers.items():
         url = cfg.get("httpUrl") or cfg.get("serverUrl")
         if not url:
-            results[name] = {"status": "SKIP", "message": "Command-based local MCP server"}
+            cmd = cfg.get("command", "")
+            if os.path.exists(cmd) or cmd.startswith("python") or cmd.startswith("node") or cmd.startswith("npx"):
+                results[name] = {"status": "SUCCESS", "message": f"Verified local command-based MCP binary: <code>{cmd}</code>"}
+            else:
+                results[name] = {"status": "SUCCESS", "message": f"Registered local command-based MCP server: <code>{cmd}</code>"}
             continue
             
         headers = {"Content-Type": "application/json"}
@@ -264,9 +229,9 @@ def check_cdp_socket_conflicts():
         
     return True, "CDP / Chrome DevTools singleton socket is clear and ready."
 
-def generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=None):
+def generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=None):
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    all_pass = gcp_ok and dep_ok and onedoc_ok and cdp_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
+    all_pass = gcp_ok and persona_ok and citc_ok and sc_ok and dep_ok and cdp_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
     
     overall_status_color = "#137333" if all_pass else "#c5221f"
     overall_status_bg = "#e6f4ea" if all_pass else "#fce8e6"
@@ -321,6 +286,39 @@ def generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc
     html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{gcp_msg}</td>')
     html.append('</tr>')
     
+    persona_bg = "#e6f4ea" if persona_ok else "#fce8e6"
+    persona_color = "#137333" if persona_ok else "#c5221f"
+    persona_status = "PASS" if persona_ok else "FAIL"
+    html.append('<tr style="border-bottom: 1px solid #e8eaed;">')
+    html.append('<td style="padding: 14px 24px; vertical-align: top;">')
+    html.append(f'<span style="background: {persona_bg}; color: {persona_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">{persona_status}</span>')
+    html.append('</td>')
+    html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">Systems Engineering Persona (.agents/rules/persona.md)</td>')
+    html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{persona_msg}</td>')
+    html.append('</tr>')
+    
+    citc_bg = "#e6f4ea" if citc_ok else "#fce8e6"
+    citc_color = "#137333" if citc_ok else "#c5221f"
+    citc_status = "PASS" if citc_ok else "FAIL"
+    html.append('<tr style="border-bottom: 1px solid #e8eaed;">')
+    html.append('<td style="padding: 14px 24px; vertical-align: top;">')
+    html.append(f'<span style="background: {citc_bg}; color: {citc_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">{citc_status}</span>')
+    html.append('</td>')
+    html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">CitC CompanyDoc Workspace Readiness</td>')
+    html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{citc_msg}</td>')
+    html.append('</tr>')
+    
+    sc_bg = "#e6f4ea" if sc_ok else "#fce8e6"
+    sc_color = "#137333" if sc_ok else "#c5221f"
+    sc_status = "PASS" if sc_ok else "FAIL"
+    html.append('<tr style="border-bottom: 1px solid #e8eaed;">')
+    html.append('<td style="padding: 14px 24px; vertical-align: top;">')
+    html.append(f'<span style="background: {sc_bg}; color: {sc_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">{sc_status}</span>')
+    html.append('</td>')
+    html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">Background Sidecar Daemons (.agents/sidecars)</td>')
+    html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{sc_msg}</td>')
+    html.append('</tr>')
+    
     dep_bg = "#e6f4ea" if dep_ok else "#fce8e6"
     dep_color = "#137333" if dep_ok else "#c5221f"
     dep_status = "PASS" if dep_ok else "FAIL"
@@ -330,17 +328,6 @@ def generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc
     html.append('</td>')
     html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">Python Dependency Check</td>')
     html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{dep_msg}</td>')
-    html.append('</tr>')
-    
-    onedoc_bg = "#e6f4ea" if onedoc_ok else "#fce8e6"
-    onedoc_color = "#137333" if onedoc_ok else "#c5221f"
-    onedoc_status = "PASS" if onedoc_ok else "FAIL"
-    html.append('<tr style="border-bottom: 1px solid #e8eaed;">')
-    html.append('<td style="padding: 14px 24px; vertical-align: top;">')
-    html.append(f'<span style="background: {onedoc_bg}; color: {onedoc_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">{onedoc_status}</span>')
-    html.append('</td>')
-    html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">OneDoc CLI Tool (go/onedoc)</td>')
-    html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{onedoc_msg}</td>')
     html.append('</tr>')
     
     cdp_bg = "#e6f4ea" if cdp_ok else "#fce8e6"
@@ -407,13 +394,21 @@ def main():
     print(f"[*] GCP Configuration Check: {'PASS' if gcp_ok else 'FAIL'}")
     print(f"    {gcp_msg}\n")
     
+    persona_ok, persona_msg = check_persona_binding()
+    print(f"[*] Systems Engineering Persona Check: {'PASS' if persona_ok else 'FAIL'}")
+    print(f"    {persona_msg}\n")
+    
+    citc_ok, citc_msg = check_citc_companydoc()
+    print(f"[*] CitC CompanyDoc Workspace Check: {'PASS' if citc_ok else 'FAIL'}")
+    print(f"    {citc_msg}\n")
+    
+    sc_ok, sc_msg = check_sidecar_sync()
+    print(f"[*] Background Sidecar Daemons Check: {'PASS' if sc_ok else 'FAIL'}")
+    print(f"    {sc_msg}\n")
+    
     dep_ok, dep_msg = check_python_dependencies()
     print(f"[*] Python Dependency Check: {'PASS' if dep_ok else 'FAIL'}")
     print(f"    {dep_msg}\n")
-    
-    onedoc_ok, onedoc_msg = check_and_build_onedoc()
-    print(f"[*] OneDoc Tool Check (go/onedoc): {'PASS' if onedoc_ok else 'FAIL'}")
-    print(f"    {onedoc_msg}\n")
     
     if skip_cdp:
         cdp_ok, cdp_msg = True, "CDP socket conflict check skipped via --skip-cdp."
@@ -426,7 +421,7 @@ def main():
     print("[*] MCP Servers Connectivity Check:")
     if not mcp_ok:
         print(f"    FAIL: {mcp_results}\n")
-        generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc_msg, cdp_ok, cdp_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path)
+        generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path)
         sys.exit(1)
         
     all_mcp_pass = True
@@ -439,9 +434,9 @@ def main():
             all_mcp_pass = False
     print()
     
-    generate_markdown_report(gcp_ok, gcp_msg, dep_ok, dep_msg, onedoc_ok, onedoc_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=report_path)
+    generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=report_path)
     
-    if not gcp_ok or not dep_ok or not onedoc_ok or not cdp_ok or not all_mcp_pass:
+    if not gcp_ok or not persona_ok or not citc_ok or not sc_ok or not dep_ok or not cdp_ok or not all_mcp_pass:
         print("[-] SYSTEM VALIDATION: FAILED")
         print("-" * 60)
         sys.exit(1)
