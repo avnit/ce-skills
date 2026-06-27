@@ -36,7 +36,7 @@ export default function Home() {
   // Toast notification state
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const API_BASE = "/api";
+  const API_BASE = "/closed-loop-admin/api";
 
   const addToast = (message: string, type: "success" | "info" | "error" = "success") => {
     const id = Date.now();

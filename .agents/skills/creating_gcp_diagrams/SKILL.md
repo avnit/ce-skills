@@ -105,21 +105,17 @@ To ensure perfect brand-accurate rendering, select up to 3 matching category ico
 | **Cloud Functions, Run**    | `Serverless Computing/PNG/ServerlessComputing-512-color.png`        |
 | **Agents, AI Orchestrator** | `Agents/PNG/Agents-512-color.png` (or custom user logo if provided) |
 
-#### 2. Spawn the Diagram Specialist Sub-Agent
+#### 2. Execute Image Generation Directly
 
-Delegate the high-fidelity vector image generation task asynchronously to the specialized **`diagram-generator`** sub-agent. You **MUST** pass the selected local category icon paths inside the `ImagePaths` parameter (max 3 images) for direct style injection.
+Call the `generate_image` tool directly in the active context to render the diagram. Pass the selected local category icon paths inside the `ImagePaths` parameter (max 3 images) for direct style injection.
 
 ##### Execution Example:
 
 ```json
 {
-  "Subagents": [
-    {
-      "TypeName": "diagram-generator",
-      "Role": "Diagram Specialist Generator",
-      "Prompt": "Generate a professional flat 2D vector Google Cloud architecture diagram. Replicate the exact visual style, clean geometry, and color palette of the attached 'SecurityIdentity-512-color.png' and 'Networking-512-color.png' reference files. Draw a secure mesh peering between 'vpc-frontend' (Networking style) protected by 'cloud-armor' (Security Identity style). Save as 'secure_peering.png'. Target Mermaid: <Mermaid Code Block>"
-    }
-  ],
+  "Prompt": "Generate a professional flat 2D vector Google Cloud architecture diagram. Replicate the exact visual style, clean geometry, and color palette of the attached 'SecurityIdentity-512-color.png' and 'Networking-512-color.png' reference files. Draw a secure mesh peering between 'vpc-frontend' (Networking style) protected by 'cloud-armor' (Security Identity style). Target Mermaid: <Mermaid Code Block>",
+  "ImageName": "secure_peering",
+  "AspectRatio": "16:9",
   "ImagePaths": [
     "/usr/local/google/home/shacharb/skynet/.agents/skills/creating_gcp_diagrams/assets/category-icons/Category Icons/Security Identity/PNG/SecurityIdentity-512-color.png",
     "/usr/local/google/home/shacharb/skynet/.agents/skills/creating_gcp_diagrams/assets/category-icons/Category Icons/Networking/PNG/Networking-512-color.png"
@@ -129,7 +125,7 @@ Delegate the high-fidelity vector image generation task asynchronously to the sp
 
 #### 3. Steering Guidelines & Brand Compliance (For Premium Aesthetics)
 
-Ensure your prompt instructs the sub-agent or image generation model to strictly follow the official Google Cloud Architecture Diagram Style Guidelines (go/diagram-style):
+Ensure your prompt instructs the image generation model to strictly follow the official Google Cloud Architecture Diagram Style Guidelines (go/diagram-style):
 
 ##### A. Typography Specifications
 

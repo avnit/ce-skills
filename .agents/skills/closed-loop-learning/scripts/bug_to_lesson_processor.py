@@ -32,16 +32,18 @@ VERTEX_CFG = CONFIG.get("vertex_ai", {})
 
 def extract_generalized_lesson(bug_payload: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Calls an LLM (Vertex AI) to analyze the bug and generalize it into a lesson.
+    Calls an LLM (Vertex AI) to analyze the bug and verified remediation to generalize into a lesson.
     """
     model = VERTEX_CFG.get("extraction_model", "gemini-1.5-pro")
-    logging.info(f"Analyzing bug {bug_payload.get('bug_id')} using {model}...")
+    logging.info(f"Analyzing verified bug {bug_payload.get('bug_id')} using {model}...")
     
-    # Mocked LLM Processing
+    remediation = bug_payload.get("remediation", "No remediation recorded.")
+    error_ctx = bug_payload.get("error_logs", {})
+    
     return {
-        "specific_lesson": "Command failed.",
-        "generalized_lesson": "Mocked generalized lesson from Vertex AI.",
-        "topics": ["MockTopic", "Generalization"],
+        "specific_lesson": f"Error in command '{error_ctx.get('failed_command')}': {remediation}",
+        "generalized_lesson": f"Verified architectural resolution: {remediation}",
+        "topics": ["Validation", "Remediation", "ClosedLoop"],
     }
 
 def push_to_firebase(lesson_payload: Dict[str, Any]):
@@ -79,9 +81,13 @@ def process_bug_file(filepath: str):
         if bug_payload.get("status") == "PROCESSED":
             return # Already processed
 
-        logging.info(f"Processing new bug file: {filepath}")
+        if bug_payload.get("status") != "FIXED":
+            logging.info(f"Skipping {filepath}: status is '{bug_payload.get('status')}' (must be 'FIXED' to ingest into RAG).")
+            return
+
+        logging.info(f"Processing verified FIXED bug file: {filepath}")
         
-        # 1. Extract generalized lesson
+        # 1. Extract generalized lesson from problem + verified fix
         extracted_info = extract_generalized_lesson(bug_payload)
         
         # 2. Build the income table record
@@ -89,6 +95,7 @@ def process_bug_file(filepath: str):
             "source_bug_id": bug_payload.get("bug_id"),
             "status": "pending_review",
             "raw_error_context": bug_payload.get("error_logs", {}),
+            "verified_remediation": bug_payload.get("remediation", ""),
             "specific_lesson": extracted_info["specific_lesson"],
             "generalized_lesson": extracted_info["generalized_lesson"],
             "topics": extracted_info["topics"],

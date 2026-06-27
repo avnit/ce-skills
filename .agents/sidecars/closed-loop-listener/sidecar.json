@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "builtin": "schedule",
+  "args": [
+    "*/15 * * * *",
+    "python3",
+    "/usr/local/google/home/shacharb/skynet/.agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py",
+    "--scan-dir",
+    "/usr/local/google/home/shacharb/.gemini/jetski/bugs"
+  ],
+  "restart_policy": "always",
+  "description": "Scans the centralized bug inbox every 15 minutes for verified FIXED bugs and ingests their problem-solution pairs into Firestore RAG memory."
+}

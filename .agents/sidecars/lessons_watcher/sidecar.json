@@ -1,7 +1,0 @@
-{
-  "command": "python3",
-  "args": ["lessons_watcher.py"],
-  "restart_policy": "always",
-  "display_name": "Lessons Learned Watcher",
-  "description": "Background daemon that recursively monitors resolved lab bugs and documents failures and lessons learned."
-}
