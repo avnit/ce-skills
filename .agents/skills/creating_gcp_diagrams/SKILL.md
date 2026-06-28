@@ -1,12 +1,12 @@
 ---
 name: creating-gcp-diagrams
 description: >-
-  Guides the generation of high-fidelity Google Cloud architecture diagrams (PNG) and/or lightweight Mermaid markdown code based on a configurable output mode, utilizing the pre-packaged official GCP Category Icons library for style anchoring and hallucination-free rendering.
+  Guides the generation of high-fidelity Google Cloud architecture diagrams (PNG) utilizing the pre-packaged official GCP Category Icons library for style anchoring and hallucination-free rendering.
 ---
 
 # Skill: GCP Architecture Diagramming & Asset Generation
 
-This skill guides you to create professional architectural diagrams, network topologies, and request flows using a configurable representation standard. It supports generating **high-definition flat-vector images** (conforming to Google Cloud design standards) and **lightweight Mermaid markdown flowcharts** depending on the document's specific requirements.
+This skill guides you to create professional architectural diagrams, network topologies, and request flows using the `generate_image` tool. 
 
 To eliminate hallucinations and enforce absolute brand-consistency in generated images, this skill leverages a **pre-packaged official Google Cloud Category Icons library** for local style and layout anchoring.
 
@@ -16,12 +16,8 @@ To eliminate hallucinations and enforce absolute brand-consistency in generated 
 
 When invoking this skill, the calling context or steering instructions must specify:
 
-1.  **`Mode`**:
-    - `"dual"` (Default): Generates both Mermaid code and the HD PNG image, embedding both sequentially (Mermaid within a collapsible block).
-    - `"mermaid-only"`: Generates only the lightweight GFM-compliant Mermaid flowchart.
-    - `"image-only"`: Generates only the high-fidelity vector PNG diagram.
-2.  **`ImageName`** (Required for `"dual"` and `"image-only"`): Unique snake_case filename (e.g., `peered_vpc_mesh`).
-3.  **`DestinationFolder`** (Required for `"dual"` and `"image-only"`): Target workspace folder (e.g., `meeting/customer_a/assets/` or `labs/dev/gke-filestore/img/`).
+1.  **`ImageName`** (Required): Unique snake_case filename (e.g., `peered_vpc_mesh`).
+2.  **`DestinationFolder`** (Required): Target workspace folder (e.g., `meeting/customer_a/assets/` or `labs/dev/gke-filestore/img/`).
 
 ---
 
@@ -38,55 +34,7 @@ When invoking this skill, the calling context or steering instructions must spec
 
 ---
 
-### Phase 2: Generate GCP-Styled Mermaid Code & Local PNG Rendering (Pre-Approval)
-
-#### 1. Write GFM-Compliant Mermaid Code
-
-Generate a clean, well-structured, GFM-compliant Mermaid.js flowchart. Follow these architectural mapping standards:
-
-- **Direction**: Use `graph TD` (Top-to-Bottom) for regional/hierarchical layers, or `graph LR` (Left-to-Right) for sequential request paths.
-- **Subgraphs**: Enclose logical boundaries in subgraphs with clear, capitalized labels (e.g., `subgraph VPC_A ["VPC Network A (10.10.0.0/16)"]`).
-- **Node Names**: Use short, uppercase abbreviations (e.g., `GCLB`, `MIG`, `NAT`, `PSC`) to keep elements compact.
-
-#### 2. Apply Google Cloud Theme Classes & Styling
-
-To ensure that Mermaid diagrams rendered inside documents look professional and follow official Google Cloud aesthetics, **you MUST define and append standard GCP color classes** at the end of every Mermaid code block:
-
-```mermaid
-%% GCP Style Classes
-classDef default fill:#ffffff,stroke:#202124,stroke-width:2px,rx:6px,ry:6px,color:#202124,font-family:'Google Sans';
-classDef header fill:#1A73E8,stroke:#1A73E8,stroke-width:2px,color:#ffffff,font-weight:bold,font-family:'Google Sans';
-classDef region fill:#F1F3F4,stroke:#202124,stroke-width:1px,color:#202124,font-family:'Google Sans';
-classDef vpc fill:#AECBFA,stroke:#202124,stroke-width:1.5px,color:#202124,font-family:'Google Sans';
-classDef subnet fill:#E8EAED,stroke:#202124,stroke-width:1px,color:#202124,font-family:'Google Sans';
-classDef zone fill:#CEEAD6,stroke:#202124,stroke-width:1px,color:#202124,font-family:'Google Sans';
-```
-
-Apply style classes explicitly to key nodes or subgraphs using the `:::` syntax:
-
-- Apply `:::header` to the main title card.
-- Apply `:::vpc` to VPC network subgraph boundaries.
-- Apply `:::subnet` or `:::region` to nested environment subgraphs.
-- Apply `:::zone` to active zones.
-
-#### 3. Compile Mermaid Code to Local PNG (Pre-Approval Embed)
-
-To prevent unrendered raw text code blocks from cluttering the IDE markdown preview, **you MUST compile the Mermaid diagram locally to a static PNG asset** and embed that image directly into the document before submitting for user approval:
-
-1.  Save the generated Mermaid syntax (including GCP classes) into a temporary file in your scratch folder (e.g., `/usr/local/google/home/shacharb/.gemini/jetski/scratch/temp_mermaid.mermaid`).
-2.  Run `mermaid-cli` locally in the shell to compile it into a high-definition PNG image with a white background and appropriate padding:
-    ```bash
-    npx -y @mermaid-js/mermaid-cli -i /usr/local/google/home/shacharb/.gemini/jetski/scratch/temp_mermaid.mermaid -o /path/to/destination/assets/mermaid_render.png -b white -p 20
-    ```
-3.  Embed the generated `mermaid_render.png` in the document:
-    `markdown
-![Architecture Diagram](assets/mermaid_render.png)
-`
-    This guarantees that the IDE markdown preview renders a beautiful, brand-aligned layout of the architecture diagram immediately!
-
----
-
-### Phase 3: Generate High-Definition Visual Asset (Executed for `dual` and `image-only` modes)
+### Phase 2: Generate High-Definition Visual Asset
 
 #### 1. Select Reference Brand Anchors from the Local Library
 
@@ -113,7 +61,7 @@ Call the `generate_image` tool directly in the active context to render the diag
 
 ```json
 {
-  "Prompt": "Generate a professional flat 2D vector Google Cloud architecture diagram. Replicate the exact visual style, clean geometry, and color palette of the attached 'SecurityIdentity-512-color.png' and 'Networking-512-color.png' reference files. Draw a secure mesh peering between 'vpc-frontend' (Networking style) protected by 'cloud-armor' (Security Identity style). Target Mermaid: <Mermaid Code Block>",
+  "Prompt": "Generate a professional flat 2D vector Google Cloud architecture diagram. Replicate the exact visual style, clean geometry, and color palette of the attached 'SecurityIdentity-512-color.png' and 'Networking-512-color.png' reference files. Draw a secure mesh peering between 'vpc-frontend' (Networking style) protected by 'cloud-armor' (Security Identity style). Layout: Left to right. Top: VPC A. Bottom: VPC B.",
   "ImageName": "secure_peering",
   "AspectRatio": "16:9",
   "ImagePaths": [
@@ -129,15 +77,7 @@ Ensure your prompt instructs the image generation model to strictly follow the o
 
 ##### A. Typography Specifications
 
-Use sentence case for all text labels. Monospace must be used for code to distinguish it from copy.
-
-- **Project Main Header**: 24px Google Cloud Logo, reverse text (White `#FFFFFF`) on Blue 600 background.
-- **Region & Zone Headings**: 17pt, Google Sans Text Normal, Google Gray 900 (`#202124`).
-- **Product Card (No Icon)**: 14pt, Google Sans Text Bold, Google Gray 900 (`#202124`).
-- **Product Card (With Icon)**: Title 14pt Google Sans Text Bold, Subtext 12pt Google Sans Text Normal, Google Gray 900 (`#202124`).
-- **Product Card (With Icon & Code)**: Title 14pt Google Sans Text Bold, Subtext 12pt Google Sans Text Normal, Code 12pt Roboto Mono Normal (monospace), Google Gray 900 (`#202124`).
-- **User Card**: 14pt, Google Sans Text Bold, Google Gray 900 (`#202124`).
-- **Path Description / Labels**: 10pt, Google Sans Text Bold, Google Gray 900 (`#202124`).
+Use sentence case for all text labels. Monospace must be used for code to distinguish it from copy. Keep text labels extremely brief to prevent generation scrambling.
 
 ##### B. Harmonious Color Palette
 
@@ -160,7 +100,6 @@ Maintain structural alignment and visual spacing using flat 2D vector elements:
 
 - **Borders**: `2pt` border stroke weight, with a `6pt` (rounded) corner radius.
 - **Sizing**: Product cards should have a standard card height of `110px` with unified internal margins of `15px`.
-- **GCP Logo**: Display a White/Reverse Google Cloud Logo inside the Blue 600 header (25px height).
 - **Product Icons**: Square icons, scaled to `24px` inside product cards.
 
 ##### D. Flow & User Path Specifications
@@ -169,20 +108,17 @@ Use line patterns to convey structural hierarchy and status:
 
 - **Primary Data Path**: Solid, dark line (`2pt` weight, Google Gray 900 `#202124`).
 - **Secondary Control Path**: Dashed line (`2pt` weight, Google Gray 900 `#202124`).
-- **Tertiary / Async Path**: Dotted line (`2pt` weight, Google Gray 900 `#202124`).
-- **Status Indicator**: Use checkmarks (green check for success, red X for failure).
 - **Colored Paths**: Limit colored paths to Blue 700 (`#1967D2`), Green 600 (`#34A853`), Red 700 (`#C5221F`), or Yellow 600 (`#F9AB00`).
 
 ---
 
-### Phase 4: Embed & Verify
+### Phase 3: Embed & Verify
 
-1. Integrate the generated assets into your final document using the layout corresponding to the selected `Mode` (collapsible layout for `dual`, standard image link for `image-only`, raw mermaid block for `mermaid-only`).
-2. Verify that all image file paths resolve correctly in the workspace and that the Mermaid code compiles successfully.
+1. Integrate the generated assets into your final document as standard markdown image links.
+2. Verify that all image file paths resolve correctly in the workspace.
 
 ---
 
 ## 💡 Gotchas & Troubleshooting
 
-- **Scrambled Text inside Images**: If the generated PNG contains scrambled letters, instruct the generator to simplify text labels to standard acronyms (e.g., use `VM` instead of `Virtual Machine`).
-- **Mermaid Rendering Errors**: Ensure there are no special characters, unmatched brackets `()`, or HTML tags inside your Mermaid node names, as these break Markdown rendering.
+- **Scrambled Text inside Images**: If the generated PNG contains scrambled letters, instruct the generator to simplify text labels to standard acronyms (e.g., use `VM` instead of `Virtual Machine`) or remove text completely and rely entirely on icons and structural lines.
