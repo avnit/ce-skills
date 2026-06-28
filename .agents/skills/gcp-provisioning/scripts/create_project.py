@@ -26,6 +26,7 @@ def parse_config(config_path):
 
 def run_command(command, dry_run=False, capture_output=False, check_return=True):
     """Runs a shell command."""
+    command = re.sub(r'\bgcloud\b(?!\s+(?:--quiet\b|-q\b))', 'gcloud --quiet', command)
     if dry_run:
         print(f"[DRY RUN] Executing: {command}")
         return True, "", "" if capture_output else True
@@ -152,8 +153,8 @@ def main():
         print(f"Error: Failed to link billing account to project {project_id} after {retries} attempts.")
         sys.exit(1)
         
-    # 5. Enable Core APIs
-    print("Enabling core APIs...")
+    # 5. Enable Core APIs with Retries
+    print("Enabling core APIs with retry loop...")
     apis = [
         "compute.googleapis.com",
         "iap.googleapis.com",
@@ -165,8 +166,18 @@ def main():
         "orgpolicy.googleapis.com"
     ]
     apis_cmd = f"gcloud services enable {' '.join(apis)} --project={project_id}"
-    if not run_command(apis_cmd, args.dry_run):
-        print(f"Failed to enable APIs for project {project_id}.")
+    
+    api_success = False
+    for attempt in range(1, 4):
+        if run_command(apis_cmd, args.dry_run):
+            api_success = True
+            break
+        print(f"Warning: Enabling core APIs failed (attempt {attempt}/3). Retrying in 15s...")
+        if not args.dry_run:
+            time.sleep(15)
+            
+    if not api_success:
+        print(f"Failed to enable APIs for project {project_id} after 3 attempts.")
         sys.exit(1)
         
     print(f"\nSUCCESS: Project {project_id} setup complete.")

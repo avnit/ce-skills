@@ -34,6 +34,25 @@ When invoking this skill, the calling context or steering instructions must spec
 
 ---
 
+## 🏗️ Two-Stage Drafting & High-Def Rendering Workflow (SYN-02 & SYN-06)
+
+### Stage 1: Drafting & Review (Mermaid Fast Review Tool)
+During initial architectural drafting and review rounds prior to final user approval of the Design Blueprint, use **Mermaid (`mmdc`)** or embedded Mermaid code blocks as a fast, low-cost review tool.
+- **Puppeteer Config Override (SYN-06)**: When executing the Mermaid CLI (`mmdc`) in headless Linux or cloudtop environments, Puppeteer will crash unless sandbox restrictions are overridden. You **MUST** pass a Puppeteer configuration override using `-p puppeteer-config.json` where `puppeteer-config.json` contains:
+  ```json
+  {
+    "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+  }
+  ```
+
+### Stage 2: Post-Approval High-Definition Visual Asset Creation (SYN-02)
+After the user reviews and formally approves the Design Blueprint:
+1. **Invoke `generate_image`**: Transition from Mermaid drafting to generating a premium, high-definition visual image asset using the `generate_image` tool anchored by local GCP category icons.
+2. **Persistent Asset Placement**: Save and copy the generated high-def image directly to the persistent customer folder under `meeting/<customer_name>/assets/design_diagram.png`.
+3. **Reference Updating**: Update all documentation references across all deliverables (`design_blueprint.md`, `one_pager.md`, `test_plan.md`) to link directly to this finalized high-definition image asset (`assets/design_diagram.png`).
+
+---
+
 ### Phase 2: Generate High-Definition Visual Asset
 
 #### 1. Select Reference Brand Anchors from the Local Library

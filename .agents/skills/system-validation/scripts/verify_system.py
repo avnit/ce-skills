@@ -4,6 +4,7 @@ import subprocess
 import urllib.request
 import urllib.error
 import sys
+import shutil
 import datetime
 
 # Dynamically resolve repository root folder (4 parent directories up from script location)
@@ -149,10 +150,12 @@ def check_mcp_servers():
         url = cfg.get("httpUrl") or cfg.get("serverUrl")
         if not url:
             cmd = cfg.get("command", "")
-            if os.path.exists(cmd) or cmd.startswith("python") or cmd.startswith("node") or cmd.startswith("npx"):
+            if not cmd:
+                results[name] = {"status": "FAIL", "message": "Missing command definition in MCP server configuration."}
+            elif os.path.exists(cmd) or shutil.which(cmd.split()[0]):
                 results[name] = {"status": "SUCCESS", "message": f"Verified local command-based MCP binary: <code>{cmd}</code>"}
             else:
-                results[name] = {"status": "SUCCESS", "message": f"Registered local command-based MCP server: <code>{cmd}</code>"}
+                results[name] = {"status": "FAIL", "message": f"Local command binary not found on path or disk: <code>{cmd}</code>"}
             continue
             
         headers = {"Content-Type": "application/json"}

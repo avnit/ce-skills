@@ -151,6 +151,68 @@ def get_active_project():
     except subprocess.SubprocessError:
         return "Unknown"
 
+def sanitize_command(cmd: str, project_id: str = "", custom_vars: dict = None) -> str:
+    """Sanitizes variable expansion artifacts and deduplicates CLI flags in liveness probes and commands."""
+    if custom_vars is None:
+        custom_vars = {}
+    
+    evaluated_cmd = cmd.replace('""', '"').replace("''", "'")
+    if project_id:
+        evaluated_cmd = evaluated_cmd.replace("<PROJECT_ID>", project_id)
+        evaluated_cmd = evaluated_cmd.replace("<project-id>", project_id)
+        evaluated_cmd = evaluated_cmd.replace("<your-project-id>", project_id)
+        evaluated_cmd = evaluated_cmd.replace("$PROJECT_ID", project_id)
+        evaluated_cmd = evaluated_cmd.replace("${PROJECT_ID}", project_id)
+        
+    sorted_keys = sorted(custom_vars.keys(), key=len, reverse=True)
+    for key in sorted_keys:
+        val = str(custom_vars[key])
+        evaluated_cmd = evaluated_cmd.replace(f"<{key}>", val)
+        evaluated_cmd = evaluated_cmd.replace(f"${key}", val)
+        evaluated_cmd = evaluated_cmd.replace(f"${{{key}}}", val)
+        
+    sanitized_lines = []
+    for line in evaluated_cmd.splitlines():
+        if not line.strip() or line.strip().startswith("#"):
+            sanitized_lines.append(line)
+            continue
+            
+        leading_space = len(line) - len(line.lstrip())
+        prefix = line[:leading_space]
+        
+        tokens = line.split()
+        seen_tokens = set()
+        seen_pairs = set()
+        cleaned_tokens = []
+        skip_next = False
+        
+        for idx, token in enumerate(tokens):
+            if skip_next:
+                skip_next = False
+                continue
+            if token in {"&&", "||", ";", "|"} or token.endswith(";"):
+                seen_tokens.clear()
+                seen_pairs.clear()
+            elif token.startswith("--"):
+                if "=" in token:
+                    if token in seen_tokens:
+                        continue
+                    seen_tokens.add(token)
+                else:
+                    if idx + 1 < len(tokens) and not tokens[idx + 1].startswith("-"):
+                        pair = (token, tokens[idx + 1])
+                        if pair in seen_pairs:
+                            skip_next = True
+                            continue
+                        seen_pairs.add(pair)
+                    else:
+                        if token in seen_tokens:
+                            continue
+                        seen_tokens.add(token)
+            cleaned_tokens.append(token)
+        sanitized_lines.append(prefix + " ".join(cleaned_tokens))
+    return "\n".join(sanitized_lines)
+
 class StatefulCodelabTester:
     """Orchestrates Codelab steps, state transitions, and command execution."""
     def __init__(self, markdown_file: str, artifact_dir: str = None, timeout: int = 600, skip_cleanup: bool = False):
@@ -168,7 +230,7 @@ class StatefulCodelabTester:
         # Determine status files
         self.static_status_file = os.path.join(self.lab_dir, "test_status.md")
         self.artifact_status_file = os.path.join(artifact_dir, "test_status.md") if artifact_dir else self.static_status_file
-        self.artifact_task_file = os.path.join(artifact_dir, "task.md") if artifact_dir else None
+        self.artifact_task_file = None  # Decoupled: never overwrite master task.md
 
         os.makedirs(self.tester_state_dir, exist_ok=True)
 
@@ -422,14 +484,8 @@ class StatefulCodelabTester:
                 step_errors = []
                 
                 for cmd in step["commands"]:
-                    # Replace variable placeholders sorted descending by length to prevent partial key collisions
-                    evaluated_cmd = cmd.replace("<PROJECT_ID>", self.project_id)
-                    evaluated_cmd = evaluated_cmd.replace("<project-id>", self.project_id)
-                    evaluated_cmd = evaluated_cmd.replace("<your-project-id>", self.project_id)
-                    
-                    sorted_keys = sorted(custom_vars.keys(), key=len, reverse=True)
-                    for key in sorted_keys:
-                        evaluated_cmd = evaluated_cmd.replace(f"<{key}>", str(custom_vars[key]))
+                    # Sanitize variables and deduplicate flags
+                    evaluated_cmd = sanitize_command(cmd, project_id=self.project_id, custom_vars=custom_vars)
                     
                     # Compute hash on evaluated command so runtime variable updates properly invalidate cache
                     cmd_hash = get_cmd_hash(evaluated_cmd)

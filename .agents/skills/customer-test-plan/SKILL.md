@@ -23,6 +23,14 @@ Use the unified discovery and solutions architect system prompt defined in [disc
 
 ---
 
+## 🛡️ Full Architectural Validation Parity & Active Verification (SYN-02)
+
+When authoring `test_plan.md`, you **MUST strictly enforce full architectural validation parity**:
+1. **No Skipped Layers or Mock Checks**: The test plan must actively validate the complete architectural design topology specified in `design_blueprint.md`. If the blueprint defines GKE clusters, custom VPC networks, node pools, PSC endpoints, or AlloyDB instances, `test_plan.md` MUST include explicit bash commands and configuration steps to provision and verify those actual resources.
+2. **Active Verification Test Harnesses**: Do not rely on passive checks or assumptions. Incorporate active verification scripts or test harnesses (such as synthetic workload generation, active connectivity probing, or real payload execution) to prove that the architecture functions end-to-end under realistic operating conditions.
+
+---
+
 ## Test Plan & Harness Manifest Template
 
 Every Test Plan generated for a customer MUST conform to this unified integration standard:
@@ -44,29 +52,30 @@ This Test Plan acts as the structured validation harness manifest. It binds our 
 
 ## 2. How to Execute Unified E2E Validation
 
-To execute the E2E validation tests, you do not need custom, fragile shell scripts. Simply run our centralized, stateful `tester.py` execution engine targeting our generated codelab:
+To execute the E2E validation tests, run our centralized, stateful `tester.py` execution engine targeting our generated test plan or codelab:
 
 ```bash
 # Run the unified stateful validation engine
 python3 .agents/skills/codelab-validation/scripts/tester.py \
-    labs/dev/customer-a-storage/customer-a-storage.lab.md \
-    --artifact-dir /Users/shacharb/.gemini/jetski/brain/[conversation-id]
+    meeting/customer_a/test_plan.md \
+    --artifact-dir meeting/customer_a/validation_artifacts \
+    --skip-cleanup
 ```
 ````
 
 ### What the Validation Engine Automates:
 
-1. **Interactive Scoping**: Reads the codelab steps, parses variables (e.g., Project ID, region), and prompts for confirmation.
-2. **Sandbox Provisioning**: Connects to the pre-sales environment, links billing, and disables restrictive organization policies.
+1. **Interactive Scoping**: Reads the codelab or test plan steps, parses variables (e.g., Project ID, region), and prompts for confirmation.
+2. **Sandbox Provisioning**: Connects to the pre-sales environment, links billing, and disables restrictive organization policies using `disable_org_policies.sh <project_id>`.
 3. **Dynamic Provisioning**: Allocates VPC Private Service Access (PSA), creates GCS HNS buckets recursively, and deploys the GKE cluster nodes.
 4. **Stateful Dynamic Claims**: Provisions GKE Filestore Enterprise (RWX) and Hyperdisk (RWO) volumes and mounts them inside microservice Pods.
 5. **Functional E2E Assertions**: Sync-writes test payloads inside pods and triggers managed Storage Transfer Service (STS) batch ingress jobs, asserting file delivery.
-6. **Automated Environmental Teardown**: Triggers project resource deletion upon validation success to ensure zero ongoing cost leakage.
+6. **Automated Environmental Teardown**: Triggers project resource deletion upon validation success (unless `--skip-cleanup` is specified) to ensure zero ongoing cost leakage.
 
 ```
 ---
 
 ## Gotchas & Operational Standards
 
-- **Single Source of Truth**: By routing testing through `tester.py` targeting the `.lab.md` file, any bug discovered during validation (Category A Syntax Errors) is immediately fixed inside the codelab source file itself. This ensures that both the customer tutorial and the automated testing scripts remain 100% correct and identical.
+- **Single Source of Truth**: By routing testing through `tester.py` targeting the `.lab.md` or `test_plan.md` file, any bug discovered during validation is immediately fixed inside the source file itself. This ensures that both the customer tutorial and the automated testing scripts remain 100% correct and identical.
 ```

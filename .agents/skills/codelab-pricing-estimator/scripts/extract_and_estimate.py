@@ -37,7 +37,7 @@ STATIC_SQL_RATES = {
     "db-custom-4-15360": 0.2452,
 }
 
-def run_command(cmd_args):
+def run_command(cmd_args, timeout=45):
     """Executes a command without a shell and returns success status, stdout, and stderr."""
     try:
         result = subprocess.run(
@@ -45,9 +45,12 @@ def run_command(cmd_args):
             shell=False,
             capture_output=True,
             text=True,
-            encoding='utf-8'
+            encoding='utf-8',
+            timeout=timeout
         )
         return result.returncode == 0, result.stdout, result.stderr
+    except subprocess.TimeoutExpired as e:
+        return False, "", f"Command timed out after {timeout} seconds: {e}"
     except Exception as e:
         return False, "", str(e)
 

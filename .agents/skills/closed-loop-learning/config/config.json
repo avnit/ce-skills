@@ -1,6 +1,8 @@
 {
   "storage": {
     "backend_type": "firebase",
+    "firebase_account_email": "shacharb@google.com",
+    "account": "shacharb@google.com",
     "firebase_project_id": "hyperstack-dev",
     "firebase_database_id": "losed-loop-learning",
     "firebase_incoming_collection": "incoming_lessons",

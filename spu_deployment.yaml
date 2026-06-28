@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netezza-spu-worker
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: netezza-spu
+  template:
+    metadata:
+      labels:
+        app: netezza-spu
+    spec:
+      serviceAccountName: spu-ksa
+      dnsPolicy: ClusterFirstWithHostNet
+      dnsConfig:
+        options:
+          - name: timeout
+            value: "2"
+          - name: attempts
+            value: "5"
+      containers:
+        - name: spu-engine
+          image: google/cloud-sdk:slim
+          command: ["/bin/bash", "-c", "while true; do sleep 30; done"]
+          env:
+            - name: BUCKET_NAME
+              value: "bluegrid-netezza-rapid-bluegrid-poc-1782632691"
+            - name: S3_ENDPOINT_OVERRIDE
+              value: "https://storage.googleapis.com"
+            - name: ENABLE_AWS_CRT
+              value: "false"
