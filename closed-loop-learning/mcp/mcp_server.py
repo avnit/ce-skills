@@ -25,7 +25,15 @@ STORAGE_CFG = CONFIG.get("storage", {})
 VERTEX_CFG = CONFIG.get("vertex_ai", {})
 
 # Initialize FastMCP Server
-mcp = FastMCP("vertex-rag-mcp")
+port = int(os.environ.get("PORT", "8080"))
+host = "0.0.0.0" if os.environ.get("PORT") or os.environ.get("K_SERVICE") else "127.0.0.1"
+mcp = FastMCP("vertex-rag-mcp", host=host, port=port)
+
+@mcp.custom_route("/", methods=["GET"])
+@mcp.custom_route("/health", methods=["GET"])
+@mcp.custom_route("/healthz", methods=["GET"])
+def health_check(request):
+    return {"status": "ok", "service": "vertex-rag-mcp"}
 
 # Resolve mock directory
 MOCK_DB_DIR = os.path.expanduser(STORAGE_CFG.get("local_mock_directory", "~/.gemini/jetski/knowledge/closed_loop_learning/lessons"))
@@ -126,4 +134,8 @@ def query_team_knowledge(query: str, topic_filters: list[str] = None) -> str:
     return output
 
 if __name__ == "__main__":
-    mcp.run(transport='stdio')
+    if os.environ.get("PORT") or os.environ.get("K_SERVICE"):
+        print(f"Starting MCP server on {host}:{port} with SSE transport...", flush=True)
+        mcp.run(transport='sse')
+    else:
+        mcp.run(transport='stdio')

@@ -4,6 +4,7 @@ import subprocess
 import urllib.request
 import urllib.error
 import sys
+import shutil
 import datetime
 
 # Dynamically resolve repository root folder (4 parent directories up from script location)
@@ -16,7 +17,7 @@ def check_gcp_config():
     if not os.path.exists(path):
         return False, f"gcp_config.txt does not exist at {path}"
     
-    required_keys = {"folder_id", "billing_account"}
+    required_keys = {"folder_id", "billing_account", "billing_project"}
     found_keys = {}
     try:
         with open(path, "r") as f:
@@ -39,7 +40,8 @@ def check_gcp_config():
             return False, f"Value for required key '{k}' in gcp_config.txt is empty."
             
     piper_ws = found_keys.get("piper_workspace", "ce-skills")
-    return True, f"gcp_config.txt verified (folder_id={found_keys['folder_id']}, piper_workspace={piper_ws})."
+    b_table = found_keys.get("billing_table", "Auto-discovered")
+    return True, f"gcp_config.txt verified (folder_id={found_keys['folder_id']}, billing_project={found_keys['billing_project']}, billing_table={b_table}, piper_workspace={piper_ws})."
 
 def check_persona_binding():
     path = os.path.join(REPO_ROOT, ".agents/rules/persona.md")
@@ -148,10 +150,12 @@ def check_mcp_servers():
         url = cfg.get("httpUrl") or cfg.get("serverUrl")
         if not url:
             cmd = cfg.get("command", "")
-            if os.path.exists(cmd) or cmd.startswith("python") or cmd.startswith("node") or cmd.startswith("npx"):
+            if not cmd:
+                results[name] = {"status": "FAIL", "message": "Missing command definition in MCP server configuration."}
+            elif os.path.exists(cmd) or shutil.which(cmd.split()[0]):
                 results[name] = {"status": "SUCCESS", "message": f"Verified local command-based MCP binary: <code>{cmd}</code>"}
             else:
-                results[name] = {"status": "SUCCESS", "message": f"Registered local command-based MCP server: <code>{cmd}</code>"}
+                results[name] = {"status": "FAIL", "message": f"Local command binary not found on path or disk: <code>{cmd}</code>"}
             continue
             
         headers = {"Content-Type": "application/json"}

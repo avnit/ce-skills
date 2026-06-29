@@ -17,4 +17,28 @@ python3 .agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py -
 
 This script reads all `bug_*.json` files that haven't been processed, uses Vertex AI to extract a generalized lesson, and pushes it to the centralized Firebase backend for human curation in the Admin Portal.
 
+## Autonomous Bug Resolution & Feedback Logging (Mandatory Protocol)
+
+Whenever an orchestrator or agent autonomously solves a validation failure, test error, infrastructure block, or script bug during execution, it **MUST strictly log** what failed, what worked, and how it resolved the bug back into the RAG memory before proceeding. Note that `bug_to_lesson_processor.py` ignores any bug file where `status != "FIXED"`. Therefore, whenever an autonomous fix occurs, you must update the bug state and trigger ingestion immediately.
+
+### Protocol Steps:
+
+1. **Locate or Create Bug JSON**: Find the generated `bug_*.json` file in `<lab_dir>/bugs/` (or `~/.gemini/jetski/bugs/`). If none exists for the failure, create `<lab_dir>/bugs/bug_auto_<timestamp>.json`.
+2. **Update Fix & Remediation Details**: Populate or update the bug JSON structure by setting `"status": "FIXED"` and recording explicit details into `"remediation"`:
+   ```json
+   {
+     "bug_id": "bug_auto_<timestamp>",
+     "status": "FIXED",
+     "error_logs": {
+       "failed_command": "<command or script that failed>",
+       "stderr_output": "<exact failure summary>"
+     },
+     "remediation": "<detailed explanation of what worked and how the error was resolved>"
+   }
+   ```
+3. **Ingest into RAG Memory Immediately**: Execute the processor script immediately on the bugs directory so the resolution is ingested into the RAG memory before continuing execution:
+   ```bash
+   python3 .agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py --scan-dir <lab_dir>/bugs
+   ```
+
 _(Note: The Admin Portal and Cloud Run MCP RAG Server are managed in a separate backend repository)._

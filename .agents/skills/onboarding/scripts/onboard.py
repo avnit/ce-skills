@@ -119,10 +119,21 @@ The user environment is operating under the following primary Customer Engineeri
             "env": {}
         }
         print("✅ Injected 'workspace' MCP server configuration.")
-        
+
+    # Inject command and args binary definitions for google-developer-documentation-mcp
+    gdev = mcp_servers.setdefault("google-developer-documentation-mcp", {})
+    if not gdev.get("command") and not gdev.get("httpUrl") and not gdev.get("serverUrl"):
+        if os.path.exists("/google/bin/releases/docs-mcp-local/docs_mcp_server.par"):
+            gdev["command"] = "/google/bin/releases/docs-mcp-local/docs_mcp_server.par"
+            gdev["args"] = []
+        else:
+            gdev["command"] = "npx"
+            gdev["args"] = ["-y", "google-developer-documentation-mcp"]
+        gdev.setdefault("env", {})
+        print("✅ Injected 'command' and 'args' binary definitions for google-developer-documentation-mcp.")
+
     # Inject quota project header if customized
     if args.knowledge_project and args.knowledge_project != "codelab-creator-central":
-        gdev = mcp_servers.setdefault("google-developer-documentation-mcp", {})
         headers = gdev.setdefault("headers", {})
         headers["X-goog-user-project"] = args.knowledge_project
         print(f"✅ Injected X-goog-user-project header ({args.knowledge_project}) into MCP config.")

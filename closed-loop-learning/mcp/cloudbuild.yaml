@@ -1,0 +1,32 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-f",
+        "mcp/Dockerfile",
+        "-t",
+        "us-west1-docker.pkg.dev/hyperstack-dev/cloud-run-source-deploy/closed-loop-mcp:latest",
+        ".",
+      ]
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "push",
+        "us-west1-docker.pkg.dev/hyperstack-dev/cloud-run-source-deploy/closed-loop-mcp:latest",
+      ]
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "closed-loop-mcp"
+      - "--image"
+      - "us-west1-docker.pkg.dev/hyperstack-dev/cloud-run-source-deploy/closed-loop-mcp:latest"
+      - "--region"
+      - "us-west1"
+      - "--service-account=529861882743-compute@developer.gserviceaccount.com"
+      - "--allow-unauthenticated"
+      - "--ingress=internal-and-cloud-load-balancing"
+options:
+  logging: CLOUD_LOGGING_ONLY

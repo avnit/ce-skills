@@ -99,8 +99,7 @@ Use the following standardized inline-CSS table template. Ensure all placeholder
           <pre
             style="font-family: ui-monospace, monospace; font-size: 11px; background: #f1f3f4; padding: 8px 12px; border-radius: 6px; color: #202124; margin: 8px 0 0 0; white-space: pre-wrap; word-break: break-all;"
           >
-[Optional output block]</pre
-          >
+[Optional output block]</pre>
         </td>
       </tr>
       <!-- Example Running Step -->

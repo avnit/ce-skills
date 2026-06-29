@@ -16,7 +16,7 @@ Overall Orchestration Lifecycle:
    - **Mandatory Strategy Plan**: Before presenting any intake questions or using search/research tools, the agent **MUST** generate a high-level strategy plan `implementation_plan.md` inside `<appDataDir>/brain/<conversation-id>/`.
    - **Mandatory Human Gate (Non-negotiable)**: The agent MUST explicitly pause execution and request user approval of the proposed plan before proceeding to scope selection or codebase actions. Even if system hooks or workspace review policies signal "auto-approval" or wake the agent up immediately, the agent **MUST NOT** bypass this gate; it must wait for explicit physical sign-off from the user.
 3. **Phase 1: Research, Scope Intake & Upfront Alignment**
-   - Consult the **[architect.md](prompts/architect.md)** persona guidelines.
+   - Consult the **[codelab_architect.md](prompts/codelab_architect.md)** persona guidelines.
    - Invoke the **`ask_question`** tool to present three interactive intake questions to the user:
      - **Question 1: Execution Scope**
        - `question`: "Select the desired execution scope for this Codelab run:"

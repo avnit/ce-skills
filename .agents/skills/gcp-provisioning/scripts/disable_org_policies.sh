@@ -16,7 +16,7 @@ fi
 echo "Verifying Org Policy API readiness..."
 API_READY=false
 for i in {1..10}; do
-  if gcloud org-policies list --project="$PROJECT_ID" --limit=1 >/dev/null 2>&1; then
+  if gcloud org-policies list --project="$PROJECT_ID" --limit=1 --quiet >/dev/null 2>&1; then
     echo "Org Policy API is active and ready."
     API_READY=true
     break
@@ -33,7 +33,26 @@ fi
 
 # Create a unique temporary directory for this process to prevent multi-process race conditions in shared directories
 TMP_DIR=$(mktemp -d -t org-policy-XXXXXX)
+trap 'cd /tmp && rm -rf "$TMP_DIR"' EXIT
 cd "$TMP_DIR"
+
+# Helper function with retries for setting org policies robustly
+set_org_policy_with_retry() {
+  local policy_file=$1
+  local policy_name=$2
+  local max_retries=3
+  local attempt=1
+  while [ $attempt -le $max_retries ]; do
+    if gcloud org-policies set-policy "$policy_file" --project="$PROJECT_ID" --quiet; then
+      return 0
+    fi
+    echo "Warning: Failed to set policy $policy_name (attempt $attempt/$max_retries). Retrying in 15s..."
+    sleep 15
+    attempt=$((attempt + 1))
+  done
+  echo "Warning: Giving up on setting policy $policy_name after $max_retries attempts."
+  return 0
+}
 
 # Boolean Policies
 BOOLEAN_POLICIES=(
@@ -65,7 +84,7 @@ EOF
 for policy in "${BOOLEAN_POLICIES[@]}"; do
     echo "Disabling Boolean Policy $policy..."
     sed "s|%POLICY%|$policy|g" boolean_policy.yaml > current_boolean.yaml
-    gcloud org-policies set-policy current_boolean.yaml --project="$PROJECT_ID" || echo "Warning: Failed to disable $policy"
+    set_org_policy_with_retry current_boolean.yaml "$policy"
 done
 
 # Create policy file for List (Allow All: True)
@@ -79,7 +98,7 @@ EOF
 for policy in "${LIST_POLICIES[@]}"; do
     echo "Enforcing ALLOW_ALL for List Policy $policy..."
     sed "s|%POLICY%|$policy|g" list_policy.yaml > current_list.yaml
-    gcloud org-policies set-policy current_list.yaml --project="$PROJECT_ID" || echo "Warning: Failed to set policy for $policy"
+    set_org_policy_with_retry current_list.yaml "$policy"
 done
 
 # Clean up the isolated temporary directory safely

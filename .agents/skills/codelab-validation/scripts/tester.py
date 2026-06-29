@@ -10,65 +10,40 @@ import logging
 import os
 import re
 import select
+import shlex
 import subprocess
 import sys
 import time
 import uuid
+from typing import Any, Tuple
 
 # Resolve repository root dynamically
 _script_dir = os.path.dirname(os.path.abspath(__file__))
 repo_root = os.path.abspath(os.path.join(_script_dir, "..", "..", "..", ".."))
 
+# Add script directory to path to import modular components
+sys.path.append(_script_dir)
+try:
+    from html_reporter import HTMLReporter
+except ImportError:
+    HTMLReporter = None
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-
-# HTML Status Table Constants (Tasks.md and visual preview compliance)
-HTML_SKELETON_TOP = """<div style="max-width: 900px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #ffffff; border-radius: 12px; border: 1px solid #e8eaed; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
-<div style="padding: 20px 24px; background: #ffffff; border-bottom: 1px solid #e8eaed; border-left: 6px solid #1a73e8;">
-<h1 style="margin: 0 0 8px 0; font-size: 22px; color: #1a73e8; font-weight: 600;">Codelab Unified Stateful Validation Board</h1>
-<div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: #5f6368;">"""
-
-HTML_SKELETON_MID = """</div>
-</div>
-<div style="padding: 20px 24px; border-bottom: 1px solid #e8eaed;">
-<div style="font-size: 14px; font-weight: 600; margin: 0 0 8px 0; color: #3c4043; text-transform: uppercase; letter-spacing: 0.5px;">Objective</div>
-<p style="margin: 0; font-size: 14px; color: #5f6368; line-height: 1.5;">
-Validate the codelab step-by-step using stateful verification, ensuring correctness, command cache hits, and persistent subshell execution.
-</p>
-</div>
-<table style="width: 100%; border-collapse: collapse; margin: 0; font-size: 13px;">
-<thead>
-<tr style="background-color: #f8f9fa; border-bottom: 2px solid #e8eaed; text-align: left; color: #3c4043;">
-<th style="padding: 12px 24px; font-weight: 600; width: 100px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Status</th>
-<th style="padding: 12px 12px 12px 0; font-weight: 600; width: 240px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Execution Step</th>
-<th style="padding: 12px 24px 12px 0; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Details & Outputs</th>
-</tr>
-</thead>
-<tbody>"""
-
-HTML_SKELETON_BOT = """</tbody>
-</table>
-</div>"""
-
-BADGE_MAP = {
-    "PENDING": '<span style="background: #f1f3f4; color: #5f6368; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">PENDING</span>',
-    "RUNNING": '<span style="background: #e8f0fe; color: #1a73e8; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">RUNNING</span>',
-    "DONE": '<span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">DONE</span>',
-    "FAILED": '<span style="background: #fce8e6; color: #c53929; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">FAILED</span>',
-    "BLOCKED": '<span style="background: #ffebee; color: #c53929; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">BLOCKED</span>',
-    "IN PROGRESS": '<span style="background: #e8f0fe; color: #1a73e8; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">IN PROGRESS</span>',
-    "COMPLETED": '<span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">COMPLETED</span>'
-}
 
 class SubshellRunner:
     """Manages a persistent, non-blocking bash session safely."""
     def __init__(self, cwd: str):
         env = os.environ.copy()
-        # Prioritize repo-local bin and home local bin dynamically
+        # Prioritize repo-local bin and home local bin dynamically using OS path separator
         local_bin = os.path.join(repo_root, "bin")
         home_bin = os.path.expanduser("~/.local/bin")
         current_path = env.get("PATH", "")
-        env["PATH"] = f"{local_bin}:{home_bin}:{current_path}"
+        env["PATH"] = os.pathsep.join([local_bin, home_bin, current_path])
+
+        # Pre-seed environment to prevent interactive prompts from hanging subshell execution
+        env["DEBIAN_FRONTEND"] = "noninteractive"
+        env["CLOUDSDK_CORE_DISABLE_PROMPTS"] = "1"
 
         self.process = subprocess.Popen(
             ["bash"],
@@ -85,9 +60,10 @@ class SubshellRunner:
         fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
     def set_env(self, key: str, value: str):
-        self.run_command(f"export {key}='{value}'")
+        """Safely exports an environment variable using shlex quoting."""
+        self.run_command(f"export {key}={shlex.quote(str(value))}")
 
-    def run_command(self, cmd: str, timeout: int = 300) -> tuple[int, str]:
+    def run_command(self, cmd: str, timeout: int = 300) -> Tuple[int, str]:
         assert self.process.stdin is not None
         assert self.process.stdout is not None
         token = f"__DONE_{uuid.uuid4().hex}__"
@@ -132,9 +108,12 @@ class SubshellRunner:
         return -3, output_bytes.decode('utf-8', errors='replace')
 
     def close(self):
+        """Terminates subshell process gracefully, falling back to force kill to avoid zombies."""
         try:
             self.process.terminate()
             self.process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            self.process.kill()
         except Exception:
             pass
 
@@ -172,6 +151,68 @@ def get_active_project():
     except subprocess.SubprocessError:
         return "Unknown"
 
+def sanitize_command(cmd: str, project_id: str = "", custom_vars: dict = None) -> str:
+    """Sanitizes variable expansion artifacts and deduplicates CLI flags in liveness probes and commands."""
+    if custom_vars is None:
+        custom_vars = {}
+    
+    evaluated_cmd = cmd.replace('""', '"').replace("''", "'")
+    if project_id:
+        evaluated_cmd = evaluated_cmd.replace("<PROJECT_ID>", project_id)
+        evaluated_cmd = evaluated_cmd.replace("<project-id>", project_id)
+        evaluated_cmd = evaluated_cmd.replace("<your-project-id>", project_id)
+        evaluated_cmd = evaluated_cmd.replace("$PROJECT_ID", project_id)
+        evaluated_cmd = evaluated_cmd.replace("${PROJECT_ID}", project_id)
+        
+    sorted_keys = sorted(custom_vars.keys(), key=len, reverse=True)
+    for key in sorted_keys:
+        val = str(custom_vars[key])
+        evaluated_cmd = evaluated_cmd.replace(f"<{key}>", val)
+        evaluated_cmd = evaluated_cmd.replace(f"${key}", val)
+        evaluated_cmd = evaluated_cmd.replace(f"${{{key}}}", val)
+        
+    sanitized_lines = []
+    for line in evaluated_cmd.splitlines():
+        if not line.strip() or line.strip().startswith("#"):
+            sanitized_lines.append(line)
+            continue
+            
+        leading_space = len(line) - len(line.lstrip())
+        prefix = line[:leading_space]
+        
+        tokens = line.split()
+        seen_tokens = set()
+        seen_pairs = set()
+        cleaned_tokens = []
+        skip_next = False
+        
+        for idx, token in enumerate(tokens):
+            if skip_next:
+                skip_next = False
+                continue
+            if token in {"&&", "||", ";", "|"} or token.endswith(";"):
+                seen_tokens.clear()
+                seen_pairs.clear()
+            elif token.startswith("--"):
+                if "=" in token:
+                    if token in seen_tokens:
+                        continue
+                    seen_tokens.add(token)
+                else:
+                    if idx + 1 < len(tokens) and not tokens[idx + 1].startswith("-"):
+                        pair = (token, tokens[idx + 1])
+                        if pair in seen_pairs:
+                            skip_next = True
+                            continue
+                        seen_pairs.add(pair)
+                    else:
+                        if token in seen_tokens:
+                            continue
+                        seen_tokens.add(token)
+            cleaned_tokens.append(token)
+        sanitized_lines.append(prefix + " ".join(cleaned_tokens))
+    return "\n".join(sanitized_lines)
+
 class StatefulCodelabTester:
     """Orchestrates Codelab steps, state transitions, and command execution."""
     def __init__(self, markdown_file: str, artifact_dir: str = None, timeout: int = 600, skip_cleanup: bool = False):
@@ -189,7 +230,7 @@ class StatefulCodelabTester:
         # Determine status files
         self.static_status_file = os.path.join(self.lab_dir, "test_status.md")
         self.artifact_status_file = os.path.join(artifact_dir, "test_status.md") if artifact_dir else self.static_status_file
-        self.artifact_task_file = os.path.join(artifact_dir, "task.md") if artifact_dir else None
+        self.artifact_task_file = None  # Decoupled: never overwrite master task.md
 
         os.makedirs(self.tester_state_dir, exist_ok=True)
 
@@ -286,96 +327,62 @@ class StatefulCodelabTester:
             self.steps = self.parse_codelab()
             self.save_state()
 
-    def save_state(self, current_idx=0, overall_status="IN PROGRESS"):
-        # Save general progress
+    def _atomic_write_json(self, filepath: str, data: Any):
+        """Writes JSON data atomically via a temporary file."""
+        tmp_path = f"{filepath}.tmp"
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        os.replace(tmp_path, filepath)
+
+    def _atomic_write_text(self, filepath: str, text: str):
+        """Writes string content atomically via a temporary file."""
+        tmp_path = f"{filepath}.tmp"
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.replace(tmp_path, filepath)
+
+    def save_state(self, current_idx: int = 0, overall_status: str = "IN PROGRESS"):
         progress = {
             "codelab": os.path.basename(self.md_path),
             "total_steps": len(self.steps),
             "current_step": current_idx + 1,
             "status": overall_status
         }
-        with open(os.path.join(self.tester_state_dir, "progress.json"), "w") as f:
-            json.dump(progress, f, indent=2)
+        self._atomic_write_json(os.path.join(self.tester_state_dir, "progress.json"), progress)
 
-        # Save individual steps
         for step in self.steps:
             step_file = os.path.join(self.tester_state_dir, f"step-{step['num']:03d}.json")
-            with open(step_file, "w") as f:
-                json.dump(step, f, indent=2)
+            self._atomic_write_json(step_file, step)
 
-        # Save user inputs cache
         user_inputs = {"PROJECT_ID": self.project_id}
-        with open(os.path.join(self.tester_state_dir, "user_inputs.json"), "w") as f:
-            json.dump(user_inputs, f, indent=2)
+        self._atomic_write_json(os.path.join(self.tester_state_dir, "user_inputs.json"), user_inputs)
 
-    def write_visual_boards(self, overall_status="IN PROGRESS"):
+    def write_visual_boards(self, overall_status: str = "IN PROGRESS"):
         """Generates premium zero-indentation HTML status charts in tasks.md / test_status.md."""
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        lines = [
-            HTML_SKELETON_TOP,
-            f'<div style="display: flex; align-items: center; gap: 6px;"><strong>Overall Status:</strong> {BADGE_MAP[overall_status]}</div>',
-            f'<div><strong>Project ID:</strong> {self.project_id}</div>',
-            f'<div><strong>Last Updated:</strong> {timestamp}</div>',
-            HTML_SKELETON_MID
-        ]
+        if HTMLReporter is not None:
+            html_content = HTMLReporter.generate_board(self.project_id, self.steps, overall_status, repo_root)
+        else:
+            html_content = f"<!-- HTMLReporter unavailable -->\n# Codelab Validation: {overall_status}\n"
 
-        for step in self.steps:
-            status = step["status"]
-            badge = BADGE_MAP[status]
-            row_style = 'border-bottom: 1px solid #e8eaed; background-color: #fafbfc;'
-            if status == "RUNNING":
-                row_style = 'border-bottom: 2px solid #1a73e8; background-color: #ffffff;'
-
-            details = step["instructions"]
-            if step.get("has_gui"):
-                details = '<span style="background: #fff3e0; color: #e65100; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; display: inline-block; margin-bottom: 6px;">🖥️ GUI / MANUAL ACTION</span><br>' + details
-            if step["commands"]:
-                cmd_text = step["commands"][0]
-                prefix_to_strip = f'export PATH="{repo_root}/bin:$HOME/.local/bin:$PATH"'
-                if cmd_text.startswith(prefix_to_strip):
-                    cmd_text = cmd_text[len(prefix_to_strip):].lstrip()
-                cmd_preview = cmd_text[:100] + "..." if len(cmd_text) > 100 else cmd_text
-                details += f'<br><code style="font-family: monospace; font-size: 11px; color: #202124; background: #f1f3f4; padding: 2px 4px; border-radius: 4px;">{cmd_preview}</code>'
-
-            lines.append(f'<tr style="{row_style}">')
-            lines.append(f'<td style="padding: 14px 24px; vertical-align: top;">{badge}</td>')
-            lines.append(f'<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: {"#1a73e8" if status == "RUNNING" else "#3c4043"};">Step {step["num"]}: {step["title"]}</td>')
-            lines.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{details}')
-            
-            if step.get("error"):
-                safe_err = step["error"].replace("<", "&lt;").replace(">", "&gt;")
-                lines.append(f'<pre style="font-family: ui-monospace, monospace; font-size: 11px; background: #f1f3f4; padding: 8px 12px; border-radius: 6px; color: #202124; margin: 8px 0 0 0; white-space: pre-wrap; word-break: break-all;">{safe_err}</pre>')
-            lines.append('</td></tr>')
-
-        lines.append(HTML_SKELETON_BOT)
-        html_content = "\n".join(line.strip() for line in lines)
-
-        # Write to active status files
-        with open(self.artifact_status_file, "w") as f:
-            f.write(html_content)
+        self._atomic_write_text(self.artifact_status_file, html_content)
             
         if self.artifact_task_file:
-            with open(self.artifact_task_file, "w") as f:
-                f.write(html_content)
+            self._atomic_write_text(self.artifact_task_file, html_content)
 
-    def file_bug_and_notify_mailbox(self, failed_step, failed_command, error_output):
-        """Decentralized subagent bug logging and POSIX mailbox message dispatch."""
-        import sys
-        sys.path.append(os.path.join(repo_root, ".agents", "scripts"))
-        try:
-            from mailbox_handler import MailboxBroker
-        except ImportError as e:
-            logging.error(f"[Tester] Failed to import MailboxBroker: {e}")
-            return
-
-        # 1. Generate local Bug JSON (Data Isolation)
+    def file_bug_and_notify_mailbox(self, failed_step: int, failed_command: str, error_output: str):
+        """Generates structured bug JSON files in local and centralized inboxes for closed-loop learning."""
         bug_epoch = int(time.time())
         bug_id = f"BUG_{failed_step:03d}_{bug_epoch}"
-        bugs_dir = os.path.join(self.lab_dir, "bugs")
-        os.makedirs(bugs_dir, exist_ok=True)
         
-        bug_file = os.path.join(bugs_dir, f"bug_{bug_id}.json")
+        # Local lab bugs directory
+        local_bugs_dir = os.path.join(self.lab_dir, "bugs")
+        os.makedirs(local_bugs_dir, exist_ok=True)
+        local_bug_file = os.path.join(local_bugs_dir, f"bug_{bug_id}.json")
+        
+        # Centralized system bugs directory
+        central_bugs_dir = os.path.expanduser("~/.gemini/jetski/bugs")
+        os.makedirs(central_bugs_dir, exist_ok=True)
+        central_bug_file = os.path.join(central_bugs_dir, f"bug_{bug_id}.json")
         
         bug_payload = {
             "bug_id": bug_id,
@@ -387,38 +394,25 @@ class StatefulCodelabTester:
                 "failed_command": failed_command,
                 "stderr_output": error_output
             },
-            "status": "NEW"
+            "status": "NEW",
+            "remediation": ""
         }
         
         try:
-            with open(bug_file, "w", encoding="utf-8") as f:
-                json.dump(bug_payload, f, indent=2)
-            logging.info(f"[Tester] Structured Bug File successfully created locally: {bug_file}")
+            self._atomic_write_json(local_bug_file, bug_payload)
+            self._atomic_write_json(central_bug_file, bug_payload)
+            logging.info(f"[Tester] Structured Bug File successfully created locally and centrally: {central_bug_file}")
+            
+            # Trigger background hook to scan central inbox for FIXED bugs
+            processor_script = os.path.join(repo_root, ".agents", "skills", "closed-loop-learning", "scripts", "bug_to_lesson_processor.py")
+            if os.path.exists(processor_script):
+                subprocess.Popen(
+                    ["python3", processor_script, "--scan-dir", central_bugs_dir],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
         except Exception as e:
             logging.error(f"[Tester] Failed to write Bug File: {e}")
-            return
-
-        # 2. Dispatch message envelope via MailboxBroker
-        try:
-            broker = MailboxBroker()
-            blackboard_pointers = {
-                "blueprint": self.md_path,
-                "bug_report": bug_file
-            }
-            payload = {
-                "bug_id": bug_id,
-                "findings_summary": f"Step {failed_step} ('{bug_payload['step_title']}') failed execution on command: {failed_command}"
-            }
-            
-            broker.send_message(
-                sender="chaos-tester",
-                recipient="orchestrator",
-                action_type="REMEDIATE",
-                blackboard_pointers=blackboard_pointers,
-                payload=payload
-            )
-        except Exception as e:
-            logging.error(f"[Tester] Failed to dispatch mailbox message envelope: {e}")
 
     def run(self) -> bool:
         """Executes step-by-step state validation."""
@@ -442,7 +436,7 @@ class StatefulCodelabTester:
         executed_hashes = []
         if os.path.exists(state_file):
             with open(state_file, "r") as f:
-                executed_hashes = [line.strip() for line in f.readlines()]
+                executed_hashes = [line.strip() for line in f if line.strip()]
 
         runner = SubshellRunner(cwd=self.lab_dir)
         try:
@@ -490,17 +484,14 @@ class StatefulCodelabTester:
                 step_errors = []
                 
                 for cmd in step["commands"]:
-                    cmd_hash = get_cmd_hash(cmd)
+                    # Sanitize variables and deduplicate flags
+                    evaluated_cmd = sanitize_command(cmd, project_id=self.project_id, custom_vars=custom_vars)
+                    
+                    # Compute hash on evaluated command so runtime variable updates properly invalidate cache
+                    cmd_hash = get_cmd_hash(evaluated_cmd)
                     if cmd_hash in executed_hashes:
                         logging.info("[Tester] Command already in cache. Skipping execution.")
                         continue
-                    
-                    # Replace variable placeholders
-                    evaluated_cmd = cmd.replace("<PROJECT_ID>", self.project_id)
-                    evaluated_cmd = evaluated_cmd.replace("<project-id>", self.project_id)
-                    evaluated_cmd = evaluated_cmd.replace("<your-project-id>", self.project_id)
-                    for key, val in custom_vars.items():
-                        evaluated_cmd = evaluated_cmd.replace(f"<{key}>", val)
                     
                     # Run command in persistent subshell
                     status, output = runner.run_command(evaluated_cmd, timeout=self.timeout)
@@ -524,7 +515,7 @@ class StatefulCodelabTester:
                     self.save_state(idx, "FAILED")
                     self.write_visual_boards("FAILED")
                     logging.error("[Tester] Step %d failed.", step["num"])
-                    self.file_bug_and_notify_mailbox(step["num"], cmd, step["error"])
+                    self.file_bug_and_notify_mailbox(step["num"], evaluated_cmd, step["error"])
                     return False
                 
                 # Step successfully completed
