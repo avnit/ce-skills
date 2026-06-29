@@ -4,7 +4,7 @@
     "firebase_account_email": "shacharb@google.com",
     "account": "shacharb@google.com",
     "firebase_project_id": "hyperstack-dev",
-    "firebase_database_id": "losed-loop-learning",
+    "firebase_database_id": "closed-loop-learning",
     "firebase_incoming_collection": "incoming_lessons",
     "local_mock_directory": "~/.gemini/jetski/knowledge/closed_loop_learning/lessons"
   },
