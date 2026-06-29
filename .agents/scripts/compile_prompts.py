@@ -43,8 +43,14 @@ SUBAGENTS_MAP = {
         "enable_mcp_tools": True
     },
     "chaos-tester": {
-        "file": "tester.md",
+        "file": "test_engineer.md",
         "description": "Executes validation scripts and tests target infrastructure deployments.",
+        "enable_write_tools": True,
+        "enable_mcp_tools": True
+    },
+    "test-engineer": {
+        "file": "test_engineer.md",
+        "description": "Converts technical design blueprints into automated validation test plans.",
         "enable_write_tools": True,
         "enable_mcp_tools": True
     }
