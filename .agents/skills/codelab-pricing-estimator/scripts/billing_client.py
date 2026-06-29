@@ -8,7 +8,6 @@ fallback catalog rates for compute, storage, networking, AI, and serverless infr
 
 import json
 import subprocess
-import sys
 
 # Static hourly fallback rates in USD
 STATIC_COMPUTE_RATES = {

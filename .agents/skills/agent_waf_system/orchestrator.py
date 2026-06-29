@@ -10,11 +10,9 @@ import os
 import sys
 import time
 import re
-import requests
+import subprocess
 
 CACHE_FILE = "session_cache.json"
-
-import subprocess
 
 class StdioWafMcpClient:
     def __init__(self, command="blaze", args=["run", "//agent_waf_system:mcp_server"], cwd="/google/src/cloud/shacharb/waf-mcp/google3"):
@@ -576,8 +574,8 @@ class WafClientOrchestrator:
             
             lines.append(f'    Topology["{top_label}"]')
             lines.append(f'    Egress["{egr_label}"]')
-            lines.append(f'    Topology -->|Route Egress| Egress')
-            lines.append(f'    Egress -->|Internet Transit| WWW["Public Internet Egress"]')
+            lines.append('    Topology -->|Route Egress| Egress')
+            lines.append('    Egress -->|Internet Transit| WWW["Public Internet Egress"]')
 
         if has_gke:
             gke = decisions.get("GKE_TOPOLOGY", {}).get("selected_option_id", "PRIVATE_CLUSTER")
@@ -585,9 +583,9 @@ class WafClientOrchestrator:
             lines.append(f'    GKE["{gke_label}"]')
             
             if has_net:
-                lines.append(f'    GKE -->|Private VPC Peering| Topology')
+                lines.append('    GKE -->|Private VPC Peering| Topology')
             else:
-                lines.append(f'    GKE -->|Egress| WWW["Public Internet Egress"]')
+                lines.append('    GKE -->|Egress| WWW["Public Internet Egress"]')
 
         if has_db:
             ha = decisions.get("HA_TOPOLOGY", {}).get("selected_option_id", "REGIONAL_HA")
@@ -597,14 +595,14 @@ class WafClientOrchestrator:
             
             lines.append(f'    DB["{ha_label}"]')
             lines.append(f'    Backup["{bck_label}"]')
-            lines.append(f'    DB -->|Replication| Backup')
+            lines.append('    DB -->|Replication| Backup')
             
             if has_gke:
-                lines.append(f'    GKE -->|Private SQL Connect| DB')
+                lines.append('    GKE -->|Private SQL Connect| DB')
             elif has_net:
-                lines.append(f'    Topology -->|Internal SQL Connect| DB')
+                lines.append('    Topology -->|Internal SQL Connect| DB')
             else:
-                lines.append(f'    App["GCP Compute App Layer"] -->|SQL Connect| DB')
+                lines.append('    App["GCP Compute App Layer"] -->|SQL Connect| DB')
 
         if has_ai:
             ai = decisions.get("AI_EGRESS", {}).get("selected_option_id", "PSC_ATTACHMENT")
@@ -612,13 +610,13 @@ class WafClientOrchestrator:
             lines.append(f'    Vertex["{ai_label}"]')
             
             if has_gke:
-                lines.append(f'    Vertex -->|Model Inference Egress| GKE')
+                lines.append('    Vertex -->|Model Inference Egress| GKE')
             elif has_db:
-                lines.append(f'    Vertex -->|Vector SQL Query| DB')
+                lines.append('    Vertex -->|Vector SQL Query| DB')
             elif has_net:
-                lines.append(f'    Vertex -->|VPC Intercept| Topology')
+                lines.append('    Vertex -->|VPC Intercept| Topology')
             else:
-                lines.append(f'    Vertex -->|Outbound Routing| WWW["Public Internet Egress"]')
+                lines.append('    Vertex -->|Outbound Routing| WWW["Public Internet Egress"]')
 
         if has_sec:
             sec = decisions.get("STORAGE_ENCRYPTION", {}).get("selected_option_id", "CMEK_HSM")
@@ -626,9 +624,9 @@ class WafClientOrchestrator:
             lines.append(f'    KMS["{sec_label}"]')
             
             if has_db:
-                lines.append(f'    KMS -->|CMK Envelope Protection| DB')
+                lines.append('    KMS -->|CMK Envelope Protection| DB')
             if has_gke:
-                lines.append(f'    KMS -->|Cluster Envelope Protection| GKE')
+                lines.append('    KMS -->|Cluster Envelope Protection| GKE')
 
         # Default fallback
         if len(lines) == 1:
@@ -649,9 +647,6 @@ class WafClientOrchestrator:
         
         for group_id, group_data in self.session_state["completed_questions"].items():
             just = justifications[group_id]
-            # Isolate CE input in strict XML tag format
-            ce_input = f"<ce_input>{just}</ce_input>"
-            
             # Prompt Injection Defense Gate:
             # If user tries to write imperative commands inside justifications to bypass security rules.
             if any(cmd in just.lower() for cmd in ["ignore previous", "bypass security", "bypass ciso", "force pass", "always pass", "override all rules"]):
@@ -711,7 +706,7 @@ class WafClientOrchestrator:
                 self.retries += 1
                 
                 if self.retries < max_retries:
-                    print(f"\n⚠️ Loopback Initiated. Security Review failed. Requesting human CE clarification...")
+                    print("\n⚠️ Loopback Initiated. Security Review failed. Requesting human CE clarification...")
                     # Interactive Loopback: call ask_question modal UI to let CE clarify
                     for group_id, group_data in self.session_state["completed_questions"].items():
                         # Check if this specific group has a fail line in the report
@@ -732,7 +727,7 @@ class WafClientOrchestrator:
                             self.save_cache()
                 else:
                     # Trip Circuit Breaker
-                    print(f"\n🚨 CIRCUIT BREAKER TRIPPED! Maximum peer retries reached.")
+                    print("\n🚨 CIRCUIT BREAKER TRIPPED! Maximum peer retries reached.")
                     print("Publishing ADR under '⚠️ SECURITY REVIEW PENDING HUMAN ESCALATION' governance banner.")
                     self.generate_final_adr(ciso_approved=False, ciso_report=sec_report)
                     self.reset_cache()
@@ -803,7 +798,7 @@ class WafClientOrchestrator:
         with open(report_file, "w") as f:
             f.write(rendered_md)
 
-        print(f"\n🏆 Final ADR Whitepaper published successfully!")
+        print("\n🏆 Final ADR Whitepaper published successfully!")
         print(f"File Location: {os.path.abspath(report_file)}")
 
 if __name__ == "__main__":

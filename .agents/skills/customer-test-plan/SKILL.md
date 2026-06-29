@@ -26,6 +26,7 @@ Use the unified discovery and solutions architect system prompt defined in [disc
 ## 🛡️ Full Architectural Validation Parity & Active Verification (SYN-02)
 
 When authoring `test_plan.md`, you **MUST strictly enforce full architectural validation parity**:
+
 1. **No Skipped Layers or Mock Checks**: The test plan must actively validate the complete architectural design topology specified in `design_blueprint.md`. If the blueprint defines GKE clusters, custom VPC networks, node pools, PSC endpoints, or AlloyDB instances, `test_plan.md` MUST include explicit bash commands and configuration steps to provision and verify those actual resources.
 2. **Active Verification Test Harnesses**: Do not rely on passive checks or assumptions. Incorporate active verification scripts or test harnesses (such as synthetic workload generation, active connectivity probing, or real payload execution) to prove that the architecture functions end-to-end under realistic operating conditions.
 

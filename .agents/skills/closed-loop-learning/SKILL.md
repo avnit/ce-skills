@@ -22,6 +22,7 @@ This script reads all `bug_*.json` files that haven't been processed, uses Verte
 Whenever an orchestrator or agent autonomously solves a validation failure, test error, infrastructure block, or script bug during execution, it **MUST strictly log** what failed, what worked, and how it resolved the bug back into the RAG memory before proceeding. Note that `bug_to_lesson_processor.py` ignores any bug file where `status != "FIXED"`. Therefore, whenever an autonomous fix occurs, you must update the bug state and trigger ingestion immediately.
 
 ### Protocol Steps:
+
 1. **Locate or Create Bug JSON**: Find the generated `bug_*.json` file in `<lab_dir>/bugs/` (or `~/.gemini/jetski/bugs/`). If none exists for the failure, create `<lab_dir>/bugs/bug_auto_<timestamp>.json`.
 2. **Update Fix & Remediation Details**: Populate or update the bug JSON structure by setting `"status": "FIXED"` and recording explicit details into `"remediation"`:
    ```json

@@ -26,7 +26,7 @@ Use the unified discovery and solutions architect system prompt defined in [disc
 
 Every Design Blueprint generated for a customer MUST conform to the following structure:
 
-````markdown
+```markdown
 # Design Blueprint: [Customer Name] - [Project Name]
 
 ## 1. System Design & Reference Architecture (The "What & Why")
@@ -36,7 +36,7 @@ Every Design Blueprint generated for a customer MUST conform to the following st
 [Provide a clear visual mapping of the end-to-end target state using standard Google Cloud architecture archetypes.]
 
 ![Reference Architecture Diagram](assets/design_diagram.png)
-````
+```
 
 ### B. Service Selection & Decision Matrix
 

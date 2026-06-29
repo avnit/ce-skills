@@ -5,7 +5,7 @@ Decouples UI formatting and zero-indentation HTML board generation from core exe
 """
 
 import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 HTML_SKELETON_TOP = """<div style="max-width: 900px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #ffffff; border-radius: 12px; border: 1px solid #e8eaed; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
 <div style="padding: 20px 24px; background: #ffffff; border-bottom: 1px solid #e8eaed; border-left: 6px solid #1a73e8;">

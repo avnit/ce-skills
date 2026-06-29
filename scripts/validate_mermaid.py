@@ -71,7 +71,7 @@ def validate_mermaid_syntax(markdown_path):
                         print(f"    {err_line}")
                 has_errors = True
             else:
-                print(f"  [CLI SUCCESS] Rendered successfully to a temporary PNG.")
+                print("  [CLI SUCCESS] Rendered successfully to a temporary PNG.")
                 
         except Exception as e:
             print(f"  [CLI ERROR] Failed to execute mmdc validator: {e}")

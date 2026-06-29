@@ -43,13 +43,11 @@ Create a formal **Knowledge Gap Analysis Report** mapping gaps to GCP solutions,
   - _Implementation Highlights_: Brief technical setup steps.
 - **Technical Objections & Risk Mitigation**: List customer objections and GCP framework solutions.
 
-
-
 ---
 
 ## 📐 High-Level Design (HLD) & Visualization Standards
 
-- **Visual Rendering Workflow**: You MUST rely on the `creating-gcp-diagrams` skill to generate the visual topology. Do not attempt to write Mermaid code yourself. 
+- **Visual Rendering Workflow**: You MUST rely on the `creating-gcp-diagrams` skill to generate the visual topology. Do not attempt to write Mermaid code yourself.
 - **Visual Simplicity**: Keep diagram topologies focused on the 2-3 core migration flows to ensure visual clarity and impact.
 
 ---

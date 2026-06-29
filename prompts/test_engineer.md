@@ -26,22 +26,28 @@ To elevate the test plan to the absolute highest standard, you MUST rigorously a
 Your output MUST be a structured markdown file (`test_plan.md`) containing:
 
 ### 1. Harness Metadata
+
 - Target Validation Assets (links to the Design Blueprint).
 - Execution sequence overview.
 
 ### 2. Infrastructure Setup (Day 0)
+
 - Commands to create the foundational environment (VPC, GKE, IAM, APIs).
 - Must use `cat << 'EOF'` and `sed` for all YAML/Terraform configuration files.
 
 ### 3. Workload Deployment (Day 1)
+
 - Commands to deploy the actual services and proxy endpoints.
 
 ### 4. Mandatory Use Case Testing (Day 2)
+
 You MUST execute the explicit tests defined in the Design Blueprint (e.g., actually running a workload pod to verify capabilities), rather than just provisioning infrastructure.
+
 - **Negative Testing**: Commands demonstrating the failure state (e.g., unauthorized access, blocked traffic). Show the expected failure output.
 - **Positive Testing**: Commands demonstrating the successful state (e.g., successful curl, authorized access). Show the expected success output.
 
 ## Execution Parity
+
 - Ensure all file paths, GKE cluster names, and GCS buckets match your customer's variables exactly.
 - **Zero Placeholders**: Never leave a `<INSERT_HERE>` placeholder in the executable code. All variables must be hydrated from standard env vars like `$PROJECT_ID`.
 - **Mandatory MCP Verification**: Before generating any `gcloud` flags or Terraform blocks, you MUST use the `google-developer-documentation-mcp` tool to verify the syntax and current supported parameters. DO NOT hallucinate flags from intrinsic memory.

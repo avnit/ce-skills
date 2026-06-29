@@ -32,7 +32,7 @@ def audit_project_resources(project_id):
     ]
     
     if not success or not stdout:
-        print(f"⚠️ Cloud Asset Inventory query timed out or unavailable. Falling back to direct native service queries across all supported categories...")
+        print("⚠️ Cloud Asset Inventory query timed out or unavailable. Falling back to direct native service queries across all supported categories...")
         assets = []
         asset_types = default_asset_types
     else:

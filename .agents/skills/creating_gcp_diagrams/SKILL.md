@@ -6,7 +6,7 @@ description: >-
 
 # Skill: GCP Architecture Diagramming & Asset Generation
 
-This skill guides you to create professional architectural diagrams, network topologies, and request flows using the `generate_image` tool. 
+This skill guides you to create professional architectural diagrams, network topologies, and request flows using the `generate_image` tool.
 
 To eliminate hallucinations and enforce absolute brand-consistency in generated images, this skill leverages a **pre-packaged official Google Cloud Category Icons library** for local style and layout anchoring.
 
@@ -37,7 +37,9 @@ When invoking this skill, the calling context or steering instructions must spec
 ## 🏗️ Two-Stage Drafting & High-Def Rendering Workflow (SYN-02 & SYN-06)
 
 ### Stage 1: Drafting & Review (Mermaid Fast Review Tool)
+
 During initial architectural drafting and review rounds prior to final user approval of the Design Blueprint, use **Mermaid (`mmdc`)** or embedded Mermaid code blocks as a fast, low-cost review tool.
+
 - **Puppeteer Config Override (SYN-06)**: When executing the Mermaid CLI (`mmdc`) in headless Linux or cloudtop environments, Puppeteer will crash unless sandbox restrictions are overridden. You **MUST** pass a Puppeteer configuration override using `-p puppeteer-config.json` where `puppeteer-config.json` contains:
   ```json
   {
@@ -46,7 +48,9 @@ During initial architectural drafting and review rounds prior to final user appr
   ```
 
 ### Stage 2: Post-Approval High-Definition Visual Asset Creation (SYN-02)
+
 After the user reviews and formally approves the Design Blueprint:
+
 1. **Invoke `generate_image`**: Transition from Mermaid drafting to generating a premium, high-definition visual image asset using the `generate_image` tool anchored by local GCP category icons.
 2. **Persistent Asset Placement**: Save and copy the generated high-def image directly to the persistent customer folder under `meeting/<customer_name>/assets/design_diagram.png`.
 3. **Reference Updating**: Update all documentation references across all deliverables (`design_blueprint.md`, `one_pager.md`, `test_plan.md`) to link directly to this finalized high-definition image asset (`assets/design_diagram.png`).
