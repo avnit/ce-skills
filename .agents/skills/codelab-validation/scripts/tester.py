@@ -253,7 +253,7 @@ class StatefulCodelabTester:
             body = sections[idx+1] if idx+1 < len(sections) else ""
             
             # Extract bash commands
-            bash_pattern = re.compile(r"```bash\n(.*?)\n[ \t]*```", re.DOTALL)
+            bash_pattern = re.compile(r"```(?:bash|sh|shell|console)?\r?\n(.*?)\r?\n[ \t]*```", re.DOTALL | re.IGNORECASE)
             commands = [c.strip() for c in bash_pattern.findall(body)]
             commands = _filter_hermetic_commands(commands)
             
@@ -415,8 +415,15 @@ class StatefulCodelabTester:
             logging.error(f"[Tester] Failed to write Bug File: {e}")
 
     def run(self) -> bool:
-        """Executes step-by-step state validation."""
         self.load_or_initialize_state()
+        
+        total_commands = sum(len(step.get("commands", [])) for step in self.steps)
+        if total_commands == 0:
+            print("no executable commands found — nothing was validated")
+            logging.error("[Tester] Hard Failure: No executable commands found in any step.")
+            self.save_state(0, "FAILED")
+            self.write_visual_boards("FAILED")
+            return False
         
         # Load custom variables mapped in variables.json
         custom_vars = {}
@@ -475,8 +482,8 @@ class StatefulCodelabTester:
                 self.write_visual_boards("IN PROGRESS")
                 
                 if not step["commands"]:
-                    logging.info("[Tester] Step has no commands. Automatically completed.")
-                    step["status"] = "DONE"
+                    logging.info("[Tester] Step has no commands. Marked as SKIPPED/NO-OP.")
+                    step["status"] = "SKIPPED/NO-OP"
                     continue
 
                 step_failed = False

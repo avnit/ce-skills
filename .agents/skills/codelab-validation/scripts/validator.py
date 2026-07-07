@@ -65,17 +65,25 @@ def download_url(url):
                     extracted_lines.append("")
                 elif groups[2]: # pre block attributes and content
                     pre_content = groups[2]
-                    # Only treat as bash commands if class or syntax specifies language-bash
-                    if "language-bash" in pre_content or "lang-bash" in pre_content:
-                        code_match = re.search(r'<code.*?>(.*?)</code>', pre_content, re.DOTALL | re.IGNORECASE)
-                        if code_match:
-                            code = code_match.group(1)
-                        else:
-                            code = pre_content.split('>', 1)[-1]
+                    code_match = re.search(r'<code.*?>(.*?)</code>', pre_content, re.DOTALL | re.IGNORECASE)
+                    if code_match:
+                        code = code_match.group(1)
+                    else:
+                        code = pre_content.split('>', 1)[-1]
+                        
+                    clean_code = re.sub(r'<.*?>', '', code).strip()
+                    # Decode HTML entities
+                    clean_code = clean_code.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&').replace('&quot;', '"')
+                    
+                    is_bash = False
+                    if "language-bash" in pre_content or "lang-bash" in pre_content or "bash" in pre_content:
+                        is_bash = True
+                    elif "prettyprint" in pre_content:
+                        shell_indicators = [r'\bgcloud\b', r'\bbq\b', r'\bgsutil\b', r'\bkubectl\b', r'\bcurl\b', r'\bapt-get\b', r'\becho\b', r'\bcat\b']
+                        if any(re.search(ind, clean_code) for ind in shell_indicators):
+                            is_bash = True
                             
-                        clean_code = re.sub(r'<.*?>', '', code).strip()
-                        # Decode HTML entities
-                        clean_code = clean_code.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&').replace('&quot;', '"')
+                    if is_bash:
                         extracted_lines.append("```bash")
                         extracted_lines.append(clean_code)
                         extracted_lines.append("```")
