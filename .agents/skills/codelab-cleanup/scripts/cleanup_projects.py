@@ -96,6 +96,14 @@ def list_projects(folder_id, markdown=False):
         print(f"Failed to list projects: {stderr}")
         return None
 
+def _get_project_number(project_id):
+    """Retrieves the project number for a given project ID."""
+    cmd = f"gcloud projects describe {project_id} --format='value(projectNumber)'"
+    success, stdout, stderr = run_command(cmd, capture_output=True, check_return=False)
+    if not success:
+        return None
+    return stdout.strip()
+
 def delete_project(project_id, force=False):
     if not force:
         confirm = input(f"Are you sure you want to delete project '{project_id}'? (y/N): ")
@@ -103,22 +111,37 @@ def delete_project(project_id, force=False):
             print("Deletion cancelled.")
             return False
             
+    # Fetch project number for liens check:
+    project_num = _get_project_number(project_id)
+    if not project_num:
+        print(f"❌ Error: Could not retrieve project number for target project '{project_id}'. Deletion blocked.")
+        return False
+
     print(f"🔍 Checking for safety liens on project {project_id}...")
-    res = subprocess.run(["gcloud", "alpha", "resource-manager", "liens", "list", f"--filter=parent=projects/{project_id}", "--format=value(name,reason)"], capture_output=True, text=True)
-    liens = [lien_item.strip() for lien_item in res.stdout.strip().split("\n") if lien_item.strip()]
+    cmd = f"gcloud alpha resource-manager liens list --project={project_id} --filter='parent=projects/{project_num}' --format='value(name,reason)'"
+    success, stdout, stderr = run_command(cmd, capture_output=True, check_return=False)
+    if not success:
+        print(f"❌ Error checking liens for {project_id}: {stderr}")
+        return False
+        
+    liens = [lien_item.strip() for lien_item in stdout.strip().split("\n") if lien_item.strip()]
     if liens:
         print(f"⚠️ Notice: Found {len(liens)} active safety lien(s) blocking deletion on '{project_id}':")
         for lien_item in liens:
             print(f"   - {lien_item}")
-        if not force:
-            lien_confirm = input(f"Do you approve removing these {len(liens)} lien(s) before proceeding with project deletion? (y/N): ")
-            if lien_confirm.lower() != 'y':
-                print("Lien removal and project deletion cancelled.")
-                return False
+            
+        lien_confirm = input(f"Do you approve removing these {len(liens)} lien(s) before proceeding with project deletion? (y/N): ")
+        if lien_confirm.lower() != 'y':
+            print("Lien removal and project deletion cancelled.")
+            return False
+            
         for lien in liens:
             bare_id = lien.split()[0].split("/")[-1]
             print(f"🔓 Removing blocking lien: {bare_id}...")
-            subprocess.run(["gcloud", "alpha", "resource-manager", "liens", "delete", bare_id, "--quiet"], check=False)
+            delete_cmd = f"gcloud alpha resource-manager liens delete {bare_id} --quiet"
+            if not run_command(delete_cmd, check_return=True):
+                print(f"❌ Error: Failed to delete lien {bare_id}. Aborting project deletion.")
+                return False
 
     print(f"🗑️ Deleting project: {project_id}")
     cmd = f"gcloud projects delete {project_id} --quiet"

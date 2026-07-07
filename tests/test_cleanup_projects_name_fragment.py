@@ -33,6 +33,8 @@ def test_delete_all_parses_real_project_id_not_fragment(monkeypatch):
             pid = parts[3]
             deleted_pids.append(pid)
             return (True, "", "") if capture_output else True
+        elif "projects describe" in cmd:
+            return (True, "9876543210\n", "") if capture_output else True
         return (True, "", "") if capture_output else True
 
     monkeypatch.setattr(cleanup_projects, "run_command", mock_run_command)
