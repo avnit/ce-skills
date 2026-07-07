@@ -29,7 +29,7 @@ def run_command(command, dry_run=False, capture_output=False, check_return=True)
     command = re.sub(r'\bgcloud\b(?!\s+(?:--quiet\b|-q\b))', 'gcloud --quiet', command)
     if dry_run:
         print(f"[DRY RUN] Executing: {command}")
-        return True, "", "" if capture_output else True
+        return (True, "", "") if capture_output else True
     
     try:
         print(f"Executing: {command}")
@@ -48,10 +48,10 @@ def run_command(command, dry_run=False, capture_output=False, check_return=True)
         print(f"Error executing command: {command}")
         print(f"Stdout: {e.stdout}")
         print(f"Stderr: {e.stderr}")
-        return False, e.stdout, e.stderr if capture_output else False
+        return (False, e.stdout, e.stderr) if capture_output else False
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-        return False, "", "" if capture_output else False
+        return (False, "", "") if capture_output else False
 
 
 def is_billing_enabled(project_id, dry_run=False):
