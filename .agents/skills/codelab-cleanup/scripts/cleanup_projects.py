@@ -146,22 +146,20 @@ def main():
     elif args.delete:
         delete_project(args.delete, args.force)
     elif args.delete_all:
-        projects_output = list_projects(folder_id)
-        if not projects_output:
-            print("No projects found or failed to list.")
+        list_projects(folder_id)
+        
+        # Retrieve actual project IDs safely:
+        cmd = f"gcloud projects list --filter='parent.id:{folder_id}' --format='value(projectId)'"
+        success, stdout, stderr = run_command(cmd, capture_output=True, check_return=False)
+        if not success:
+            print("Failed to retrieve project IDs for deletion.")
             return
             
-        lines = projects_output.strip().split('\n')
-        if len(lines) <= 1:
+        project_ids = [line.strip() for line in stdout.strip().split('\n') if line.strip()]
+        if not project_ids:
              print("No projects found to delete.")
              return
              
-        project_ids = []
-        for line in lines[1:]: # Skip header
-             parts = line.split()
-             if parts and len(parts) >= 2:
-                 project_ids.append(parts[1])
-                 
         print(f"Found {len(project_ids)} projects to delete.")
         
         if not args.force:
