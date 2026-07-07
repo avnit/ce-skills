@@ -6,7 +6,8 @@ AUTO_YES = False
 
 def run_command(command, check=True, cwd=None):
     try:
-        result = subprocess.run(command, check=check, shell=True, text=True, capture_output=True, cwd=cwd)
+        assert isinstance(command, list), f"Expected list command, got: {command}"
+        result = subprocess.run(command, check=check, shell=False, text=True, capture_output=True, cwd=cwd)
         return result
     except subprocess.CalledProcessError as e:
         print(f"Error running command: {command}", file=sys.stderr)
@@ -37,7 +38,7 @@ def main():
     AUTO_YES = args.yes
 
     # Get current branch
-    res = run_command("git branch --show-current")
+    res = run_command(["git", "branch", "--show-current"])
     current_branch = res.stdout.strip()
     if not current_branch:
         print("Error: Could not determine current branch.", file=sys.stderr)
@@ -47,7 +48,7 @@ def main():
 
     # Step 1: Local Changes
     print("\n--- Step 1: Local Changes ---")
-    status_res = run_command("git status --porcelain")
+    status_res = run_command(["git", "status", "--porcelain"])
     if not status_res.stdout.strip():
         print("No local changes to commit.")
     else:
@@ -56,26 +57,26 @@ def main():
         
         if ask_permission(f"Do you want to add and commit changes in '{args.path}'?"):
             print(f"Adding changes in '{args.path}'...")
-            run_command(f"git add {args.path}")
+            run_command(["git", "add", "--", args.path])
             print("Committing changes...")
-            run_command(f'git commit -m "{args.message}"')
+            run_command(["git", "commit", "-m", args.message])
             
             # Step 2: Push
             print("\n--- Step 2: Push Changes ---")
             if ask_permission(f"Do you want to push {current_branch} to origin?"):
                 print(f"Pushing {current_branch} to origin...")
-                run_command(f"git push origin {current_branch}")
+                run_command(["git", "push", "origin", current_branch])
         else:
             print("Skipping commit and push.")
 
     # Step 3: Fetch and Show Incoming Changes
     print("\n--- Step 3: Fetch and Compare ---")
     print("Fetching from origin...")
-    run_command("git fetch origin")
+    run_command(["git", "fetch", "origin"])
     
     # Find common ancestor
     try:
-        base_res = run_command(f"git merge-base HEAD origin/{args.main_branch}")
+        base_res = run_command(["git", "merge-base", "HEAD", f"origin/{args.main_branch}"])
         base_commit = base_res.stdout.strip()
     except SystemExit:
         print(f"Error: Could not find common ancestor with origin/{args.main_branch}. Make sure the branch exists.")
@@ -84,7 +85,7 @@ def main():
     print(f"Common ancestor: {base_commit}")
     
     # Changes in current branch
-    diff_current = run_command(f"git diff --name-only {base_commit}..HEAD")
+    diff_current = run_command(["git", "diff", "--name-only", f"{base_commit}..HEAD"])
     print(f"\nFiles changed in {current_branch} (since divergence):")
     if diff_current.stdout.strip():
         print(diff_current.stdout)
@@ -92,7 +93,7 @@ def main():
         print("No changes.")
         
     # Changes in main branch
-    diff_main = run_command(f"git diff --name-only {base_commit}..origin/{args.main_branch}")
+    diff_main = run_command(["git", "diff", "--name-only", f"{base_commit}..origin/{args.main_branch}"])
     print(f"\nFiles changed in origin/{args.main_branch} (since divergence):")
     if diff_main.stdout.strip():
         print(diff_main.stdout)
@@ -103,7 +104,7 @@ def main():
     print("\n--- Step 4: Merge ---")
     if ask_permission(f"Do you want to merge origin/{args.main_branch} into {current_branch}?"):
         print(f"Merging origin/{args.main_branch} into {current_branch}...")
-        merge_res = subprocess.run(f"git merge origin/{args.main_branch}", shell=True, text=True, capture_output=True)
+        merge_res = subprocess.run(["git", "merge", f"origin/{args.main_branch}"], shell=False, text=True, capture_output=True)
         
         print(merge_res.stdout)
         if merge_res.returncode != 0:
