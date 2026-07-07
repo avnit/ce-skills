@@ -12,7 +12,8 @@ import time
 import re
 import subprocess
 
-CACHE_FILE = "session_cache.json"
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+CACHE_FILE = os.path.join(_script_dir, "session_cache.json")
 
 class StdioWafMcpClient:
     def __init__(self, command="blaze", args=["run", "//agent_waf_system:mcp_server"], cwd="/google/src/cloud/shacharb/waf-mcp/google3"):
@@ -698,8 +699,8 @@ class WafClientOrchestrator:
             
             if sec_approved:
                 print("\n🟢 SECURITY REVIEW PASSED! Generating final approved whitepaper...")
-                self.generate_final_adr(ciso_approved=True, ciso_report="Passed all security and compliance checks successfully.")
-                self.reset_cache()
+                if self.generate_final_adr(ciso_approved=True, ciso_report="Passed all security and compliance checks successfully."):
+                    self.reset_cache()
                 return
             else:
                 print(f"\n🔴 SECURITY REVIEW FAILED! Detailed Report:\n{sec_report}")
@@ -729,20 +730,24 @@ class WafClientOrchestrator:
                     # Trip Circuit Breaker
                     print("\n🚨 CIRCUIT BREAKER TRIPPED! Maximum peer retries reached.")
                     print("Publishing ADR under '⚠️ SECURITY REVIEW PENDING HUMAN ESCALATION' governance banner.")
-                    self.generate_final_adr(ciso_approved=False, ciso_report=sec_report)
-                    self.reset_cache()
+                    if self.generate_final_adr(ciso_approved=False, ciso_report=sec_report):
+                        self.reset_cache()
                     return
 
     def generate_final_adr(self, ciso_approved, ciso_report):
         """Renders template into final whitepaper markdown document."""
-        # Load template
-        template_path = "agent_waf_system/templates/ADR_TEMPLATE.md"
+        # Load template relative to the script location
+        template_path = os.path.join(_script_dir, "templates", "ADR_TEMPLATE.md")
         if not os.path.exists(template_path):
             print(f"❌ Template not found at {template_path}!")
-            return
+            return False
 
-        with open(template_path, "r") as f:
-            template_content = f.read()
+        try:
+            with open(template_path, "r") as f:
+                template_content = f.read()
+        except Exception as e:
+            print(f"❌ Failed to read template at {template_path}: {e}")
+            return False
 
         # Format context variables
         decisions_list = []
@@ -789,17 +794,22 @@ class WafClientOrchestrator:
 
         rendered_md = self.render_custom_template(template_content, context)
 
-        # Save in customer-specific adr directory
+        # Save in customer-specific adr directory under the repository root
         clean_cust = re.sub(r'[^a-zA-Z0-9]', '_', self.session_state["customer_name"].lower()).strip('_')
-        target_dir = f"reports/customer/{clean_cust}/adr"
+        repo_root = os.path.abspath(os.path.join(_script_dir, "..", "..", ".."))
+        target_dir = os.path.join(repo_root, "reports", "customer", clean_cust, "adr")
         os.makedirs(target_dir, exist_ok=True)
-        report_file = f"{target_dir}/WAF_ADR.md"
+        report_file = os.path.join(target_dir, "WAF_ADR.md")
         
-        with open(report_file, "w") as f:
-            f.write(rendered_md)
-
-        print("\n🏆 Final ADR Whitepaper published successfully!")
-        print(f"File Location: {os.path.abspath(report_file)}")
+        try:
+            with open(report_file, "w") as f:
+                f.write(rendered_md)
+            print("\n🏆 Final ADR Whitepaper published successfully!")
+            print(f"File Location: {os.path.abspath(report_file)}")
+            return True
+        except Exception as e:
+            print(f"❌ Failed to write final ADR report to {report_file}: {e}")
+            return False
 
 if __name__ == "__main__":
     orchestrator = WafClientOrchestrator()
