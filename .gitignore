@@ -23,6 +23,7 @@ doc/
 
 # Python Caches & Virtual Environments
 __pycache__/
+.pytest_cache/
 *.py[cod]
 *$py.class
 .ipynb_checkpoints/
