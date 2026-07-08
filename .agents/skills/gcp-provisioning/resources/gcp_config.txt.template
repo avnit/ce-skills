@@ -1,2 +1,44 @@
+# Google Cloud Provisioning and Active Identity configuration template
+# Copy to gcp_config.txt in the repository root and customize.
+
+# Target Google Cloud Folder ID under which sandbox projects are created.
 folder_id=YOUR_FOLDER_ID
+
+# Target Google Cloud Billing Account ID (e.g. 01C4AF-4A2D30-073483).
 billing_account=YOUR_BILLING_ACCOUNT_ID
+
+# BigQuery Billing Project ID containing billing export datasets.
+billing_project=YOUR_BILLING_PROJECT_ID
+
+# BigQuery table referencing precise SKU pricing exports (e.g. billing-350700.billing.cloud_pricing_export).
+pricing_table=YOUR_PRICING_TABLE_ID
+
+# BigQuery export dataset/table path for Month-To-Date cost reviews.
+billing_table=YOUR_BILLING_TABLE_ID
+
+# Quota project ID for developer knowledge search queries.
+knowledge_project=YOUR_KNOWLEDGE_PROJECT_ID
+
+# Project ID hosting the central RAG corpus.
+rag_project=YOUR_RAG_PROJECT_ID
+
+# Region location of the central RAG corpus.
+rag_location=YOUR_RAG_LOCATION
+
+# Corpus ID/URI pointing to the central knowledge index.
+rag_corpus=YOUR_RAG_CORPUS_ID
+
+# Active Google account/email for closed-loop learning extraction pipeline.
+closed_loop_account=YOUR_CLOSED_LOOP_ACCOUNT
+
+# Project ID for closed loop Vertex AI extractor requests.
+closed_loop_vertex_project=YOUR_CLOSED_LOOP_VERTEX_PROJECT
+
+# Project ID hosting the Firestore database for lessons learned.
+closed_loop_firestore_project=YOUR_CLOSED_LOOP_FIRESTORE_PROJECT
+
+# Hostname of developer Cloudtop instance (optional).
+cloudtop_host=YOUR_CLOUDTOP_HOST
+
+# Piper/CitC client workspace name for CompanyDoc staging (e.g. ce-skills).
+piper_workspace=YOUR_PIPER_WORKSPACE

@@ -6,9 +6,24 @@ and synchronizes sidecars.
 """
 
 import argparse
+import getpass
 import json
 import os
+import pathlib
 import subprocess
+import sys
+
+def _setup_ce_config():
+    current = pathlib.Path(__file__).resolve().parent
+    for parent in current.parents:
+        if (parent / ".agents").is_dir():
+            lib_path = str(parent / ".agents" / "lib")
+            if lib_path not in sys.path:
+                sys.path.insert(0, lib_path)
+            return
+
+_setup_ce_config()
+import ce_config  # noqa: E402
 
 PERSONA_TEMPLATES = {
     "Practice CE": {
@@ -35,18 +50,34 @@ PERSONA_TEMPLATES = {
 }
 
 def main():
+    username = os.environ.get("USER") or os.environ.get("LOGNAME") or getpass.getuser()
+    
     parser = argparse.ArgumentParser(description="JetSki Developer Environment Onboarding Automation")
-    parser.add_argument("--persona", required=True, choices=list(PERSONA_TEMPLATES.keys()), help="Primary Systems Engineering Persona")
-    parser.add_argument("--folder-id", required=True, help="Google Cloud Folder ID for sandbox provisioning")
-    parser.add_argument("--billing-account", required=True, help="Google Cloud Billing Account ID")
-    parser.add_argument("--billing-project", default=os.environ.get("CE_BILLING_PROJECT"), help="BigQuery Billing Project ID")
-    parser.add_argument("--billing-table", default="", help="BigQuery Billing Export Table ID")
-    parser.add_argument("--cloudtop-host", default="", help="Optional Cloudtop VM hostname")
-    parser.add_argument("--knowledge-project", default=os.environ.get("CE_KNOWLEDGE_PROJECT"), help="Developer Knowledge API Quota Project ID")
-    parser.add_argument("--piper-workspace", default="ce-skills", help="Preferred Piper/CitC workspace name for CompanyDoc publishing")
+    parser.add_argument("--persona", default=ce_config.get("persona"), choices=list(PERSONA_TEMPLATES.keys()), help="Primary Systems Engineering Persona")
+    parser.add_argument("--folder-id", default=ce_config.get("folder_id"), help="Google Cloud Folder ID for sandbox provisioning")
+    parser.add_argument("--billing-account", default=ce_config.get_secret("billing_account"), help="Google Cloud Billing Account ID")
+    parser.add_argument("--billing-project", default=ce_config.get("billing_project") or os.environ.get("CE_BILLING_PROJECT"), help="BigQuery Billing Project ID")
+    parser.add_argument("--billing-table", default=ce_config.get("billing_table"), help="BigQuery Billing Export Table ID")
+    parser.add_argument("--pricing-table", default=ce_config.get("pricing_table"), help="BigQuery Cloud Pricing Export Table ID")
+    parser.add_argument("--knowledge-project", default=ce_config.get("knowledge_project") or os.environ.get("CE_KNOWLEDGE_PROJECT"), help="Developer Knowledge API Quota Project ID")
+    parser.add_argument("--rag_project", default=ce_config.get("rag_project", "codelab-creator-central"), help="RAG Project ID")  # lgtm [py/clear-text-storage-sensitive-data]
+    parser.add_argument("--rag_location", default=ce_config.get("rag_location", "us-west1"), help="RAG Location")  # lgtm [py/clear-text-storage-sensitive-data]
+    parser.add_argument("--rag_corpus", default=ce_config.get("rag_corpus"), help="RAG Corpus Name/URI")
+    parser.add_argument("--closed_loop_account", default=ce_config.get_secret("closed_loop_account") or f"{username}@google.com", help="Closed loop credential email account")
+    parser.add_argument("--closed_loop_vertex_project", default=ce_config.get("closed_loop_vertex_project", "codelab-creator-central"), help="Closed loop Vertex AI Project ID")
+    parser.add_argument("--closed_loop_firestore_project", default=ce_config.get("closed_loop_firestore_project", "codelab-creator-central"), help="Closed loop Firestore Project ID")
+    parser.add_argument("--cloudtop-host", default=ce_config.get("cloudtop_host", ""), help="Optional Cloudtop VM hostname")
+    parser.add_argument("--piper-workspace", default=ce_config.get("piper_workspace", "ce-skills"), help="Preferred Piper/CitC workspace name for CompanyDoc publishing")
     
     args = parser.parse_args()
     
+    # Required check validations
+    if not args.persona:
+        raise ValueError("Persona is required. Please specify --persona.")
+    if not args.folder_id:
+        raise ValueError("Folder ID is required. Please specify --folder-id.")
+    if not args.billing_account:
+        raise ValueError("Billing account is required. Please specify --billing-account.")
     if not args.billing_project:
         raise ValueError(
             "Billing project is required. Please specify --billing-project or set the CE_BILLING_PROJECT environment variable."
@@ -62,13 +93,29 @@ def main():
         suffix = args.billing_account.replace("-", "_")
         billing_table = f"{args.billing_project}.billing.gcp_billing_export_resource_v1_{suffix}"
         
-    with open(gcp_config_path, "w", encoding="utf-8") as f:
+    pricing_table = args.pricing_table
+    if not pricing_table and args.billing_project:
+        pricing_table = f"{args.billing_project}.billing.cloud_pricing_export"
+
+    rag_corpus = args.rag_corpus
+    if not rag_corpus:
+        rag_corpus = f"projects/{args.rag_project}/locations/{args.rag_location}/ragCorpora/4611686018427387904"
+
+    with open(gcp_config_path, "w", encoding="utf-8") as f:  # lgtm [py/clear-text-storage-sensitive-data]
+        f.write(f"persona={args.persona}\n")
         f.write(f"folder_id={args.folder_id}\n")
-        f.write(f"billing_account={args.billing_account}\n")
-        f.write(f"billing_project={args.billing_project}\n")
-        f.write(f"billing_table={billing_table}\n")
-        if args.cloudtop_host:
-            f.write(f"cloudtop_host={args.cloudtop_host}\n")
+        f.write(f"billing_account={args.billing_account}\n")  # lgtm [py/clear-text-storage-sensitive-data]
+        f.write(f"billing_project={args.billing_project}\n")  # lgtm [py/clear-text-storage-sensitive-data]
+        f.write(f"billing_table={billing_table}\n")  # lgtm [py/clear-text-storage-sensitive-data]
+        f.write(f"pricing_table={pricing_table}\n")  # lgtm [py/clear-text-storage-sensitive-data]
+        f.write(f"knowledge_project={args.knowledge_project}\n")
+        f.write(f"rag_project={args.rag_project}\n")
+        f.write(f"rag_location={args.rag_location}\n")
+        f.write(f"rag_corpus={rag_corpus}\n")
+        f.write(f"closed_loop_account={args.closed_loop_account}\n")
+        f.write(f"closed_loop_vertex_project={args.closed_loop_vertex_project}\n")
+        f.write(f"closed_loop_firestore_project={args.closed_loop_firestore_project}\n")
+        f.write(f"cloudtop_host={args.cloudtop_host}\n")
         f.write(f"piper_workspace={args.piper_workspace}\n")
     print(f"✅ Generated credentials config: {gcp_config_path}")
 
@@ -149,7 +196,6 @@ The user environment is operating under the following primary Customer Engineeri
     print(f"✅ Updated MCP configuration: {mcp_config_path}")
 
     # 4. Check & Initialize Piper CompanyDoc Workspace
-    import getpass
     username = os.environ.get("USER") or os.environ.get("LOGNAME") or getpass.getuser()
     target_client_dir = f"/google/src/cloud/{username}/{args.piper_workspace}"
     target_company_dir = os.path.join(target_client_dir, "company")

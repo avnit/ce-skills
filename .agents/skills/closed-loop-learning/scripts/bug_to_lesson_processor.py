@@ -16,10 +16,24 @@ import glob
 import json
 import logging
 import os
+import pathlib
 import re
 import subprocess
+import sys
 import time
 from typing import Dict, Any, List, Optional
+
+def _setup_ce_config():
+    current = pathlib.Path(__file__).resolve().parent
+    for parent in current.parents:
+        if (parent / ".agents").is_dir():
+            lib_path = str(parent / ".agents" / "lib")
+            if lib_path not in sys.path:
+                sys.path.insert(0, lib_path)
+            return
+
+_setup_ce_config()
+import ce_config  # noqa: E402
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -58,14 +72,13 @@ class GcloudUserCredentials(BaseCredentials):
             super().__init__()
         self.account = (
             account
-            or os.environ.get("CLOSED_LOOP_CREDENTIAL_ACCOUNT")
+            or ce_config.get_secret("closed_loop_account")
             or STORAGE_CFG.get("account")
             or STORAGE_CFG.get("firebase_account_email")
         )
         if not self.account:
             raise ValueError(
-                "No credentials account configured. Please configure 'account' in config.json "
-                "or set the CLOSED_LOOP_CREDENTIAL_ACCOUNT environment variable."
+                "No credentials account configured. Please run onboarding workflow or set CLOSED_LOOP_CREDENTIAL_ACCOUNT."
             )
         self.token: Optional[str] = None
         self.expiry: Optional[datetime.datetime] = None
@@ -231,11 +244,10 @@ def extract_generalized_lesson(bug_payload: Dict[str, Any]) -> Dict[str, Any]:
         import vertexai
         from vertexai.generative_models import GenerativeModel, GenerationConfig
 
-        project = os.environ.get("CLOSED_LOOP_VERTEX_PROJECT") or VERTEX_CFG.get("project_id") or os.environ.get("GCP_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT")
+        project = ce_config.get("closed_loop_vertex_project") or VERTEX_CFG.get("project_id") or os.environ.get("GCP_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT")
         if not project:
             raise ValueError(
-                "No Vertex AI project_id configured. Please configure 'project_id' in config.json "
-                "or set the CLOSED_LOOP_VERTEX_PROJECT environment variable."
+                "No Vertex AI project_id configured. Please configure it in gcp_config.txt or set CLOSED_LOOP_VERTEX_PROJECT."
             )
         location = VERTEX_CFG.get("location", "us-central1")
         model_name = VERTEX_CFG.get("extraction_model", "gemini-1.5-pro")
@@ -306,15 +318,14 @@ def push_to_firebase(lesson_payload: Dict[str, Any]) -> None:
             from google.cloud import firestore
             creds = get_user_credentials()
             firestore_project = (
-                os.environ.get("CLOSED_LOOP_FIRESTORE_PROJECT")
+                ce_config.get("closed_loop_firestore_project")
                 or STORAGE_CFG.get("firebase_project_id")
                 or os.environ.get("GCP_PROJECT")
                 or os.environ.get("GOOGLE_CLOUD_PROJECT")
             )
             if not firestore_project:
                 raise ValueError(
-                    "No Firestore project configured. Please configure 'firebase_project_id' in config.json "
-                    "or set the CLOSED_LOOP_FIRESTORE_PROJECT environment variable."
+                    "No Firestore project configured. Please configure it in gcp_config.txt or set CLOSED_LOOP_FIRESTORE_PROJECT."
                 )
             db = firestore.Client(
                 project=firestore_project,

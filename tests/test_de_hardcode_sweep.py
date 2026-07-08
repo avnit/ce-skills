@@ -83,6 +83,14 @@ def test_pricing_estimator_configurable_table_and_tempfile(monkeypatch):
 
 def test_onboarding_no_author_argparse_defaults(monkeypatch):
     """Verifies onboarding onboard.py doesn't contain hardcoded argparse defaults."""
+    # Point ce_config to a nonexistent temp file to prevent loading real workspace credentials
+    monkeypatch.setenv("CE_CONFIG_PATH", "/nonexistent/gcp_config.txt")
+    import ce_config
+    ce_config._cached_config = None
+    
+    # Force reload of onboard.py after resetting ce_config so its parser evaluates clean defaults
+    if "onboard" in sys.modules:
+        del sys.modules["onboard"]
     onboard = _load(REPO / ".agents" / "skills" / "onboarding" / "scripts" / "onboard.py")
 
     monkeypatch.delenv("USER", raising=False)

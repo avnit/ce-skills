@@ -4,15 +4,27 @@ import argparse
 import datetime
 import json
 import os
+import pathlib
 import sys
 import tempfile
 
-import vertexai
-import vertexai.preview.rag
+def _setup_ce_config():
+    current = pathlib.Path(__file__).resolve().parent
+    for parent in current.parents:
+        if (parent / ".agents").is_dir():
+            lib_path = str(parent / ".agents" / "lib")
+            if lib_path not in sys.path:
+                sys.path.insert(0, lib_path)
+            return
 
-PROJECT_ID = os.environ.get("CE_RAG_PROJECT_ID", "codelab-creator-central")
-LOCATION = os.environ.get("CE_RAG_LOCATION", "us-west1")
-CORPUS_NAME = os.environ.get("CE_RAG_CORPUS_NAME", f"projects/{PROJECT_ID}/locations/{LOCATION}/ragCorpora/4611686018427387904")
+_setup_ce_config()
+import ce_config  # noqa: E402
+import vertexai  # noqa: E402
+import vertexai.preview.rag  # noqa: E402
+
+PROJECT_ID = ce_config.get("rag_project", "codelab-creator-central")
+LOCATION = ce_config.get("rag_location", "us-west1")
+CORPUS_NAME = ce_config.get("rag_corpus", f"projects/{PROJECT_ID}/locations/{LOCATION}/ragCorpora/4611686018427387904")
 
 def query_centralized_rag(query_text: str, n_results: int = 3):
     """Queries the centralized Vertex AI RAG system."""
