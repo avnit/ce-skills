@@ -36,9 +36,9 @@ class TestBugToLessonProcessor(unittest.TestCase):
     def test_dual_identity_credentials_refresh_and_cache(self, mock_run):
         mock_run.return_value = MagicMock(stdout="mock_oauth_token_string\n", returncode=0)
 
-        creds = processor.GcloudUserCredentials(account="shacharb@google.com")
+        creds = processor.GcloudUserCredentials(account="test-user@google.com")
         self.assertFalse(creds.valid)
-        self.assertEqual(creds.account, "shacharb@google.com")
+        self.assertEqual(creds.account, "test-user@google.com")
 
         # Trigger refresh
         creds.refresh()
@@ -48,7 +48,7 @@ class TestBugToLessonProcessor(unittest.TestCase):
 
         # Ensure gcloud command invoked with correct account
         mock_run.assert_called_once_with(
-            ["gcloud", "auth", "print-access-token", "--account=shacharb@google.com"],
+            ["gcloud", "auth", "print-access-token", "--account=test-user@google.com"],
             capture_output=True, text=True, check=True
         )
 

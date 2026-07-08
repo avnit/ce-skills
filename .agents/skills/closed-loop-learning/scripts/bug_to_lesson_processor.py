@@ -64,7 +64,7 @@ except ImportError:
 class GcloudUserCredentials(BaseCredentials):
     """
     Custom credentials subclass that dynamically executes
-    `gcloud auth print-access-token --account=shacharb@google.com` on demand
+    `gcloud auth print-access-token --account=<user-corporate-email>` on demand
     with 55-minute in-memory caching so global Argolis sandbox ADC remains untouched.
     """
     def __init__(self, account: Optional[str] = None):

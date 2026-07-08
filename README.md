@@ -88,7 +88,7 @@ Skills are code-backed capability layers pairing instruction manifests (`SKILL.m
 ## 📂 Master Repository Topology
 
 ```text
-skynet/
+ce-skills/
 ├── .gitignore                 # Excludes local temporary caches, lock files, and generated config files
 ├── README.md                  # This comprehensive alignment documentation
 ├── package.json               # Standard Node.js package dependencies

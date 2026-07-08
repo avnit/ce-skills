@@ -63,7 +63,7 @@ After the user reviews and formally approves the Design Blueprint:
 
 To ensure perfect brand-accurate rendering, select up to 3 matching category icons from the pre-packaged local library:
 
-- **Path**: `/usr/local/google/home/shacharb/skynet/.agents/skills/creating_gcp_diagrams/assets/category-icons/Category Icons/`
+- **Path**: `.agents/skills/creating_gcp_diagrams/assets/category-icons/Category Icons/`
 
 | Architectural Component     | Target Local Reference Asset Path                                   |
 | :-------------------------- | :------------------------------------------------------------------ |
@@ -88,8 +88,8 @@ Call the `generate_image` tool directly in the active context to render the diag
   "ImageName": "secure_peering",
   "AspectRatio": "16:9",
   "ImagePaths": [
-    "/usr/local/google/home/shacharb/skynet/.agents/skills/creating_gcp_diagrams/assets/category-icons/Category Icons/Security Identity/PNG/SecurityIdentity-512-color.png",
-    "/usr/local/google/home/shacharb/skynet/.agents/skills/creating_gcp_diagrams/assets/category-icons/Category Icons/Networking/PNG/Networking-512-color.png"
+    ".agents/skills/creating_gcp_diagrams/assets/category-icons/Category Icons/Security Identity/PNG/SecurityIdentity-512-color.png",
+    ".agents/skills/creating_gcp_diagrams/assets/category-icons/Category Icons/Networking/PNG/Networking-512-color.png"
   ]
 }
 ```

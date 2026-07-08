@@ -21,7 +21,7 @@ python3 .agents/skills/g3doc-formatter/scripts/format_g3doc.py \
 ### Script Arguments:
 
 - `--file`: (Required) Path to the markdown file to format.
-- `--owner`: (Required) Owner username or team name (e.g., `ce-skills` or `shacharb`) for the freshness tag.
+- `--owner`: (Required) Owner username or team name (e.g., `ce-skills` or `<username>`) for the freshness tag.
 - `--in-place`: (Optional) Overwrites the file in place. If omitted, prints the formatted content to stdout.
 
 ## Transformations Applied

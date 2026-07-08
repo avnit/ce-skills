@@ -66,4 +66,4 @@ The script will:
 
 ## Additional Documentation
 
-For a comprehensive walkthrough of prerequisites, bridging mechanics, and Critique CL review rules (including personal exemption vs team LGTM policies), see [publishing_guide.md](file:///usr/local/google/home/shacharb/skynet/.agents/skills/publish-artifact/references/publishing_guide.md).
+For a comprehensive walkthrough of prerequisites, bridging mechanics, and Critique CL review rules (including personal exemption vs team LGTM policies), see [publishing_guide.md](references/publishing_guide.md).
