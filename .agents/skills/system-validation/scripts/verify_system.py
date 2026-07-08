@@ -1,5 +1,6 @@
 import os
 import json
+import glob
 import pathlib
 import subprocess
 import urllib.request
@@ -70,20 +71,41 @@ def check_citc_companydoc():
     return False, f"CitC CompanyDoc view not found at <code>{company_dir}</code>.<br>Please run <code>g4 client -c {ws_name}</code>."
 
 def check_sidecar_sync():
-    sidecars_dir = os.path.join(REPO_ROOT, ".agents/sidecars")
-    if not os.path.exists(sidecars_dir):
-        return True, "No sidecars directory configured."
+    search_pattern = os.path.join(REPO_ROOT, ".agents", "**", "sidecar.json")
+    templates = glob.glob(search_pattern, recursive=True)
+    if not templates:
+        return True, "No sidecar templates found."
+        
+    dest_root = os.path.expanduser("~/.gemini/jetski/sidecars")
+    
     try:
         count = 0
-        for entry in os.listdir(sidecars_dir):
-            sc_dir = os.path.join(sidecars_dir, entry)
-            if os.path.isdir(sc_dir):
-                json_path = os.path.join(sc_dir, "sidecar.json")
-                if os.path.exists(json_path):
-                    with open(json_path, "r") as f:
-                        json.load(f)
-                    count += 1
-        return True, f"Verified {count} background sidecar daemon configurations in <code>{sidecars_dir}</code>."
+        for t_path in templates:
+            sidecar_id = os.path.basename(os.path.dirname(t_path))
+            
+            # Verify the sync output exists
+            dest_file = os.path.join(dest_root, sidecar_id, "sidecar.json")
+            if not os.path.exists(dest_file):
+                return False, (
+                    f"Sidecar '{sidecar_id}' is not synchronized.<br>"
+                    f"Please run onboarding or <code>bash .agents/scripts/sync_sidecars.sh</code>."
+                )
+                
+            # Load synced configuration
+            with open(dest_file, "r", encoding="utf-8") as f:
+                d_config = json.load(f)
+                
+            d_args = d_config.get("args", [])
+            if len(d_args) > 2 and d_args[1] in ("python", "python3"):
+                script_path = d_args[2]
+                if not script_path.startswith("/"):
+                    return False, f"Sidecar '{sidecar_id}' script path in synced config is not absolute: <code>{script_path}</code>."
+                if not os.path.exists(script_path):
+                    return False, f"Sidecar '{sidecar_id}' script does not exist: <code>{script_path}</code>."
+            
+            count += 1
+            
+        return True, f"Verified {count} background sidecar daemon configurations."
     except Exception as e:
         return False, f"Sidecar validation failed: {e}"
 

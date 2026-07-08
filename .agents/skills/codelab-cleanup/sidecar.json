@@ -5,7 +5,7 @@
   "args": [
     "0 * * * *",
     "python3",
-    "scripts/sweeper.py",
+    ".agents/skills/codelab-cleanup/scripts/sweeper.py",
     "--force"
   ],
   "restart_policy": "always"

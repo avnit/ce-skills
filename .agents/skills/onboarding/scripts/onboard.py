@@ -69,6 +69,7 @@ def main():
     parser.add_argument("--cloudtop-host", default=ce_config.get("cloudtop_host", ""), help="Optional Cloudtop VM hostname")
     parser.add_argument("--piper-workspace", default=ce_config.get("piper_workspace", "ce-skills"), help="Preferred Piper/CitC workspace name for CompanyDoc publishing")
     parser.add_argument("--waf-mcp-cwd", default=ce_config.get("waf_mcp_cwd"), help="Local google3 workspace CWD directory for WAF MCP Blaze commands")
+    parser.add_argument("--bug-scan-dir", default=ce_config.get("bug_scan_dir") or os.path.expanduser("~/.gemini/jetski/bugs"), help="Absolute path to directory scanning local bug/FIX inbox JSON files")
     
     args = parser.parse_args()
     
@@ -119,6 +120,7 @@ def main():
         f.write(f"cloudtop_host={args.cloudtop_host}\n")
         f.write(f"piper_workspace={args.piper_workspace}\n")
         f.write(f"waf_mcp_cwd={args.waf_mcp_cwd or ''}\n")
+        f.write(f"bug_scan_dir={args.bug_scan_dir or ''}\n")
     print(f"✅ Generated credentials config: {gcp_config_path}")
 
     # 2. Generate persona.md rule
