@@ -127,6 +127,48 @@ def _filter_hermetic_commands(commands: list[str]) -> list[str]:
         clean.append(cmd)
     return clean
 
+# Fenced-block languages whose content is executed as shell commands. Output/data
+# languages (text, output, yaml, json, hcl, log, ...) and narrative between blocks
+# are never collected. NOTE: 'console' is kept executable to preserve prior behavior;
+# whether terminal-session blocks should run is a separate decision (see #77).
+_EXECUTABLE_FENCE_LANGS = {"", "bash", "sh", "shell", "console"}
+_FENCE_LINE_RE = re.compile(r"^[ \t]*```[ \t]*([^\s`]*)")
+
+def _extract_command_blocks(body: str) -> list[str]:
+    """Extract executable fenced code blocks via proper open/close fence pairing.
+
+    A line-based state machine: fences alternate open/close, so the text *between* a
+    non-executable block (e.g. a ```text output block) and the next block is never
+    captured. This fixes the findall-regex flaw (#77) where a closing fence followed
+    by narrative and an opening fence matched as one spurious block — executing the
+    narrative as bash and dropping the real command.
+    """
+    blocks: list[str] = []
+    in_block = False
+    lang = ""
+    buf: list[str] = []
+    for raw in body.splitlines():
+        line = raw.rstrip("\r")
+        is_fence = _FENCE_LINE_RE.match(line)
+        if not in_block:
+            if is_fence:
+                in_block = True
+                lang = is_fence.group(1).lower()
+                buf = []
+            # a non-fence line outside a block is narrative -> ignored
+        elif is_fence:
+            # any fence line closes the current block
+            if lang in _EXECUTABLE_FENCE_LANGS:
+                block = "\n".join(buf).strip()
+                if block:
+                    blocks.append(block)
+            in_block = False
+            lang = ""
+            buf = []
+        else:
+            buf.append(line)
+    return blocks
+
 def normalize_command(cmd: str) -> str:
     lines = []
     for line in cmd.splitlines():
@@ -252,9 +294,8 @@ class StatefulCodelabTester:
             title = title_line.replace("##", "").strip()
             body = sections[idx+1] if idx+1 < len(sections) else ""
             
-            # Extract bash commands
-            bash_pattern = re.compile(r"```(?:bash|sh|shell|console)?\r?\n(.*?)\r?\n[ \t]*```", re.DOTALL | re.IGNORECASE)
-            commands = [c.strip() for c in bash_pattern.findall(body)]
+            # Extract executable commands via proper fence pairing (never captures narrative)
+            commands = _extract_command_blocks(body)
             commands = _filter_hermetic_commands(commands)
             
             # Detect explicit or implicit prerequisites
