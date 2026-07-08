@@ -75,6 +75,7 @@ ENV_ALIASES = {
     "closed_loop_account": ["CLOSED_LOOP_CREDENTIAL_ACCOUNT"],
     "closed_loop_vertex_project": ["CLOSED_LOOP_VERTEX_PROJECT"],
     "closed_loop_firestore_project": ["CLOSED_LOOP_FIRESTORE_PROJECT"],
+    "waf_mcp_cwd": ["CE_WAF_MCP_CWD"],
 }
 
 SECRET_KEYS = {"billing_account", "closed_loop_account"}

@@ -42,3 +42,6 @@ cloudtop_host=YOUR_CLOUDTOP_HOST
 
 # Piper/CitC client workspace name for CompanyDoc staging (e.g. ce-skills).
 piper_workspace=YOUR_PIPER_WORKSPACE
+
+# Local google3 repository directory path where the WAF MCP Server is compiled/run (e.g. /google/src/cloud/username/client/google3).
+waf_mcp_cwd=YOUR_WAF_MCP_CWD

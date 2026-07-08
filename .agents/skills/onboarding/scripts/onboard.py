@@ -68,6 +68,7 @@ def main():
     parser.add_argument("--closed_loop_firestore_project", default=ce_config.get("closed_loop_firestore_project", "codelab-creator-central"), help="Closed loop Firestore Project ID")
     parser.add_argument("--cloudtop-host", default=ce_config.get("cloudtop_host", ""), help="Optional Cloudtop VM hostname")
     parser.add_argument("--piper-workspace", default=ce_config.get("piper_workspace", "ce-skills"), help="Preferred Piper/CitC workspace name for CompanyDoc publishing")
+    parser.add_argument("--waf-mcp-cwd", default=ce_config.get("waf_mcp_cwd"), help="Local google3 workspace CWD directory for WAF MCP Blaze commands")
     
     args = parser.parse_args()
     
@@ -83,7 +84,7 @@ def main():
             "Billing project is required. Please specify --billing-project or set the CE_BILLING_PROJECT environment variable."
         )
     
-    workspace_root = os.environ.get("BUILD_WORKING_DIRECTORY", os.getcwd())
+    workspace_root = os.environ.get("BUILD_WORKSPACE_DIRECTORY") or os.environ.get("BUILD_WORKING_DIRECTORY", os.getcwd())
     print(f"🚀 Starting JetSki Onboarding Automation in: {workspace_root}")
     
     # 1. Generate gcp_config.txt
@@ -117,6 +118,7 @@ def main():
         f.write(f"closed_loop_firestore_project={args.closed_loop_firestore_project}\n")
         f.write(f"cloudtop_host={args.cloudtop_host}\n")
         f.write(f"piper_workspace={args.piper_workspace}\n")
+        f.write(f"waf_mcp_cwd={args.waf_mcp_cwd or ''}\n")
     print(f"✅ Generated credentials config: {gcp_config_path}")
 
     # 2. Generate persona.md rule

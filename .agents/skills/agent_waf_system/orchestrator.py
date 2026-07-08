@@ -11,20 +11,44 @@ import sys
 import time
 import re
 import subprocess
+import pathlib
+
+def _setup_ce_config():
+    current = pathlib.Path(__file__).resolve().parent
+    for parent in current.parents:
+        if (parent / ".agents").is_dir():
+            lib_path = str(parent / ".agents" / "lib")
+            if lib_path not in sys.path:
+                sys.path.insert(0, lib_path)
+            return
+
+_setup_ce_config()
+import ce_config  # noqa: E402
 
 _script_dir = os.path.dirname(os.path.abspath(__file__))
 CACHE_FILE = os.path.join(_script_dir, "session_cache.json")
 
 class StdioWafMcpClient:
-    def __init__(self, command="blaze", args=["run", "//agent_waf_system:mcp_server"], cwd="/google/src/cloud/shacharb/waf-mcp/google3"):
+    def __init__(self, command="blaze", args=["run", "//agent_waf_system:mcp_server"], cwd=None, use_mock=False):
         self.command = command
         self.args = args
-        self.cwd = cwd
+        self.use_mock = use_mock
+        self.cwd = cwd or ce_config.get("waf_mcp_cwd")
+        if not self.cwd and not self.use_mock:
+            raise ValueError(
+                "WAF MCP working directory (waf_mcp_cwd) is not configured. "
+                "Please configure it in gcp_config.txt or run onboarding, "
+                "or opt in to mock/demo mode using --demo / --mock."
+            )
 
     def get_questionnaire_tree(self, area_of_tech, deployment_size, customer_priority, session_state=None):
         """
         Queries the remote WAF MCP Server running in stdio mode via Blaze.
         """
+        if self.use_mock:
+            print("\n⚠️ WAF Client Scoping Engine: Running in DEMO/MOCK mode! (Using local scoping engine fallback)")
+            return self._get_fallback_mock_tree(area_of_tech, deployment_size, customer_priority, session_state)
+
         payload = {
             "jsonrpc": "2.0",
             "method": "tools/call",
@@ -86,9 +110,10 @@ class StdioWafMcpClient:
             
             raise Exception("No text content found in stdio response block.")
         except Exception as e:
-            print(f"\nℹ️ Blaze WAF MCP stdio server lookup skipped: {e}")
-            print("Running local client scoping engine fallback...")
-            return self._get_fallback_mock_tree(area_of_tech, deployment_size, customer_priority, session_state)
+            raise RuntimeError(
+                f"Fatal: WAF MCP stdio server connection failure: {e}. "
+                "To execute using client-side mock data fallback, run with --demo/--mock."
+            ) from e
 
     def _get_fallback_mock_tree(self, area_of_tech, deployment_size, customer_priority, session_state=None):
         """Lightweight local client-side fallback supporting composite technologies (NETWORKING, DATABASES, GKE)."""
@@ -293,8 +318,8 @@ class StdioWafMcpClient:
         }
 
 class WafClientOrchestrator:
-    def __init__(self, command="blaze", args=["run", "//agent_waf_system:mcp_server"], cwd="/google/src/cloud/shacharb/waf-mcp/google3"):
-        self.mcp = StdioWafMcpClient(command, args, cwd)
+    def __init__(self, command="blaze", args=["run", "//agent_waf_system:mcp_server"], cwd=None, use_mock=False):
+        self.mcp = StdioWafMcpClient(command, args, cwd=cwd, use_mock=use_mock)
         self.session_state = {}
         self.retries = 0
 
@@ -793,6 +818,8 @@ class WafClientOrchestrator:
         }
 
         rendered_md = self.render_custom_template(template_content, context)
+        if self.mcp.use_mock:
+            rendered_md = "⚠️ MOCK DATA — NOT A VERIFIED WAF REVIEW\n\n" + rendered_md
 
         # Save in customer-specific adr directory under the repository root
         clean_cust = re.sub(r'[^a-zA-Z0-9]', '_', self.session_state["customer_name"].lower()).strip('_')
@@ -812,9 +839,19 @@ class WafClientOrchestrator:
             return False
 
 if __name__ == "__main__":
-    orchestrator = WafClientOrchestrator()
-    # If a flag is passed to run interactive or test, do it.
-    if len(sys.argv) > 1 and sys.argv[1] == "--test":
+    import argparse
+    parser = argparse.ArgumentParser(description="Jeski Client Agent Orchestration Harness")
+    parser.add_argument("--test", action="store_true", help="Run automated test scenarios")
+    parser.add_argument("--demo", action="store_true", help="Run in demo/mock mode using local mock scoping engine")
+    parser.add_argument("--mock", action="store_true", help="Synonym for --demo")
+    parser.add_argument("--cwd", help="Override WAF MCP working directory path")
+    args = parser.parse_args()
+
+    # Route demo scenarios and test block through the mock/demo opt-in
+    use_mock = args.demo or args.mock or args.test
+    orchestrator = WafClientOrchestrator(cwd=args.cwd, use_mock=use_mock)
+
+    if args.test:
         # Programmatic validation run
         print("🚀 Running automated script tests...")
         
