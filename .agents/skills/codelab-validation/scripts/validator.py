@@ -16,6 +16,8 @@ import shutil
 import subprocess
 import sys
 import urllib.request
+import html
+from html.parser import HTMLParser
 
 # Resolve repository root dynamically
 _script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -26,6 +28,76 @@ repo_root = os.path.abspath(os.path.join(_script_dir, "..", "..", "..", ".."))
 def clean_filename(name):
     """Sanitizes a string for use in filenames."""
     return re.sub(r'[^a-z0-9-]', '', name.lower().strip().replace(' ', '-'))
+
+
+class CodelabHTMLParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.in_script = False
+        self.in_style = False
+        self.in_title = False
+        self.current_header_level = None
+        self.in_pre = False
+        self.title_text = ""
+        self.current_header_text = []
+        self.current_pre_text = []
+        self.current_pre_attrs = ""
+        self.elements = []
+        self.full_text = []
+
+    def handle_starttag(self, tag, attrs):
+        tag_lower = tag.lower()
+        if tag_lower == 'script':
+            self.in_script = True
+        elif tag_lower == 'style':
+            self.in_style = True
+        elif tag_lower == 'title':
+            self.in_title = True
+        elif tag_lower in ['h1', 'h2', 'h3', 'h4']:
+            self.current_header_level = int(tag_lower[1])
+            self.current_header_text = []
+        elif tag_lower == 'pre':
+            self.in_pre = True
+            self.current_pre_text = []
+            attr_pairs = []
+            for name, val in attrs:
+                attr_pairs.append(f'{name}="{val}"' if val is not None else name)
+            self.current_pre_attrs = " ".join(attr_pairs)
+
+    def handle_endtag(self, tag):
+        tag_lower = tag.lower()
+        if tag_lower == 'script':
+            self.in_script = False
+        elif tag_lower == 'style':
+            self.in_style = False
+        elif tag_lower == 'title':
+            self.in_title = False
+            if self.title_text:
+                self.elements.append(('title', self.title_text.strip()))
+        elif tag_lower in ['h1', 'h2', 'h3', 'h4']:
+            level = int(tag_lower[1])
+            if self.current_header_level == level:
+                header_str = "".join(self.current_header_text).strip()
+                self.elements.append(('header', level, header_str))
+            self.current_header_level = None
+        elif tag_lower == 'pre':
+            self.in_pre = False
+            pre_str = "".join(self.current_pre_text).strip()
+            self.elements.append(('pre', pre_str, self.current_pre_attrs))
+            self.current_pre_attrs = ""
+
+    def handle_data(self, data):
+        if self.in_script or self.in_style:
+            return
+        
+        self.full_text.append(data)
+        
+        if self.in_title:
+            self.title_text += data
+        elif self.current_header_level is not None:
+            self.current_header_text.append(data)
+        elif self.in_pre:
+            self.current_pre_text.append(data)
 
 
 def download_url(url):
@@ -40,46 +112,34 @@ def download_url(url):
         # If it looks like HTML, extract pre/code elements or clean it up
         if "<html" in html_or_text.lower():
             print("[Validator] HTML detected, extracting text blocks and commands...")
-            # Extract headers (h2, h3) and pre/code blocks
+            parser = CodelabHTMLParser()
+            parser.feed(html_or_text)
+            
             extracted_lines = []
-            # Remove script and style tags
-            html_or_text = re.sub(r'<style.*?>.*?</style>', '', html_or_text, flags=re.DOTALL | re.IGNORECASE)
-            html_or_text = re.sub(r'<script.*?>.*?</script>', '', html_or_text, flags=re.DOTALL | re.IGNORECASE)
-            
-            # Extract title
-            title_match = re.search(r'<title>(.*?)</title>', html_or_text, re.IGNORECASE)
-            if title_match:
-                extracted_lines.append(f"# {title_match.group(1)}")
-                extracted_lines.append("")
-            
-            # Parse pre blocks and headers sequentially using a robust matching pattern
-            pattern = re.compile(r'<h([1-4]).*?>(.*?)</h\1>|<pre\b(.*?)</pre>', re.DOTALL | re.IGNORECASE)
-            
-            for match in pattern.finditer(html_or_text):
-                groups = match.groups()
-                if groups[0]: # H1-H4 header
-                    level = int(groups[0])
-                    prefix = "#" * level
-                    clean_h = re.sub(r'<.*?>', '', groups[1]).strip()
-                    extracted_lines.append(f"{prefix} {clean_h}")
+            for item in parser.elements:
+                if item[0] == 'title':
+                    extracted_lines.append(f"# {item[1]}")
                     extracted_lines.append("")
-                elif groups[2]: # pre block attributes and content
-                    pre_content = groups[2]
-                    code_match = re.search(r'<code.*?>(.*?)</code>', pre_content, re.DOTALL | re.IGNORECASE)
-                    if code_match:
-                        code = code_match.group(1)
-                    else:
-                        code = pre_content.split('>', 1)[-1]
-                        
-                    clean_code = re.sub(r'<.*?>', '', code).strip()
-                    # Decode HTML entities
-                    clean_code = clean_code.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&').replace('&quot;', '"')
+                elif item[0] == 'header':
+                    level = item[1]
+                    prefix = "#" * level
+                    extracted_lines.append(f"{prefix} {item[2]}")
+                    extracted_lines.append("")
+                elif item[0] == 'pre':
+                    pre_content = item[1]
+                    pre_attrs = item[2]
+                    
+                    # Unescape standard HTML entities
+                    clean_code = html.unescape(pre_content).strip()
                     
                     is_bash = False
-                    if "language-bash" in pre_content or "lang-bash" in pre_content or "bash" in pre_content:
+                    if "language-bash" in pre_attrs or "lang-bash" in pre_attrs or "bash" in pre_attrs:
                         is_bash = True
-                    elif "prettyprint" in pre_content:
-                        shell_indicators = [r'\bgcloud\b', r'\bbq\b', r'\bgsutil\b', r'\bkubectl\b', r'\bcurl\b', r'\bapt-get\b', r'\becho\b', r'\bcat\b']
+                    elif "prettyprint" in pre_attrs:
+                        shell_indicators = [
+                            r'\bgcloud\b', r'\bbq\b', r'\bgsutil\b', r'\bkubectl\b',
+                            r'\bcurl\b', r'\bapt-get\b', r'\becho\b', r'\bcat\b'
+                        ]
                         if any(re.search(ind, clean_code) for ind in shell_indicators):
                             is_bash = True
                             
@@ -91,8 +151,8 @@ def download_url(url):
             
             markdown_content = "\n".join(extracted_lines)
             if not markdown_content.strip():
-                # Fallback: strip HTML completely
-                markdown_content = re.sub(r'<.*?>', '', html_or_text)
+                # Fallback: strip HTML completely and unescape entities
+                markdown_content = html.unescape("".join(parser.full_text))
         else:
             # Already text/markdown
             markdown_content = html_or_text
