@@ -53,10 +53,20 @@ class GcloudUserCredentials(BaseCredentials):
     `gcloud auth print-access-token --account=shacharb@google.com` on demand
     with 55-minute in-memory caching so global Argolis sandbox ADC remains untouched.
     """
-    def __init__(self, account: str = "shacharb@google.com"):
+    def __init__(self, account: Optional[str] = None):
         if BaseCredentials is not object:
             super().__init__()
-        self.account = account
+        self.account = (
+            account
+            or os.environ.get("CLOSED_LOOP_CREDENTIAL_ACCOUNT")
+            or STORAGE_CFG.get("account")
+            or STORAGE_CFG.get("firebase_account_email")
+        )
+        if not self.account:
+            raise ValueError(
+                "No credentials account configured. Please configure 'account' in config.json "
+                "or set the CLOSED_LOOP_CREDENTIAL_ACCOUNT environment variable."
+            )
         self.token: Optional[str] = None
         self.expiry: Optional[datetime.datetime] = None
         self._cache_duration_sec: float = 55 * 60
@@ -89,7 +99,7 @@ class GcloudUserCredentials(BaseCredentials):
 
 def get_user_credentials() -> Any:
     """Returns an instance of GcloudUserCredentials."""
-    return GcloudUserCredentials("shacharb@google.com")
+    return GcloudUserCredentials()
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +231,12 @@ def extract_generalized_lesson(bug_payload: Dict[str, Any]) -> Dict[str, Any]:
         import vertexai
         from vertexai.generative_models import GenerativeModel, GenerationConfig
 
-        project = VERTEX_CFG.get("project_id", "hyperstack-dev")
+        project = os.environ.get("CLOSED_LOOP_VERTEX_PROJECT") or VERTEX_CFG.get("project_id") or os.environ.get("GCP_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT")
+        if not project:
+            raise ValueError(
+                "No Vertex AI project_id configured. Please configure 'project_id' in config.json "
+                "or set the CLOSED_LOOP_VERTEX_PROJECT environment variable."
+            )
         location = VERTEX_CFG.get("location", "us-central1")
         model_name = VERTEX_CFG.get("extraction_model", "gemini-1.5-pro")
 
@@ -290,8 +305,19 @@ def push_to_firebase(lesson_payload: Dict[str, Any]) -> None:
         try:
             from google.cloud import firestore
             creds = get_user_credentials()
+            firestore_project = (
+                os.environ.get("CLOSED_LOOP_FIRESTORE_PROJECT")
+                or STORAGE_CFG.get("firebase_project_id")
+                or os.environ.get("GCP_PROJECT")
+                or os.environ.get("GOOGLE_CLOUD_PROJECT")
+            )
+            if not firestore_project:
+                raise ValueError(
+                    "No Firestore project configured. Please configure 'firebase_project_id' in config.json "
+                    "or set the CLOSED_LOOP_FIRESTORE_PROJECT environment variable."
+                )
             db = firestore.Client(
-                project=STORAGE_CFG.get("firebase_project_id"),
+                project=firestore_project,
                 database=STORAGE_CFG.get("firebase_database_id", "(default)"),
                 credentials=creds
             )

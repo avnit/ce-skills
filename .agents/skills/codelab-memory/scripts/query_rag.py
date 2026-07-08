@@ -10,9 +10,9 @@ import tempfile
 import vertexai
 import vertexai.preview.rag
 
-CORPUS_NAME = "projects/codelab-creator-central/locations/us-west1/ragCorpora/4611686018427387904"
-PROJECT_ID = "codelab-creator-central"
-LOCATION = "us-west1"
+PROJECT_ID = os.environ.get("CE_RAG_PROJECT_ID", "codelab-creator-central")
+LOCATION = os.environ.get("CE_RAG_LOCATION", "us-west1")
+CORPUS_NAME = os.environ.get("CE_RAG_CORPUS_NAME", f"projects/{PROJECT_ID}/locations/{LOCATION}/ragCorpora/4611686018427387904")
 
 def query_centralized_rag(query_text: str, n_results: int = 3):
     """Queries the centralized Vertex AI RAG system."""

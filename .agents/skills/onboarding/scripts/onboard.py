@@ -39,13 +39,18 @@ def main():
     parser.add_argument("--persona", required=True, choices=list(PERSONA_TEMPLATES.keys()), help="Primary Systems Engineering Persona")
     parser.add_argument("--folder-id", required=True, help="Google Cloud Folder ID for sandbox provisioning")
     parser.add_argument("--billing-account", required=True, help="Google Cloud Billing Account ID")
-    parser.add_argument("--billing-project", default="billing-350700", help="BigQuery Billing Project ID")
+    parser.add_argument("--billing-project", default=os.environ.get("CE_BILLING_PROJECT"), help="BigQuery Billing Project ID")
     parser.add_argument("--billing-table", default="", help="BigQuery Billing Export Table ID")
     parser.add_argument("--cloudtop-host", default="", help="Optional Cloudtop VM hostname")
-    parser.add_argument("--knowledge-project", default="codelab-creator-central", help="Developer Knowledge API Quota Project ID")
+    parser.add_argument("--knowledge-project", default=os.environ.get("CE_KNOWLEDGE_PROJECT"), help="Developer Knowledge API Quota Project ID")
     parser.add_argument("--piper-workspace", default="ce-skills", help="Preferred Piper/CitC workspace name for CompanyDoc publishing")
     
     args = parser.parse_args()
+    
+    if not args.billing_project:
+        raise ValueError(
+            "Billing project is required. Please specify --billing-project or set the CE_BILLING_PROJECT environment variable."
+        )
     
     workspace_root = os.environ.get("BUILD_WORKING_DIRECTORY", os.getcwd())
     print(f"🚀 Starting JetSki Onboarding Automation in: {workspace_root}")
@@ -144,7 +149,8 @@ The user environment is operating under the following primary Customer Engineeri
     print(f"✅ Updated MCP configuration: {mcp_config_path}")
 
     # 4. Check & Initialize Piper CompanyDoc Workspace
-    username = os.environ.get("USER", os.environ.get("LOGNAME", "shacharb"))
+    import getpass
+    username = os.environ.get("USER") or os.environ.get("LOGNAME") or getpass.getuser()
     target_client_dir = f"/google/src/cloud/{username}/{args.piper_workspace}"
     target_company_dir = os.path.join(target_client_dir, "company")
     

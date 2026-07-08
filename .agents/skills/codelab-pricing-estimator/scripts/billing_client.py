@@ -7,6 +7,7 @@ fallback catalog rates for compute, storage, networking, AI, and serverless infr
 """
 
 import json
+import os
 import subprocess
 
 # Static hourly fallback rates in USD
@@ -104,10 +105,13 @@ def run_command(cmd_args, timeout=60):
 
 def fetch_price_from_bq(service_desc, sku_pattern, region):
     """Queries BigQuery public billing pricing export for precise SKU rates."""
+    pricing_table = os.environ.get("CE_PRICING_TABLE")
+    if not pricing_table:
+        return 0.0
     query = f"""
     SELECT 
       billing_account_price.tiered_rates[OFFSET(0)].usd_amount as price
-    FROM `billing-350700.billing.cloud_pricing_export`
+    FROM `{pricing_table}`
     WHERE service.description = '{service_desc}'
       AND sku.description LIKE '%{sku_pattern}%'
       AND '{region}' IN UNNEST(geo_taxonomy.regions)

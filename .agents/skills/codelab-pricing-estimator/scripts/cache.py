@@ -22,12 +22,8 @@ class CatalogCache:
             if env_dir and os.path.exists(env_dir):
                 cache_dir = os.path.join(env_dir, "sku_cache")
             else:
-                default_sidecar = "/usr/local/google/home/shacharb/.gemini/jetski/sidecar_data/sku_cache"
-                if os.path.exists("/usr/local/google/home/shacharb/.gemini/jetski/sidecar_data"):
-                    cache_dir = default_sidecar
-                else:
-                    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                    cache_dir = os.path.join(base_dir, "cache")
+                import tempfile
+                cache_dir = os.path.join(tempfile.gettempdir(), "sku_cache")
         self.cache_dir = cache_dir
         self.cache_file = os.path.join(self.cache_dir, "gcp_catalog.json")
         self.cache_status = "MISS"
