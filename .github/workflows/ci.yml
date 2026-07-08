@@ -11,6 +11,10 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege GITHUB_TOKEN — every job only reads the repo (checkout, lint, test).
+permissions:
+  contents: read
+
 jobs:
   # --------------------------------------------------------------------
   # 1. Markdown / YAML — Prettier formatting check
