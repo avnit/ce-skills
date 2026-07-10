@@ -235,6 +235,33 @@ class TestProcessorMcpTransport(unittest.TestCase):
                         saved = json.load(f)
                     self.assertEqual(saved["status"], "FIXED")
 
+    @patch.object(processor, "push_to_firebase")
+    def test_firestore_path_executes_without_mcp_deps(self, mock_firebase):
+        """Verify module imports cleanly and firestore path executes when jsonschema and mcp are absent."""
+        with patch.dict(sys.modules, {"jsonschema": None, "mcp": None, "mcp.client": None, "mcp.client.session": None, "mcp.client.streamable_http": None}):
+            with patch.dict(os.environ, {"CLOSED_LOOP_STORAGE_BACKEND": "local"}, clear=True):
+                os.environ.pop("CLOSED_LOOP_TRANSPORT", None)
+                bug_file = os.path.join(self.test_dir, "bug_no_deps.json")
+                with open(bug_file, "w", encoding="utf-8") as f:
+                    json.dump({
+                        "bug_id": "bug_no_deps",
+                        "status": "FIXED",
+                        "remediation": "Fix permissions",
+                        "error_logs": {"failed_command": "cmd"}
+                    }, f)
+
+                res = processor.process_bug_file(bug_file)
+                self.assertTrue(res)
+                mock_firebase.assert_called_once()
+
+    def test_mcp_path_raises_actionable_error_without_deps(self):
+        """Verify missing jsonschema or mcp raises actionable RuntimeError with installation instructions."""
+        with patch.dict(sys.modules, {"jsonschema": None, "mcp": None}):
+            with self.assertRaises(RuntimeError) as cm:
+                processor.validate_submission({"source_bug_id": "test"})
+            self.assertIn("CLOSED_LOOP_TRANSPORT=mcp requires extra deps", str(cm.exception))
+            self.assertIn("requirements.txt", str(cm.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

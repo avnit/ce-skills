@@ -15,7 +15,6 @@ import asyncio
 import datetime
 import glob
 import json
-import jsonschema
 import logging
 import os
 import pathlib
@@ -375,19 +374,29 @@ def _get_mcp_auth_headers(url: str) -> Dict[str, str]:
 
 def _get_streamable_client_kwargs(headers: Dict[str, str]) -> Dict[str, Any]:
     import inspect
-    from mcp.client.streamable_http import streamable_http_client
+    try:
+        from mcp.client.streamable_http import streamable_http_client
+    except (ImportError, ModuleNotFoundError) as e:
+        raise RuntimeError("CLOSED_LOOP_TRANSPORT=mcp requires extra deps: pip3 install -r <repo>/requirements.txt (or run via: uv run --with-requirements requirements.txt python3 ...)") from e
+
     params = inspect.signature(streamable_http_client).parameters
     if "headers" in params:
         return {"headers": headers} if headers else {}
     elif "http_client" in params:
-        import httpx
+        try:
+            import httpx
+        except (ImportError, ModuleNotFoundError) as e:
+            raise RuntimeError("CLOSED_LOOP_TRANSPORT=mcp requires extra deps: pip3 install -r <repo>/requirements.txt (or run via: uv run --with-requirements requirements.txt python3 ...)") from e
         return {"http_client": httpx.AsyncClient(headers=headers)} if headers else {}
     return {}
 
 
 async def submit_to_mcp_async(submission_payload: Dict[str, Any], url: str) -> Dict[str, Any]:
-    from mcp.client.session import ClientSession
-    from mcp.client.streamable_http import streamable_http_client
+    try:
+        from mcp.client.session import ClientSession
+        from mcp.client.streamable_http import streamable_http_client
+    except (ImportError, ModuleNotFoundError) as e:
+        raise RuntimeError("CLOSED_LOOP_TRANSPORT=mcp requires extra deps: pip3 install -r <repo>/requirements.txt (or run via: uv run --with-requirements requirements.txt python3 ...)") from e
 
     headers = _get_mcp_auth_headers(url)
     kwargs = _get_streamable_client_kwargs(headers)
@@ -407,6 +416,8 @@ async def submit_to_mcp_async(submission_payload: Dict[str, Any], url: str) -> D
                 text = content[0].text if content and hasattr(content[0], "text") else "{}"
                 return json.loads(text)
     except Exception as e:
+        if "CLOSED_LOOP_TRANSPORT=mcp requires extra deps" in str(e):
+            raise
         raise RuntimeError(f"MCP Server communication error: {e}") from e
 
 
@@ -418,6 +429,11 @@ def submit_to_mcp(submission_payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def validate_submission(submission_payload: Dict[str, Any]) -> None:
+    try:
+        import jsonschema
+    except (ImportError, ModuleNotFoundError) as e:
+        raise RuntimeError("CLOSED_LOOP_TRANSPORT=mcp requires extra deps: pip3 install -r <repo>/requirements.txt (or run via: uv run --with-requirements requirements.txt python3 ...)") from e
+
     schema_path = os.path.join(os.path.dirname(__file__), "..", "contracts", "lesson_submission.schema.json")
     if not os.path.exists(schema_path):
         raise ValueError(f"Vendored schema not found at {schema_path}")
