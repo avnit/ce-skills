@@ -1,0 +1,163 @@
+{
+  "_drift_note": "Vendored from cloud-gtm/ce-skills-close-loop-learning:doc/contracts/lesson_submission.schema.json on 2026-07-10. Do not edit directly; update the backend source of truth first.",
+  "$defs": {
+    "ErrorContext": {
+      "properties": {
+        "failed_command": {
+          "description": "The command that failed execution.",
+          "title": "Failed Command",
+          "type": "string"
+        },
+        "stderr_output": {
+          "description": "Canonical name for stderr output from the failure.",
+          "title": "Stderr Output",
+          "type": "string"
+        },
+        "exit_code": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional exit code of the command.",
+          "title": "Exit Code"
+        }
+      },
+      "required": ["failed_command", "stderr_output"],
+      "title": "ErrorContext",
+      "type": "object"
+    },
+    "Origin": {
+      "properties": {
+        "lab_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name of the lab or module.",
+          "title": "Lab Name"
+        },
+        "step_number": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Step index or number in the lab.",
+          "title": "Step Number"
+        },
+        "workflow": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Workflow identifier (e.g. validate-codelab).",
+          "title": "Workflow"
+        }
+      },
+      "title": "Origin",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "source_bug_id": {
+      "description": "Client identity for the bug.",
+      "title": "Source Bug Id",
+      "type": "string"
+    },
+    "raw_error_context": {
+      "$ref": "#/$defs/ErrorContext",
+      "description": "Raw error execution context."
+    },
+    "remediation": {
+      "description": "Description of what fixed the error.",
+      "title": "Remediation",
+      "type": "string"
+    },
+    "specific_lesson": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Why the failure occurred.",
+      "title": "Specific Lesson"
+    },
+    "generalized_lesson": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Generalized rule and command sample.",
+      "title": "Generalized Lesson"
+    },
+    "topics": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Tags or topics related to the lesson.",
+      "title": "Topics"
+    },
+    "origin": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Origin"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Recommended metadata about lab or step."
+    },
+    "submitted_by": {
+      "description": "Required until D10 auth derives it.",
+      "title": "Submitted By",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_bug_id",
+    "raw_error_context",
+    "remediation",
+    "submitted_by"
+  ],
+  "title": "LessonSubmission",
+  "type": "object"
+}

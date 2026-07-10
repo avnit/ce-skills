@@ -11,9 +11,11 @@ Consolidated master production script implementing:
 """
 
 import argparse
+import asyncio
 import datetime
 import glob
 import json
+import jsonschema
 import logging
 import os
 import pathlib
@@ -354,10 +356,83 @@ def push_to_firebase(lesson_payload: Dict[str, Any]) -> None:
             raise RuntimeError(f"Local storage write failed: {e}") from e
 
 
+def _get_mcp_auth_headers(url: str) -> Dict[str, str]:
+    try:
+        from urllib.parse import urlparse
+        from google.auth.transport.requests import Request as AuthRequest
+        from google.oauth2 import id_token
+
+        parsed = urlparse(url)
+        aud = f"{parsed.scheme}://{parsed.netloc}"
+        auth_req = AuthRequest()
+        token = id_token.fetch_id_token(auth_req, aud)
+        if token:
+            return {"Authorization": f"Bearer {token}"}
+    except Exception as e:
+        logging.warning(f"Could not fetch OIDC ID token for {url}: {e}")
+    return {}
+
+
+def _get_streamable_client_kwargs(headers: Dict[str, str]) -> Dict[str, Any]:
+    import inspect
+    from mcp.client.streamable_http import streamable_http_client
+    params = inspect.signature(streamable_http_client).parameters
+    if "headers" in params:
+        return {"headers": headers} if headers else {}
+    elif "http_client" in params:
+        import httpx
+        return {"http_client": httpx.AsyncClient(headers=headers)} if headers else {}
+    return {}
+
+
+async def submit_to_mcp_async(submission_payload: Dict[str, Any], url: str) -> Dict[str, Any]:
+    from mcp.client.session import ClientSession
+    from mcp.client.streamable_http import streamable_http_client
+
+    headers = _get_mcp_auth_headers(url)
+    kwargs = _get_streamable_client_kwargs(headers)
+    try:
+        async with streamable_http_client(url, **kwargs) as (read_stream, write_stream, _):
+            async with ClientSession(read_stream, write_stream) as session:
+                await session.initialize()
+                res = await session.call_tool("submit_lesson", arguments={"submission": submission_payload})
+                if getattr(res, "isError", False):
+                    content = getattr(res, "content", [])
+                    err_text = content[0].text if content and hasattr(content[0], "text") else "MCP tool error"
+                    raise RuntimeError(f"MCP tool error: {err_text}")
+                structured = getattr(res, "structuredContent", None)
+                if structured and isinstance(structured, dict) and "result" in structured:
+                    return structured["result"]
+                content = getattr(res, "content", [])
+                text = content[0].text if content and hasattr(content[0], "text") else "{}"
+                return json.loads(text)
+    except Exception as e:
+        raise RuntimeError(f"MCP Server communication error: {e}") from e
+
+
+def submit_to_mcp(submission_payload: Dict[str, Any]) -> Dict[str, Any]:
+    url = ce_config.get("mcp_server_url") or os.environ.get("CE_MCP_SERVER_URL")
+    if not url:
+        raise ValueError("Missing required mcp_server_url in environment or gcp_config.txt for CLOSED_LOOP_TRANSPORT=mcp")
+    return asyncio.run(submit_to_mcp_async(submission_payload, url))
+
+
+def validate_submission(submission_payload: Dict[str, Any]) -> None:
+    schema_path = os.path.join(os.path.dirname(__file__), "..", "contracts", "lesson_submission.schema.json")
+    if not os.path.exists(schema_path):
+        raise ValueError(f"Vendored schema not found at {schema_path}")
+    with open(schema_path, "r", encoding="utf-8") as f:
+        schema = json.load(f)
+    try:
+        jsonschema.validate(instance=submission_payload, schema=schema)
+    except jsonschema.ValidationError as e:
+        raise ValueError(f"Submission payload failed schema validation: {e}") from e
+
+
 def process_bug_file(filepath: str) -> bool:
     """
     Processes a single bug file. Returns True if successful or cleanly skipped, False on failure.
-    Guarantee: local file status never mutates to PROCESSED if push_to_firebase fails.
+    Guarantee: local file status never mutates to PROCESSED if push_to_firebase or submit_to_mcp fails.
     """
     try:
         with open(filepath, "r", encoding="utf-8") as f:
@@ -372,25 +447,77 @@ def process_bug_file(filepath: str) -> bool:
 
         logging.info(f"Processing verified FIXED bug file: {filepath}")
 
-        # Extract generalized lesson
-        extracted_info = extract_generalized_lesson(bug_payload)
+        transport = os.environ.get("CLOSED_LOOP_TRANSPORT") or ce_config.get("closed_loop_transport") or "firestore"
+        if transport.lower() == "mcp":
+            error_logs = bug_payload.get("error_logs", {})
+            submitted_by = (
+                ce_config.get_secret("closed_loop_account")
+                or os.environ.get("CLOSED_LOOP_ACCOUNT")
+                or os.environ.get("CE_CLOSED_LOOP_ACCOUNT")
+                or STORAGE_CFG.get("account")
+                or STORAGE_CFG.get("firebase_account_email")
+            )
+            if not submitted_by:
+                raise ValueError("Missing required closed_loop_account in environment (CLOSED_LOOP_ACCOUNT/CE_CLOSED_LOOP_ACCOUNT) or gcp_config.txt for CLOSED_LOOP_TRANSPORT=mcp")
 
-        # Build lesson record with stripped boilerplate and scrubbed tags
-        lesson_record = {
-            "source_bug_id": bug_payload.get("bug_id"),
-            "status": "pending_review",
-            "raw_error_context": bug_payload.get("error_logs", {}),
-            "verified_remediation": strip_boilerplate(bug_payload.get("remediation", "")),
-            "specific_lesson": extracted_info["specific_lesson"],
-            "generalized_lesson": extracted_info["generalized_lesson"],
-            "topics": extracted_info["topics"],
-            "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        }
+            lesson_submission = {
+                "source_bug_id": bug_payload.get("bug_id") or bug_payload.get("source_bug_id"),
+                "raw_error_context": {
+                    "failed_command": error_logs.get("failed_command", ""),
+                    "stderr_output": error_logs.get("stderr_output") or error_logs.get("error_message", ""),
+                },
+                "remediation": strip_boilerplate(bug_payload.get("remediation", "")),
+                "submitted_by": submitted_by,
+            }
+            if "exit_code" in error_logs and error_logs["exit_code"] is not None:
+                lesson_submission["raw_error_context"]["exit_code"] = error_logs["exit_code"]
 
-        # Push to storage (will raise exception on write/network error)
-        push_to_firebase(lesson_record)
+            origin_dict = {}
+            if bug_payload.get("lab_name") is not None:
+                origin_dict["lab_name"] = str(bug_payload.get("lab_name"))
+            if bug_payload.get("step_number") is not None:
+                try:
+                    origin_dict["step_number"] = int(bug_payload.get("step_number"))
+                except (ValueError, TypeError):
+                    pass
+            if bug_payload.get("workflow") is not None:
+                origin_dict["workflow"] = str(bug_payload.get("workflow"))
+            if origin_dict:
+                lesson_submission["origin"] = origin_dict
 
-        # Atomic transition: reached ONLY if push_to_firebase succeeded without raising
+            validate_submission(lesson_submission)
+            try:
+                receipt = submit_to_mcp(lesson_submission)
+                logging.info(f"MCP submission successful for {lesson_submission['source_bug_id']}. Extraction mode: {receipt.get('extraction_mode')}")
+                possible_dups = receipt.get("possible_duplicates", [])
+                if possible_dups:
+                    logging.info(f"Advisory: possible duplicates found: {possible_dups}")
+            except Exception as e:
+                err_str = str(e)
+                if "already exists with status" in err_str or "Conflict" in err_str:
+                    logging.warning(f"Terminal conflict error for {filepath}: {err_str}. Transitioning status to PROCESSED to stop retry loop.")
+                else:
+                    raise
+        else:
+            # Extract generalized lesson
+            extracted_info = extract_generalized_lesson(bug_payload)
+
+            # Build lesson record with stripped boilerplate and scrubbed tags
+            lesson_record = {
+                "source_bug_id": bug_payload.get("bug_id"),
+                "status": "pending_review",
+                "raw_error_context": bug_payload.get("error_logs", {}),
+                "verified_remediation": strip_boilerplate(bug_payload.get("remediation", "")),
+                "specific_lesson": extracted_info["specific_lesson"],
+                "generalized_lesson": extracted_info["generalized_lesson"],
+                "topics": extracted_info["topics"],
+                "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+
+            # Push to storage (will raise exception on write/network error)
+            push_to_firebase(lesson_record)
+
+        # Atomic transition: reached ONLY if push_to_firebase or submit_to_mcp succeeded without raising
         bug_payload["status"] = "PROCESSED"
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(bug_payload, f, indent=2)

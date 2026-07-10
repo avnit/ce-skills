@@ -25,8 +25,11 @@ class TestBugToLessonProcessor(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
+        self.env_patcher = patch.dict(os.environ, {"CLOSED_LOOP_STORAGE_BACKEND": "local"})
+        self.env_patcher.start()
 
     def tearDown(self):
+        self.env_patcher.stop()
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     # -----------------------------------------------------------------------
@@ -122,7 +125,7 @@ class TestBugToLessonProcessor(unittest.TestCase):
     # -----------------------------------------------------------------------
     # 5. Atomic Error Handling Tests
     # -----------------------------------------------------------------------
-    @patch("bug_to_lesson_processor.push_to_firebase")
+    @patch.object(processor, "push_to_firebase")
     def test_atomic_error_handling_preserves_status_on_failure(self, mock_push):
         # Simulate storage write failure
         mock_push.side_effect = RuntimeError("Simulated Firestore write failure")
@@ -146,7 +149,7 @@ class TestBugToLessonProcessor(unittest.TestCase):
             disk_payload = json.load(f)
         self.assertEqual(disk_payload["status"], "FIXED")
 
-    @patch("bug_to_lesson_processor.push_to_firebase")
+    @patch.object(processor, "push_to_firebase")
     def test_successful_processing_updates_status(self, mock_push):
         mock_push.return_value = None  # Successful push
 
