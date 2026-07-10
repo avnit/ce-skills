@@ -1,7 +1,6 @@
 import importlib.util
 import urllib.request
 from pathlib import Path
-import pytest
 import os
 import json
 

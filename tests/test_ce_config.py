@@ -1,8 +1,6 @@
-import os
 import pathlib
 import pytest
 import sys
-from unittest.mock import MagicMock
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 LIB_DIR = REPO / ".agents" / "lib"
@@ -121,7 +119,7 @@ def test_onboarding_writes_all_documented_keys(tmp_path, monkeypatch):
     onboard.main()
     
     # Parse written config lines
-    lines = [l.strip() for l in written_configs["content"].split("\n") if l.strip()]
+    lines = [raw_line.strip() for raw_line in written_configs["content"].split("\n") if raw_line.strip()]
     parsed = {}
     for line in lines:
         k, v = line.split("=", 1)

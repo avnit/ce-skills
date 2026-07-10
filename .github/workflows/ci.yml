@@ -92,7 +92,11 @@ jobs:
 
       - name: Run pytest
         run: |
-          uvx pytest tests/ -v
+          if [ -f "requirements.txt" ]; then
+            uvx --with-requirements requirements.txt pytest tests/ -q
+          else
+            uvx pytest tests/ -q
+          fi
 
   # --------------------------------------------------------------------
   # 5. Terraform — fmt + validate (runs only if labs/dev is present)

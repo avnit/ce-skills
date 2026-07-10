@@ -1,6 +1,5 @@
 import importlib.util
 from pathlib import Path
-import pytest
 import os
 import json
 
