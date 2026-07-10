@@ -19,7 +19,8 @@ it, `.github/workflows/*`, or `.github/agent-allowlist.json` without an architec
    (`cloud-gtm/ce-skills-close-loop-learning`), plus its parent `doc/mcp_migration_design.md`
    and the contract schemas under `doc/contracts/`. If an issue conflicts with the design,
    stop and ask on the issue.
-3. This file, then `CONTRIBUTING.md` for repo conventions not covered here.
+3. `AGENT_HUB_HANDOFF.md` — operational summary of the hub (gates, pickup protocol, gotchas).
+4. This file, then `CONTRIBUTING.md` for repo conventions not covered here.
 
 ## How you get work — Agent Hub
 
