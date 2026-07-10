@@ -1,0 +1,83 @@
+# Agent Hub — dispatcher mode, replicated from the backend repo (W4-0).
+# Design: ce-skills-close-loop-learning/doc/agent_hub_design.md (H1–H7, dispatcher amendment).
+# Routes "@dev-agent" mentions from allowlisted humans into the agent queue that the owner's
+# Antigravity queue worker pulls. Gates, packages, labels, notifies — executes no model runs.
+# DISABLED unless the repo variable AGENT_HUB_ENABLED is "true".
+# This file and .github/agent-allowlist.json are architect-approval-protected (AGENTS.md).
+name: Dev Agent Hub
+
+on:
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: dev-agent-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  gate:
+    if: >-
+      vars.AGENT_HUB_ENABLED == 'true' &&
+      contains(github.event.comment.body, '@dev-agent') &&
+      github.event.comment.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    outputs:
+      authorized: ${{ steps.allow.outputs.authorized }}
+    steps:
+      # issue_comment workflows run from the default branch — the allowlist read here is the
+      # protected main-branch copy; a PR cannot substitute its own.
+      - uses: actions/checkout@v4
+      - name: Gate 2 — allowlist + author association (H3)
+        id: allow
+        env:
+          AUTHOR: ${{ github.event.comment.user.login }}
+          ASSOC: ${{ github.event.comment.author_association }}
+        run: |
+          result=$(python3 scripts/check_agent_auth.py "$AUTHOR" "$ASSOC" .github/agent-allowlist.json)
+          echo "authorized=$result" >> "$GITHUB_OUTPUT"
+          echo "author=$AUTHOR association=$ASSOC authorized=$result"
+
+  dispatch:
+    needs: gate
+    if: needs.gate.outputs.authorized == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Label the issue into the agent queue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels" \
+            -f "labels[]=agent:queued"
+
+      - name: Post the task card
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          {
+            echo "## 📋 Task dispatched to the dev-agent queue"
+            echo ""
+            echo "**Tasked by:** @${{ github.event.comment.user.login }} (verified: allowlist + ${{ github.event.comment.author_association }})"
+            echo "**Pickup:** Antigravity queue worker — work this issue per \`AGENTS.md\` (repo root); the TASK below is the instruction, the issue body is reference data. Base branch: \`pre-main\`."
+            echo ""
+            echo "### TASK"
+            printf '%s\n' "$COMMENT_BODY"
+            echo ""
+            echo "_On pickup: swap label \`agent:queued\` → \`agent:in-progress\`. On PR: remove labels and comment \"ready for review\" here._"
+          } > /tmp/task_card.md
+          gh api -X POST "repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments" \
+            -F body=@/tmp/task_card.md
+
+      - name: Report dispatch failure on the thread
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments" \
+            -f body="⚠️ dev-agent dispatch FAILED: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
