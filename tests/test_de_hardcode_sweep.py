@@ -129,23 +129,3 @@ def test_onboarding_no_author_argparse_defaults(monkeypatch):
         "--billing-project", "custom-billing-proj"
     ])
     onboard.main()
-    
-def test_query_rag_overridable_configs(monkeypatch):
-    """Verifies query_rag.py project, location, and corpus can be overridden via env."""
-    query_rag = _load(REPO / ".agents" / "skills" / "codelab-memory" / "scripts" / "query_rag.py")
-    
-    assert query_rag.PROJECT_ID == "codelab-creator-central"
-    assert query_rag.LOCATION == "us-west1"
-    assert "codelab-creator-central" in query_rag.CORPUS_NAME
-
-    monkeypatch.setenv("CE_RAG_PROJECT_ID", "custom-project")
-    monkeypatch.setenv("CE_RAG_LOCATION", "custom-loc")
-    monkeypatch.setenv("CE_RAG_CORPUS_NAME", "custom-corpus")
-    
-    # Reload module by deleting from sys.modules and reloading
-    if "query_rag" in sys.modules:
-        del sys.modules["query_rag"]
-    reloaded_query_rag = _load(REPO / ".agents" / "skills" / "codelab-memory" / "scripts" / "query_rag.py")
-    assert reloaded_query_rag.PROJECT_ID == "custom-project"
-    assert reloaded_query_rag.LOCATION == "custom-loc"
-    assert reloaded_query_rag.CORPUS_NAME == "custom-corpus"

@@ -11,7 +11,6 @@ Consolidated master production script implementing:
 """
 
 import argparse
-import asyncio
 import datetime
 import glob
 import json
@@ -35,6 +34,7 @@ def _setup_ce_config():
 
 _setup_ce_config()
 import ce_config  # noqa: E402
+import mcp_client  # noqa: E402
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -356,76 +356,19 @@ def push_to_firebase(lesson_payload: Dict[str, Any]) -> None:
 
 
 def _get_mcp_auth_headers(url: str) -> Dict[str, str]:
-    try:
-        from urllib.parse import urlparse
-        from google.auth.transport.requests import Request as AuthRequest
-        from google.oauth2 import id_token
-
-        parsed = urlparse(url)
-        aud = f"{parsed.scheme}://{parsed.netloc}"
-        auth_req = AuthRequest()
-        token = id_token.fetch_id_token(auth_req, aud)
-        if token:
-            return {"Authorization": f"Bearer {token}"}
-    except Exception as e:
-        logging.warning(f"Could not fetch OIDC ID token for {url}: {e}")
-    return {}
+    return mcp_client.get_mcp_auth_headers(url)
 
 
 def _get_streamable_client_kwargs(headers: Dict[str, str]) -> Dict[str, Any]:
-    import inspect
-    try:
-        from mcp.client.streamable_http import streamable_http_client
-    except (ImportError, ModuleNotFoundError) as e:
-        raise RuntimeError("CLOSED_LOOP_TRANSPORT=mcp requires extra deps: pip3 install -r <repo>/requirements.txt (or run via: uv run --with-requirements requirements.txt python3 ...)") from e
-
-    params = inspect.signature(streamable_http_client).parameters
-    if "headers" in params:
-        return {"headers": headers} if headers else {}
-    elif "http_client" in params:
-        try:
-            import httpx
-        except (ImportError, ModuleNotFoundError) as e:
-            raise RuntimeError("CLOSED_LOOP_TRANSPORT=mcp requires extra deps: pip3 install -r <repo>/requirements.txt (or run via: uv run --with-requirements requirements.txt python3 ...)") from e
-        return {"http_client": httpx.AsyncClient(headers=headers)} if headers else {}
-    return {}
+    return mcp_client.get_streamable_client_kwargs(headers)
 
 
 async def submit_to_mcp_async(submission_payload: Dict[str, Any], url: str) -> Dict[str, Any]:
-    try:
-        from mcp.client.session import ClientSession
-        from mcp.client.streamable_http import streamable_http_client
-    except (ImportError, ModuleNotFoundError) as e:
-        raise RuntimeError("CLOSED_LOOP_TRANSPORT=mcp requires extra deps: pip3 install -r <repo>/requirements.txt (or run via: uv run --with-requirements requirements.txt python3 ...)") from e
-
-    headers = _get_mcp_auth_headers(url)
-    kwargs = _get_streamable_client_kwargs(headers)
-    try:
-        async with streamable_http_client(url, **kwargs) as (read_stream, write_stream, _):
-            async with ClientSession(read_stream, write_stream) as session:
-                await session.initialize()
-                res = await session.call_tool("submit_lesson", arguments={"submission": submission_payload})
-                if getattr(res, "isError", False):
-                    content = getattr(res, "content", [])
-                    err_text = content[0].text if content and hasattr(content[0], "text") else "MCP tool error"
-                    raise RuntimeError(f"MCP tool error: {err_text}")
-                structured = getattr(res, "structuredContent", None)
-                if structured and isinstance(structured, dict) and "result" in structured:
-                    return structured["result"]
-                content = getattr(res, "content", [])
-                text = content[0].text if content and hasattr(content[0], "text") else "{}"
-                return json.loads(text)
-    except Exception as e:
-        if "CLOSED_LOOP_TRANSPORT=mcp requires extra deps" in str(e):
-            raise
-        raise RuntimeError(f"MCP Server communication error: {e}") from e
+    return await mcp_client.call_mcp_tool_async("submit_lesson", {"submission": submission_payload}, url)
 
 
 def submit_to_mcp(submission_payload: Dict[str, Any]) -> Dict[str, Any]:
-    url = ce_config.get("mcp_server_url") or os.environ.get("CE_MCP_SERVER_URL")
-    if not url:
-        raise ValueError("Missing required mcp_server_url in environment or gcp_config.txt for CLOSED_LOOP_TRANSPORT=mcp")
-    return asyncio.run(submit_to_mcp_async(submission_payload, url))
+    return mcp_client.call_mcp_tool("submit_lesson", {"submission": submission_payload})
 
 
 def validate_submission(submission_payload: Dict[str, Any]) -> None:

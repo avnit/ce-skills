@@ -1,12 +1,11 @@
-"""Script to interface with the centralized RAG system for Codelab Creator."""
+"""Script to interface with the centralized RAG system via MCP query_team_knowledge."""
 
 import argparse
-import datetime
 import json
-import os
 import pathlib
 import sys
-import tempfile
+from typing import Any, Dict, List, Optional
+
 
 def _setup_ce_config():
     current = pathlib.Path(__file__).resolve().parent
@@ -17,104 +16,56 @@ def _setup_ce_config():
                 sys.path.insert(0, lib_path)
             return
 
+
 _setup_ce_config()
-import ce_config  # noqa: E402
-import vertexai  # noqa: E402
-import vertexai.preview.rag  # noqa: E402
+import mcp_client  # noqa: E402
 
-PROJECT_ID = ce_config.get("rag_project", "codelab-creator-central")
-LOCATION = ce_config.get("rag_location", "us-west1")
-CORPUS_NAME = ce_config.get("rag_corpus", f"projects/{PROJECT_ID}/locations/{LOCATION}/ragCorpora/4611686018427387904")
 
-def query_centralized_rag(query_text: str, n_results: int = 3):
-    """Queries the centralized Vertex AI RAG system."""
-    print(f"Querying centralized RAG for: '{query_text}'...")
-    
+def query_centralized_rag(
+    query_text: str, n_results: int = 5, topic_filters: Optional[List[str]] = None
+) -> Dict[str, Any]:
+    """Queries the centralized team knowledge base via MCP query_team_knowledge."""
+    print(f"Querying team knowledge via MCP for: '{query_text}'...")
+
+    arguments: Dict[str, Any] = {"query": query_text, "top_k": n_results}
+    if topic_filters:
+        arguments["topic_filters"] = topic_filters
+
     try:
-        vertexai.init(project=PROJECT_ID, location=LOCATION)
-        
-        response = vertexai.preview.rag.retrieval_query(
-            text=query_text,
-            rag_resources=[vertexai.preview.rag.RagResource(
-                rag_corpus=CORPUS_NAME,
-            )],
-            similarity_top_k=n_results,
-        )
-        
-        # Format output
-        formatted_results = []
-        for context in response.contexts.contexts:
-             formatted_results.append({
-                 "text": context.text,
-                 "distance": context.distance if hasattr(context, "distance") else None
-             })
-             
-        print(json.dumps(formatted_results, indent=2))
-        return formatted_results
-        
+        result = mcp_client.call_mcp_tool("query_team_knowledge", arguments=arguments)
+        print(json.dumps(result, indent=2))
+        return result
     except Exception as e:
-        print(f"Error querying RAG: {e}", file=sys.stderr)
-        return []
+        print(f"Error querying team knowledge via MCP: {e}", file=sys.stderr)
+        return {
+            "retrieval_mode": "database_fallback",
+            "degraded_reason": f"Client execution failed: {e}",
+            "results": [],
+        }
 
-def learn_new_lesson(problem: str, solution: str, context: str):
-    """Sends a new lesson to the centralized RAG system by uploading a file."""
-    print("Storing new lesson in centralized RAG...")
-    
-    # Create a structured document
-    doc_content = f"Context: {context}\nProblem: {problem}\nSolution: {solution}"
-    
-    temp_path = None
-    try:
-        vertexai.init(project=PROJECT_ID, location=LOCATION)
-        
-        # Write to a temp file
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
-            f.write(doc_content)
-            temp_path = f.name
-            
-        display_name = f"lesson_{context.replace(' ', '_')}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        
-        vertexai.preview.rag.upload_file(
-            corpus_name=CORPUS_NAME,
-            path=temp_path,
-            display_name=display_name,
-            description=f"Lesson learned for context: {context}"
-        )
-        
-        print(json.dumps({
-            "status": "stored",
-            "display_name": display_name,
-            "content": doc_content
-        }, indent=2))
-        return True
-        
-    except Exception as e:
-        print(f"Error storing lesson in RAG: {e}", file=sys.stderr)
-        return False
-    finally:
-        if temp_path and os.path.exists(temp_path):
-            os.unlink(temp_path)
 
 def main():
-    parser = argparse.ArgumentParser(description="Interface with Centralized Vertex AI RAG.")
+    parser = argparse.ArgumentParser(
+        description="Interface with Centralized Team Knowledge via MCP."
+    )
     parser.add_argument("--query", type=str, help="Query to search for lessons.")
-    parser.add_argument("--learn", action="store_true", help="Record a new lesson.")
-    parser.add_argument("--problem", type=str, help="The error or problem encountered.")
-    parser.add_argument("--solution", type=str, help="The solution or fix applied.")
-    parser.add_argument("--context", type=str, default="General", help="The context.")
-    parser.add_argument("--n_results", type=int, default=3, help="Number of results to return.")
+    parser.add_argument(
+        "--n_results", type=int, default=5, help="Number of results to return."
+    )
+    parser.add_argument(
+        "--topic_filters",
+        nargs="*",
+        help="Optional topic filters for the search.",
+    )
 
     args = parser.parse_args()
 
     if args.query:
-        query_centralized_rag(args.query, args.n_results)
-    elif args.learn:
-        if not args.problem or not args.solution:
-            print("Error: --problem and --solution are required for --learn")
-            sys.exit(1)
-        learn_new_lesson(args.problem, args.solution, args.context)
+        query_centralized_rag(args.query, args.n_results, args.topic_filters)
     else:
         parser.print_help()
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

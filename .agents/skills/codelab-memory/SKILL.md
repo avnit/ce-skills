@@ -9,7 +9,7 @@ This skill provides an interface to the centralized RAG system used to store and
 
 ## Retrieving Learnings
 
-Use the provided script to search for relevant learnings before starting a design or when debugging a failure:
+Use the provided script to search for relevant learnings via MCP `query_team_knowledge` before starting a design or when debugging a failure:
 
 ```bash
 python3 .agents/skills/codelab-memory/scripts/query_rag.py --query "your search topic"
@@ -22,11 +22,9 @@ python3 .agents/skills/codelab-memory/scripts/query_rag.py --query "your search 
 
 ## Storing Learnings
 
-If you discover a new gotcha or a solution to a tricky problem, store it in the centralized RAG:
+Direct uploads to the corpus are retired. To store new lessons learned, gotchas, or remediation rules, use the **closed-loop-learning** skill to submit structured records via `submit_lesson` for review and curation:
 
-```bash
-python3 .agents/skills/codelab-memory/scripts/query_rag.py --learn --problem "Description of problem" --solution "Description of solution" --context "Topic/Service"
-```
+- Refer to the **closed-loop-learning** skill for bug file extraction and lesson submission workflows.
 
 **When to use:**
 

@@ -19,6 +19,7 @@ billing_table=YOUR_BILLING_TABLE_ID
 # Quota project ID for developer knowledge search queries.
 knowledge_project=YOUR_KNOWLEDGE_PROJECT_ID
 
+# TODO(#90): Remove rag_project/rag_location/rag_corpus plumbing during W4-4 onboarding cleanup.
 # Project ID hosting the central RAG corpus.
 rag_project=YOUR_RAG_PROJECT_ID
 

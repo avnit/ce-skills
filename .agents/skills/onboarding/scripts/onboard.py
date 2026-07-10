@@ -60,6 +60,7 @@ def main():
     parser.add_argument("--billing-table", default=ce_config.get("billing_table"), help="BigQuery Billing Export Table ID")
     parser.add_argument("--pricing-table", default=ce_config.get("pricing_table"), help="BigQuery Cloud Pricing Export Table ID")
     parser.add_argument("--knowledge-project", default=ce_config.get("knowledge_project") or os.environ.get("CE_KNOWLEDGE_PROJECT"), help="Developer Knowledge API Quota Project ID")
+    # TODO(#90): Remove rag_project/rag_location/rag_corpus plumbing during W4-4 onboarding cleanup.
     parser.add_argument("--rag_project", default=ce_config.get("rag_project", "codelab-creator-central"), help="RAG Project ID")  # lgtm [py/clear-text-storage-sensitive-data]
     parser.add_argument("--rag_location", default=ce_config.get("rag_location", "us-west1"), help="RAG Location")  # lgtm [py/clear-text-storage-sensitive-data]
     parser.add_argument("--rag_corpus", default=ce_config.get("rag_corpus"), help="RAG Corpus Name/URI")

@@ -69,6 +69,7 @@ def load_config() -> Dict[str, str]:
 ENV_ALIASES = {
     "pricing_table": ["CE_PRICING_TABLE"],
     "billing_project": ["CE_BILLING_PROJECT"],
+    # TODO(#90): Remove rag_project/rag_location/rag_corpus plumbing during W4-4 onboarding cleanup.
     "rag_project": ["CE_RAG_PROJECT_ID"],
     "rag_location": ["CE_RAG_LOCATION"],
     "rag_corpus": ["CE_RAG_CORPUS_NAME"],
