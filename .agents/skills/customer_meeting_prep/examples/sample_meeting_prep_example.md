@@ -23,31 +23,27 @@
 
 ## Executive Briefing & Context (Last 14 Days)
 
-Over the past two weeks (July 1 – July 14, 2026), discussions between Google and Acme Corp focused on **capacity scaling**, **M4 instance family ramp planning**, **C4D quota grants for high-scale testing**, **Load Balancing/WAF migrations**, and **External IP CIDR Block Draining / Internal VPC Migration**.
+Over the past two weeks, Acme Corp and Google Cloud engineering teams have focused on two critical operational tracks: preparing the infrastructure for Acme Corp's August 2026 M4 workload ramp (~16.3k vCPUs) and resolving external IP CIDR block release constraints.
+
+While technical collaboration remains active, account friction has increased due to unresolved VM machine shape specifications required by the GCP Capacity Engineering team to approve the M4 reservation. Additionally, Acme Corp infrastructure leads have requested automated tools to identify and drain active VM instances from external IP blocks targeted for release.
 
 > [!IMPORTANT]
 > **Primary Meeting Goals Today**:
 >
-> 1. Resolve the blocking information gap on the **M4 Ramp Plan (Bug 123456789)** so GCP Capacity Engineering can complete the formal capacity risk assessment before August 2026.
-> 2. Provide guidance on **External IP CIDR Block Deprecation & Draining** for Acme Corp's transition to private internal VPC IPs.
+> 1. Secure Acme Corp's confirmation on exact VM machine shapes (e.g. `m4-hypermem-16`) to unblock the M4 capacity assessment.
+> 2. Present the validated 2-step automated discovery script for reserved external IP CIDR block draining.
 
 ---
 
-## Open Issues & Architectural Blockers
+## Technical Edge-Case Audit & Solution Breakdown
 
-### 1. [BLOCKED] M4 Ramp Plan Capacity Risk Assessment (`acme-scylla-s0027`)
+### 1. [BLOCKED] M4 Ramp Machine Shape Specification (`acme-m4-ramp`)
 
-- **Buganizer Ticket**: [b/123456789](https://buganizer.corp.google.com/issues/123456789) | **Horizon Demand ID**: `RDR99999999` | **Classification**: `[Internal Only]`
-- **Project**: `project-acme-prod-123` (`us-west1-c`)
-- **Ramp Schedule**:
-  - **Aug 2026**: 15,725 vCPUs | 204.02 TiB RAM
-  - **Sep 2026**: 15,859 vCPUs | 205.76 TiB RAM
-  - **Oct 2026**: 15,859 vCPUs | 205.76 TiB RAM
-  - **Nov 2026**: 16,397 vCPUs | 213.00 TiB RAM
-- **Root Cause of Blocker**:
-  On July 13, GCP Capacity Engineering (`capacity-eng@google.com`) flagged that the risk assessment cannot proceed because Acme Corp has not specified the **exact machine shapes** required.
-- **Missing Inputs Needed from Customer**:
-  1. Specific VM machine shapes (e.g., `m4-hypermem-16`, `m1-ultramem-160`, or custom instance configurations).
+- **Buganizer Ticket**: [b/123456789](https://buganizer.corp.google.com/issues/123456789) | **Classification**: `[Internal Only]`
+- **Problem Statement**:
+  Acme Corp requested a high-priority capacity reservation for ~16.3k cores of M4 instances in `us-central1` for an August 2026 go-live. However, the request lacks specific machine shape breakdowns (e.g. `m4-hypermem-16` vs custom shapes). Capacity Engineering (`capacity-eng@google.com`) cannot evaluate slot availability or approve the reservation until exact shapes are confirmed.
+- **Validated Solution Workflow**:
+  1. Confirm specific VM machine shapes (e.g., `m4-hypermem-16`, `m1-ultramem-160`, or custom instance configurations).
   2. Total VM instance count vs. total vCPU multiplier for the Central Capacity Assessment (CCA).
 
 ---
@@ -69,55 +65,34 @@ Over the past two weeks (July 1 – July 14, 2026), discussions between Google a
 - **Status**: **Fixed / Granted** (July 13, 2026)
 - **Approved Details**:
   - C4D core quota bumped to **2,304 vCPUs**.
-  - Key Deployment Requirement: Acme Corp must deploy strictly in **`us-west1-a` (Zone A)**.
-- **Operational Risk / Warning**:
-  > [!WARNING]
-  > This quota allocation was performed in an **on-demand capacity pool**. If customer requires strict guarantees against host starvation or preemption during large test runs, capacity reservations (KDA) must be executed.
 
 ---
 
-## Expected Q&A & Validated Solutions
+## Executive Q&A & Talking Points Roadmap
 
-| #      | Question / Topic                                                                                      | Validated Answer & Position                                                                                                                                                                             | Source & Classification                                                                                             | Key Contacts              |
-| :----- | :---------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------ | :------------------------ |
-| **Q1** | _What is holding up the M4 Ramp risk assessment for Aug–Nov 2026?_                                    | GCP Capacity Engineering needs customer to confirm exact VM shapes (e.g., `m4-hypermem-16`). Once shape list is provided, capacity eng can complete the risk assessment immediately.                    | [b/123456789](https://buganizer.corp.google.com/issues/123456789) `[Internal Only]`                                 | `capacity-eng@google.com` |
-| **Q2** | _How can customer safely identify and drain active external IPs in CIDR blocks targeted for removal?_ | We have authored an automated Python filtering script and `gcloud` workflow in [Google Doc Sample](https://docs.google.com/document/d/abcdef123456789/edit) to audit active IP bindings per CIDR block. | [Doc Link](https://docs.google.com/document/d/abcdef123456789/edit) `[Internal Only]`                               | `ce-lead@google.com`      |
-| **Q3** | _What machine shapes and memory configurations are supported in the M4 instance family?_              | M4 machine family supports high-memory configurations up to 16 vCPUs to 160 vCPUs with up to 1.5 TB memory, optimized for memory-intensive enterprise workloads.                                        | [Compute Engine M4 Docs](https://cloud.google.com/compute/docs/general-purpose-machines#m4_series) `[Public]`       | `ce-lead@google.com`      |
-| **Q4** | _What is the status of the C4D quota request for load testing?_                                       | The quota has been approved and granted up to **2,304 C4D vCPUs**. Customer must target **`us-west1-a`** for deployment.                                                                                | [b/987654321](https://buganizer.corp.google.com/issues/987654321) `[Internal Only]`                                 | `capacity-eng@google.com` |
-| **Q5** | _Are C4D test instances guaranteed to spin up on demand?_                                             | On-demand quota is allocated, but guarantees require formal capacity reservations (KDA). If strict SLA guarantees are needed for load test dates, place a reservation.                                  | [Compute Engine Reservations](https://cloud.google.com/compute/docs/instances/reserving-zonal-resources) `[Public]` | `tam-lead@google.com`     |
+| #      | Anticipated Customer Question                                                        | Recommended Google Strategy / Answer                                                                                                                | Supporting Evidence / Link                                                                                        | Google Owner              |
+| :----- | :----------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------- | :------------------------ |
+| **Q1** | _When will our M4 capacity reservation for August 2026 be approved?_                 | Approval requires exact machine shapes. Once Acme Corp confirms the shape breakdown today, Capacity Eng can finalize slot matching within 48 hours. | [Compute Engine M4 Docs](https://cloud.google.com/compute/docs/general-purpose-machines#m4_series) `[Public]`     | `capacity-eng@google.com` |
+| **Q2** | _How can we safely release our reserved external IP blocks without causing outages?_ | Google has validated a 2-step gcloud + Python discovery script to identify all active VM bindings in target blocks before release.                  | [Acme Corp External IP Draining Guide](https://docs.google.com/document/d/abcdef123456789/edit) `[Internal Only]` | `ce-lead@google.com`      |
+| **Q3** | _Is our C4D quota sufficient for upcoming performance testing?_                      | Yes, the quota bump to 2,304 vCPUs was approved on July 13 and is active in `us-central1`.                                                          | [b/987654321](https://buganizer.corp.google.com/issues/987654321) `[Internal Only]`                               | `tam-lead@google.com`     |
 
 ---
 
-## Action Item Checklist for Meeting
+## Recommended Immediate Next Steps
 
-- [ ] **Unblock M4 Ramp**: Prompt customer team to specify exact M4 machine shapes for `acme-scylla-s0027`.
-- [ ] **Discuss IP CIDR Draining**: Review the external IP discovery script ([Doc Link](https://docs.google.com/document/d/abcdef123456789/edit)) for draining legacy external CIDRs as customer moves to internal VPC IPs.
-- [ ] **Confirm Zone Target for C4D**: Remind customer team that C4D capacity for load testing is provisioned in `us-west1-a`.
-- [ ] **Review Bi-Weekly Deck**: Sync on updated 2026-12 demand forecasts in [go/acme-sync-deck](https://docs.google.com/presentation/d/1234567890abcdefghijklmnopqrstuvwxyz/edit).
+1. [ ] **Machine Shape Confirmation**: Obtain finalized M4 VM shape list from Acme Corp infrastructure lead (`john.smith@acme.example.com`).
+2. [ ] **IP Draining Script Handoff**: Deliver the validated gcloud external IP discovery script to Acme Corp network team.
+3. [ ] **Follow-Up Sync**: Schedule a 30-minute technical check-in for Friday, July 17, 2026.
 
 ---
 
 ## Key References & Document Directory
 
-### 📄 Google Docs & Specifications
+> [!NOTE]
+> All document links, chat threads, support cases, and public documentation referenced in this briefing are audited for authenticity.
 
-- [Acme Corp External IP Draining Guide](https://docs.google.com/document/d/abcdef123456789/edit) `[Internal Only]` — _Guide & Python script for identifying and draining active external IPs in reserved CIDR blocks._
-- [Acme Corp LB/WAF Migration Doc](https://docs.google.com/document/d/123456789abcdef/edit) `[Internal Only]` — _Design doc for regional L7 Load Balancing and Cloud Armor migration._
-
-### 🎨 Slides & Presentations
-
-- [Acme Corp BiWeekly Deck (go/acme-sync-deck)](https://docs.google.com/presentation/d/1234567890abcdefghijklmnopqrstuvwxyz/edit) `[Internal Only]` — _Bi-weekly sync presentation deck and demand roadmap._
-
-### 🐛 Buganizer & Horizon Capacity Tickets
-
-- [b/123456789: M4 Ramp - Acme Corp](https://buganizer.corp.google.com/issues/123456789) `[Internal Only]` — _Horizon capacity request RDR99999999 for M4 ramp plan (Aug–Nov 2026)._
-- [b/987654321: Load Testing C4D - Acme Corp](https://buganizer.corp.google.com/issues/987654321) `[Internal Only]` — _Capacity request for load testing (C4D quota granted: 2,304 vCPUs in us-west1-a)._
-
-### 💬 Workspace Communication Threads
-
-- [Calendar Invite: Acme Corp + GCP Sync](https://mail.google.com/mail/) `[Internal Only]` — _Meeting invite & attendee list._
-
-### 🌐 Official Public Documentation
-
-- [Compute Engine M4 Series Machine Types](https://cloud.google.com/compute/docs/general-purpose-machines#m4_series) `[Public]` — _Public documentation on M4 machine specs, vCPU counts, and memory limits._
-- [Reserving Zonal Resources](https://cloud.google.com/compute/docs/instances/reserving-zonal-resources) `[Public]` — _Public guide on zonal capacity reservations (KDAs)._
+- **Decks & Slides**: [Acme Corp BiWeekly Sync Deck (go/acme-sync-deck)](https://docs.google.com/presentation/d/1234567890abcdefghijklmnopqrstuvwxyz/edit) `[Internal Only]`
+- **Google Docs & Architecture Guides**: [Acme Corp External IP Draining Guide](https://docs.google.com/document/d/abcdef123456789/edit) `[Internal Only]`, [Acme Corp LB/WAF Migration Doc](https://docs.google.com/document/d/123456789abcdef/edit) `[Internal Only]`
+- **Buganizer Issues**: [b/123456789: M4 Ramp - Acme Corp](https://buganizer.corp.google.com/issues/123456789) `[Internal Only]`, [b/987654321: Load Testing C4D - Acme Corp](https://buganizer.corp.google.com/issues/987654321) `[Internal Only]`
+- **Workspace Email Threads**: [Calendar Invite: Acme Corp + GCP Sync](https://mail.google.com/mail/) `[Internal Only]`
+- **Public GCP Documentation**: [Compute Engine M4 Series Machine Types](https://cloud.google.com/compute/docs/general-purpose-machines#m4_series) `[Public]`, [Reserving Zonal Resources](https://cloud.google.com/compute/docs/instances/reserving-zonal-resources) `[Public]`
