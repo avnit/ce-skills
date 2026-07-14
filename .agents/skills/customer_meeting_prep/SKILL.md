@@ -90,15 +90,28 @@ Once the user completes the `ask_question` modal, **dynamically construct the `-
 
 ```bash
 /google/bin/releases/csa-cli/csa_cli.par \
-  --user_prompt="Find all communications, email discussions, docs, calendar events, and chat messages regarding {Customer Name} in the last 14 days. Prioritize topics, architectural decisions, tickets, open blockers, and discussions specifically relevant to {Selected Persona Focus / Specialization, e.g. Networking, Infrastructure, PSC, Load Balancing, Security, Data/AI} at {Selected Depth Level, e.g. Level 300/400 Deep Architecture}." \
+  --user_prompt="Find all communications, email discussions, docs, calendar events, and chat messages regarding {Customer Name} in the last 14 days. Filter and prioritize topics, architectural decisions, tickets, open blockers, and discussions EXCLUSIVELY relevant to {Selected Persona Domain ONLY, e.g. Practice CE for Networking: Private Service Connect, Load Balancers, Cloud Armor, Interconnect, IP Draining, ILB Latency} at {Selected Depth Level}." \
   --allowed_corpora="GMAIL,DRIVE,CALENDAR,CHAT" \
   --latency_budget_seconds=60 \
   --max_output_tokens=20000
 ```
 
-> [!TIP]
-> **Why Targeted Prompting Improves Results**:
-> Injecting the selected persona specialization directly into `csa_cli.par` steers the underlying vector semantic search engine to prioritize relevant technical threads, architecture reviews, and issue tickets over non-technical administrative emails.
+> [!CAUTION]
+> **CRITICAL DOMAIN ISOLATION RULE**:
+> Do NOT combine multiple unrelated domains (e.g., mixing Networking with Data/AI/Dataproc/Oracle) in the `csa_cli.par` prompt. If the active persona is **Networking**, restrict search keywords strictly to Networking & Infrastructure (PSC, ALB, Interconnect, BGP, IP draining, Latency) to prevent data science or database threads from crowding out networking blockers.
+
+---
+
+### Mandatory Customer Participant LinkedIn Profile Retrieval Protocol
+
+For **EVERY** participant identified in the Customer Team list:
+
+1. **Workspace Extraction**: Check calendar invites, meeting notes, email signatures, and pre-read slides retrieved by `csa_cli.par` for existing `https://www.linkedin.com/in/*` URLs.
+2. **Mandatory Web Search (`search_web`)**: If a participant's LinkedIn profile link is missing, you **MUST** run the `search_web` tool for that participant:
+   ```bash
+   search_web query="{Participant Name} {Customer Company Name} LinkedIn profile"
+   ```
+3. **Verification & Attribution**: Validate the profile URL structure with `verify_links.py` and format as `[Customer Participant](https://www.linkedin.com/in/username) — Title/Role [Public]`.
 
 ---
 
