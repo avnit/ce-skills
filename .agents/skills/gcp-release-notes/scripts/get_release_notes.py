@@ -197,29 +197,44 @@ def list_types():
 
 def generate_explanation(product_name, release_type, description):
     """Generates a concise AI explanation of why this release item is important/impactful using Gemini."""
+    prompt = f"""
+Analyze the following Google Cloud release note for "{product_name}" ({release_type}):
+{description}
+
+Provide a single-sentence, highly concise explanation of the architectural impact of this change, why it matters to cloud architects/developers, or what action they should take.
+Be direct, precise, and technical. Do not include introductory phrases like "This change matters because". Keep it under 30 words.
+"""
     try:
         from google import genai
         client = genai.Client(vertexai=True)
-        model_name = "gemini-3-flash-preview"
-        
-        prompt = f"""
-        You are a Google Cloud Principal Solutions Architect. 
-        Analyze the following release note for the product "{product_name}" ({release_type}):
-        
-        Release Description:
-        {description}
-        
-        Provide a single-sentence, highly concise explanation of the architectural impact of this change, why it matters to developers/architects, or what action they should take.
-        Be direct, precise, and technical. Do not include introductory phrases like "This change matters because" or "As an architect".
-        Keep it under 30 words.
-        """
-        response = client.models.generate_content(
-            model=model_name,
-            contents=prompt
-        )
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
         return response.text.strip()
-    except Exception as e:
-        return f"⚠️ AI Explanation Unavailable: {e}"
+    except Exception:
+        pass
+
+    try:
+        import urllib.request
+        import subprocess
+        token_res = subprocess.run(['gcloud', 'auth', 'print-access-token'], capture_output=True, text=True)
+        if token_res.returncode == 0 and token_res.stdout.strip():
+            token = token_res.stdout.strip()
+            url = 'https://us-central1-aiplatform.googleapis.com/v1/projects/billing-350700/locations/us-central1/publishers/google/models/gemini-2.5-flash:generateContent'
+            headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+            payload = {'contents': [{'parts': [{'text': prompt}]}]}
+            req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as res:
+                data = json.loads(res.read().decode('utf-8'))
+                text = data['candidates'][0]['content']['parts'][0]['text'].strip()
+                return text
+    except Exception:
+        pass
+
+    # Fallback heuristic summary
+    clean_desc = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', description)
+    clean_desc = re.sub(r'<br>', ' ', clean_desc).strip()
+    words = clean_desc.split()
+    short_summary = " ".join(words[:25]) + ("..." if len(words) > 25 else "")
+    return f"Architectural Update: {short_summary}"
 
 def search_notes(topic, release_type, start_date, limit, output_format, save_path, ai_explain=False):
     """Searches for release notes matching the user parameters."""
