@@ -67,15 +67,15 @@ Yields:
 
 ## Google Cloud Release Notes: Search Results
 
-*   **Topic/Keyword**: "session affinity"
-*   **Release Type Filter**: ALL
-*   **Since**: 2024-01-01
-*   **Results Limit**: 1
-*   **Generated At**: 2026-05-04 10:43 AM
+- **Topic/Keyword**: "session affinity"
+- **Release Type Filter**: ALL
+- **Since**: 2024-01-01
+- **Results Limit**: 1
+- **Generated At**: 2026-05-04 10:43 AM
 
-| Published At | Product Name | Type | Description |
-| :--- | :--- | :--- | :--- |
-| 2024-10-29 | Cloud Load Balancing | FEATURE | All the Application Load Balancers, except the classic Application Load Balancer, now support stateful cookie-based session affinity. When you use stateful cookie-based affinity, the load balancer includes an HTTP cookie in the `Set-Cookie` header in response to the initial HTTP request. With stateful session affinity, customers can preserve stickiness to the selected backend. <br> For details, see [Stateful cookie-based session affinity](https://docs.cloud.google.com/load-balancing/docs/backend-service#stateful-session-affinity). <br> This capability is in **General Availability**. |
+| Published At | Product Name         | Type    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| :----------- | :------------------- | :------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2024-10-29   | Cloud Load Balancing | FEATURE | All the Application Load Balancers, except the classic Application Load Balancer, now support stateful cookie-based session affinity. When you use stateful cookie-based affinity, the load balancer includes an HTTP cookie in the `Set-Cookie` header in response to the initial HTTP request. With stateful session affinity, customers can preserve stickiness to the selected backend. <br> For details, see [Stateful cookie-based session affinity](https://docs.cloud.google.com/load-balancing/docs/backend-service#stateful-session-affinity). <br> This capability is in **General Availability**. |
 
 #### AI Explanation Search Result
 
@@ -89,15 +89,15 @@ Yields:
 
 ## Google Cloud Release Notes: Search Results
 
-*   **Topic/Keyword**: "Cloud NGFW"
-*   **Release Type Filter**: ALL
-*   **Since**: 2024-01-01
-*   **Results Limit**: 1
-*   **Generated At**: 2026-05-04 10:54 AM
+- **Topic/Keyword**: "Cloud NGFW"
+- **Release Type Filter**: ALL
+- **Since**: 2024-01-01
+- **Results Limit**: 1
+- **Generated At**: 2026-05-04 10:54 AM
 
-| Published At | Product Name | Type | Description | AI Architect Impact |
-| :--- | :--- | :--- | :--- | :--- |
-| 2026-03-24 | Cloud NGFW | FEATURE | You can use the URL filtering service to filter your workload traffic by using <br> domain and Server Name Indication (SNI) information available in the egress <br> HTTP(S) messages. For more information, see <br> [URL filtering service overview](https://docs.cloud.google.com/firewall/docs/about-url-filtering). This <br> feature is available in **General Availability**. | Architects can now enforce granular egress security by filtering outbound traffic via domain and SNI, preventing data exfiltration and ensuring compliance without the overhead of full TLS decryption. |
+| Published At | Product Name | Type    | Description                                                                                                                                                                                                                                                                                                                                                                          | AI Architect Impact                                                                                                                                                                                     |
+| :----------- | :----------- | :------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-24   | Cloud NGFW   | FEATURE | You can use the URL filtering service to filter your workload traffic by using <br> domain and Server Name Indication (SNI) information available in the egress <br> HTTP(S) messages. For more information, see <br> [URL filtering service overview](https://docs.cloud.google.com/firewall/docs/about-url-filtering). This <br> feature is available in **General Availability**. | Architects can now enforce granular egress security by filtering outbound traffic via domain and SNI, preventing data exfiltration and ensuring compliance without the overhead of full TLS decryption. |
 
 ## Evaluation & Quality Assurance (Eval Suite)
 
