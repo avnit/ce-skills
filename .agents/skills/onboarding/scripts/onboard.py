@@ -62,6 +62,7 @@ def check_gcloud_preflight():
         ["gcloud", "auth", "list", "--format=json"],
         capture_output=True,
         text=True,
+        timeout=10,
     )
     if res.returncode != 0:
         raise RuntimeError(
@@ -130,12 +131,19 @@ def main():
 
     # Install kubectl + gke-gcloud-auth-plugin for GKE headless execution
     print("📦 Installing required cluster tooling (kubectl, gke-gcloud-auth-plugin)...")
-    subprocess.run(
+    res_install = subprocess.run(
         ["gcloud", "components", "install", "kubectl", "gke-gcloud-auth-plugin", "--quiet"],
-        check=False,
+        capture_output=True,
+        text=True,
     )
-    os.environ["USE_GKE_GCLOUD_AUTH_PLUGIN"] = "True"
-    print("✅ Verified cluster tooling installation.")
+    has_kubectl = bool(shutil.which("kubectl"))
+    has_plugin = bool(shutil.which("gke-gcloud-auth-plugin"))
+
+    if res_install.returncode == 0 and has_kubectl and has_plugin:
+        os.environ["USE_GKE_GCLOUD_AUTH_PLUGIN"] = "True"
+        print("✅ cluster tooling present")
+    else:
+        print("⚠️ could not install/verify kubectl + gke-gcloud-auth-plugin — GKE codelab validation will fail until these exist")
 
     # 1. Generate gcp_config.txt
     gcp_config_path = os.path.join(workspace_root, "gcp_config.txt")
@@ -226,20 +234,29 @@ The user environment is operating under the following primary Customer Engineeri
         }
         print("✅ Injected 'workspace' MCP server configuration.")
 
-    # Inject command and args binary definitions for google-developer-documentation-mcp
-    gdev = mcp_servers.setdefault("google-developer-documentation-mcp", {})
-    if not gdev.get("command") and not gdev.get("httpUrl") and not gdev.get("serverUrl"):
-        if os.path.exists("/google/bin/releases/docs-mcp-local/docs_mcp_server.par"):
-            gdev["command"] = "/google/bin/releases/docs-mcp-local/docs_mcp_server.par"
+    # Inject command and args binary definitions for google-developer-documentation-mcp if .par binary exists
+    docs_par_path = "/google/bin/releases/docs-mcp-local/docs_mcp_server.par"
+    if os.path.exists(docs_par_path):
+        gdev = mcp_servers.setdefault("google-developer-documentation-mcp", {})
+        if not gdev.get("command") and not gdev.get("httpUrl") and not gdev.get("serverUrl"):
+            gdev["command"] = docs_par_path
             gdev["args"] = []
             gdev.setdefault("env", {})
             print("✅ Injected 'command' and 'args' binary definitions for google-developer-documentation-mcp.")
 
-    # Inject quota project header if customized
-    if args.knowledge_project and args.knowledge_project != "codelab-creator-central":
-        headers = gdev.setdefault("headers", {})
-        headers["X-goog-user-project"] = args.knowledge_project
-        print(f"✅ Injected X-goog-user-project header ({args.knowledge_project}) into MCP config.")
+        # Inject quota project header if customized
+        if args.knowledge_project and args.knowledge_project != "codelab-creator-central":
+            headers = gdev.setdefault("headers", {})
+            headers["X-goog-user-project"] = args.knowledge_project
+            print(f"✅ Injected X-goog-user-project header ({args.knowledge_project}) into MCP config.")
+    else:
+        if "google-developer-documentation-mcp" in mcp_servers:
+            gdev = mcp_servers["google-developer-documentation-mcp"]
+            if not gdev.get("command") and not gdev.get("httpUrl") and not gdev.get("serverUrl"):
+                mcp_servers.pop("google-developer-documentation-mcp", None)
+                print("ℹ️ Removed command-less 'google-developer-documentation-mcp' entry (docs MCP server .par unavailable in this environment).")
+        else:
+            print("ℹ️ Developer documentation MCP server is unavailable in this environment.")
         
     with open(mcp_config_path, "w", encoding="utf-8") as f:
         json.dump(mcp_data, f, indent=2)
