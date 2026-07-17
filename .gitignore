@@ -62,4 +62,6 @@ startup.sh
 # Exclude active agent runtime states and mailboxes
 .agents/state/
 .agents/mailboxes/
+.agents/skills/skills_audit.json
+.agents/skills/reports/
 demo/
