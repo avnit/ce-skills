@@ -69,8 +69,12 @@ def test_onboarding_writes_all_documented_keys(tmp_path, monkeypatch):
     sys.modules["onboard"] = onboard
     spec.loader.exec_module(onboard)
     
-    # Mock subprocess checks
-    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: subprocess.CompletedProcess(args, 0))
+    # Mock subprocess checks and shutil.which
+    def mock_run(*args, **kwargs):
+        return subprocess.CompletedProcess(args, 0, stdout='[{"account": "test@google.com", "status": "ACTIVE"}]')
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    monkeypatch.setattr("shutil.which", lambda cmd: f"/usr/bin/{cmd}")
     monkeypatch.setattr(getpass, "getuser", lambda: "test-user")
     
     # Direct output to tmp_path
@@ -125,12 +129,12 @@ def test_onboarding_writes_all_documented_keys(tmp_path, monkeypatch):
         k, v = line.split("=", 1)
         parsed[k] = v
         
-    # Verify all 15 expected keys exist
+    # Verify expected keys exist
     expected_keys = [
         "persona", "folder_id", "billing_account", "billing_project", "billing_table",
         "pricing_table", "knowledge_project", "rag_project", "rag_location", "rag_corpus",
         "closed_loop_account", "closed_loop_vertex_project", "closed_loop_firestore_project",
-        "cloudtop_host", "piper_workspace"
+        "cloudtop_host", "piper_workspace", "USE_GKE_GCLOUD_AUTH_PLUGIN"
     ]
     for k in expected_keys:
         assert k in parsed, f"Expected key '{k}' was not written to gcp_config.txt"

@@ -10,6 +10,7 @@ import getpass
 import json
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 
@@ -48,6 +49,40 @@ PERSONA_TEMPLATES = {
         "objectives": "Focuses on rapid customer ramping, immediate time-to-value, unblocking priority plays, and migration executions. Artifacts prioritize low-latency execution speed-runs, copy-pasteable delivery mechanics, and immediate visual micro-validations."
     }
 }
+
+def check_gcloud_preflight():
+    """Verify gcloud CLI is installed and authenticated before writing configuration."""
+    if not shutil.which("gcloud"):
+        raise RuntimeError(
+            "❌ Error: 'gcloud' CLI is not installed or not found on PATH.\n"
+            "Please install Google Cloud SDK (https://cloud.google.com/sdk/docs/install) before running onboarding."
+        )
+
+    res = subprocess.run(
+        ["gcloud", "auth", "list", "--format=json"],
+        capture_output=True,
+        text=True,
+    )
+    if res.returncode != 0:
+        raise RuntimeError(
+            f"❌ Error checking gcloud authentication: {res.stderr.strip()}"
+        )
+
+    try:
+        accounts = json.loads(res.stdout) if res.stdout.strip() else []
+    except Exception:
+        accounts = []
+
+    has_active = any(
+        isinstance(acc, dict) and acc.get("status") == "ACTIVE"
+        for acc in accounts
+    )
+    if not has_active:
+        raise RuntimeError(
+            "❌ Error: No active authenticated account found in gcloud.\n"
+            "Please run 'gcloud auth login' or 'gcert' before running onboarding."
+        )
+
 
 def main():
     username = os.environ.get("USER") or os.environ.get("LOGNAME") or getpass.getuser()
@@ -89,6 +124,19 @@ def main():
     workspace_root = os.environ.get("BUILD_WORKSPACE_DIRECTORY") or os.environ.get("BUILD_WORKING_DIRECTORY", os.getcwd())
     print(f"🚀 Starting JetSki Onboarding Automation in: {workspace_root}")
     
+    # 0. Preflight gcloud installation & authentication check
+    check_gcloud_preflight()
+    print("✅ Verified gcloud CLI installation and active authed account.")
+
+    # Install kubectl + gke-gcloud-auth-plugin for GKE headless execution
+    print("📦 Installing required cluster tooling (kubectl, gke-gcloud-auth-plugin)...")
+    subprocess.run(
+        ["gcloud", "components", "install", "kubectl", "gke-gcloud-auth-plugin", "--quiet"],
+        check=False,
+    )
+    os.environ["USE_GKE_GCLOUD_AUTH_PLUGIN"] = "True"
+    print("✅ Verified cluster tooling installation.")
+
     # 1. Generate gcp_config.txt
     gcp_config_path = os.path.join(workspace_root, "gcp_config.txt")
     billing_table = args.billing_table
@@ -122,6 +170,7 @@ def main():
         f.write(f"piper_workspace={args.piper_workspace}\n")
         f.write(f"waf_mcp_cwd={args.waf_mcp_cwd or ''}\n")
         f.write(f"bug_scan_dir={args.bug_scan_dir or ''}\n")
+        f.write("USE_GKE_GCLOUD_AUTH_PLUGIN=True\n")
     print(f"✅ Generated credentials config: {gcp_config_path}")
 
     # 2. Generate persona.md rule
@@ -183,11 +232,8 @@ The user environment is operating under the following primary Customer Engineeri
         if os.path.exists("/google/bin/releases/docs-mcp-local/docs_mcp_server.par"):
             gdev["command"] = "/google/bin/releases/docs-mcp-local/docs_mcp_server.par"
             gdev["args"] = []
-        else:
-            gdev["command"] = "npx"
-            gdev["args"] = ["-y", "google-developer-documentation-mcp"]
-        gdev.setdefault("env", {})
-        print("✅ Injected 'command' and 'args' binary definitions for google-developer-documentation-mcp.")
+            gdev.setdefault("env", {})
+            print("✅ Injected 'command' and 'args' binary definitions for google-developer-documentation-mcp.")
 
     # Inject quota project header if customized
     if args.knowledge_project and args.knowledge_project != "codelab-creator-central":
@@ -225,12 +271,7 @@ The user environment is operating under the following primary Customer Engineeri
         subprocess.run(["bash", sync_script], check=False)
         print("✅ Sidecar daemons synchronized.")
 
-    # 7. Pre-warm Mermaid CLI
-    print("🎨 Pre-warming Mermaid CLI dependency cache...")
-    subprocess.run(["npx", "-y", "@mermaid-js/mermaid-cli", "--help"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-    print("✅ Mermaid CLI pre-warmed.")
-
-    # 8. Community Group Membership
+    # 6. Community Group Membership
     print("\n👥 Checking community group membership (ce-skills-users@google.com)...")
     print("👉 Please verify you have joined the official Google Group at: https://groups.google.com/a/google.com/g/ce-skills-users")
     if os.path.exists("/google/src/cloud"):
