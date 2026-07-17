@@ -112,31 +112,53 @@ class TestOnboardingPreflight(unittest.TestCase):
         # kubectl and gke-gcloud-auth-plugin missing on PATH
         mock_which.side_effect = lambda cmd: "/usr/bin/gcloud" if cmd == "gcloud" else None
 
-        # Simulate tooling check logic
-        res_install = mock_run(["gcloud", "components", "install", "kubectl", "gke-gcloud-auth-plugin", "--quiet"], capture_output=True, text=True)
-        self.assertEqual(res_install.returncode, 0)
-        has_kubectl = bool(mock_which("kubectl"))
-        has_plugin = bool(mock_which("gke-gcloud-auth-plugin"))
-        self.assertFalse(has_kubectl and has_plugin)
+        res = onboard.install_cluster_tooling()
+        self.assertFalse(res)
+        out = captured.getvalue()
+        self.assertIn("could not install/verify kubectl", out)
+        self.assertNotIn("cluster tooling present", out)
+
+    @patch("sys.stdout")
+    @patch("subprocess.run")
+    @patch("shutil.which")
+    def test_tooling_install_verified_success(self, mock_which, mock_run, mock_stdout):
+        import io
+        captured = io.StringIO()
+        mock_stdout.write = captured.write
+
+        mock_res = MagicMock()
+        mock_res.returncode = 0
+        mock_run.return_value = mock_res
+        mock_which.return_value = "/usr/bin/kubectl"
+
+        res = onboard.install_cluster_tooling()
+        self.assertTrue(res)
+        out = captured.getvalue()
+        self.assertIn("cluster tooling present", out)
 
     @patch("os.path.exists")
     def test_docs_mcp_pruned_when_par_absent(self, mock_exists):
-        # Setup mock exists to return False for .par file
         mock_exists.side_effect = lambda path: False if "docs_mcp_server.par" in path else True
 
         mcp_servers = {"google-developer-documentation-mcp": {}}
-        docs_par_path = "/google/bin/releases/docs-mcp-local/docs_mcp_server.par"
-
-        if mock_exists(docs_par_path):
-            gdev = mcp_servers.setdefault("google-developer-documentation-mcp", {})
-            gdev["command"] = docs_par_path
-        else:
-            if "google-developer-documentation-mcp" in mcp_servers:
-                gdev = mcp_servers["google-developer-documentation-mcp"]
-                if not gdev.get("command") and not gdev.get("httpUrl") and not gdev.get("serverUrl"):
-                    mcp_servers.pop("google-developer-documentation-mcp", None)
-
+        onboard.configure_docs_mcp(mcp_servers)
         self.assertNotIn("google-developer-documentation-mcp", mcp_servers)
+
+    @patch("os.path.exists")
+    def test_docs_mcp_url_header_injected_when_par_absent(self, mock_exists):
+        mock_exists.side_effect = lambda path: False if "docs_mcp_server.par" in path else True
+
+        mcp_servers = {
+            "google-developer-documentation-mcp": {
+                "httpUrl": "http://localhost:8080/mcp"
+            }
+        }
+        onboard.configure_docs_mcp(mcp_servers, knowledge_project="my-custom-proj")
+        self.assertIn("google-developer-documentation-mcp", mcp_servers)
+        self.assertEqual(
+            mcp_servers["google-developer-documentation-mcp"]["headers"]["X-goog-user-project"],
+            "my-custom-proj",
+        )
 
 
 if __name__ == "__main__":
