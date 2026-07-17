@@ -30,6 +30,29 @@ def validate_date(date_str):
     except ValueError:
         raise argparse.ArgumentTypeError(f"Invalid date format: '{date_str}'. Must be in YYYY-MM-DD format.")
 
+def load_gcp_config():
+    """Recursively searches parent directories for gcp_config.txt and parses key-value configuration."""
+    config = {}
+    curr_dir = os.getcwd()
+    for _ in range(5):
+        path = os.path.join(curr_dir, "gcp_config.txt")
+        if os.path.exists(path):
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and '=' in line and not line.startswith('#'):
+                            k, v = line.split('=', 1)
+                            config[k.strip()] = v.strip()
+                return config
+            except Exception:
+                pass
+        parent = os.path.dirname(curr_dir)
+        if parent == curr_dir:
+            break
+        curr_dir = parent
+    return config
+
 def html_to_markdown(html, is_table_mode=False):
     """Converts simple HTML tags from Google Cloud release notes to standard Markdown."""
     if not html:
@@ -80,7 +103,12 @@ def html_to_markdown(html, is_table_mode=False):
 
 def execute_query(query):
     """Executes a query using the bq CLI and handles errors gracefully."""
-    cmd_args = ["bq", "query", "--use_legacy_sql=false", "--max_rows=100000", "--format=json", query]
+    config = load_gcp_config()
+    proj_id = config.get("billing_project") or config.get("project_id") or os.environ.get("GOOGLE_CLOUD_PROJECT")
+    cmd_args = ["bq", "query"]
+    if proj_id:
+        cmd_args.append(f"--project_id={proj_id}")
+    cmd_args.extend(["--use_legacy_sql=false", "--max_rows=100000", "--format=json", query])
     success, stdout, stderr = run_command(cmd_args)
     
     if not success:
@@ -197,29 +225,55 @@ def list_types():
 
 def generate_explanation(product_name, release_type, description):
     """Generates a concise AI explanation of why this release item is important/impactful using Gemini."""
+    prompt = f"""
+Analyze the following Google Cloud release note for "{product_name}" ({release_type}):
+{description}
+
+Provide a single-sentence, highly concise explanation of the architectural impact of this change, why it matters to cloud architects/developers, or what action they should take.
+Be direct, precise, and technical. Do not include introductory phrases like "This change matters because". Keep it under 30 words.
+"""
+    errors = []
+
+    # 1. Try Vertex AI Python SDK if available
     try:
         from google import genai
         client = genai.Client(vertexai=True)
-        model_name = "gemini-3-flash-preview"
-        
-        prompt = f"""
-        You are a Google Cloud Principal Solutions Architect. 
-        Analyze the following release note for the product "{product_name}" ({release_type}):
-        
-        Release Description:
-        {description}
-        
-        Provide a single-sentence, highly concise explanation of the architectural impact of this change, why it matters to developers/architects, or what action they should take.
-        Be direct, precise, and technical. Do not include introductory phrases like "This change matters because" or "As an architect".
-        Keep it under 30 words.
-        """
-        response = client.models.generate_content(
-            model=model_name,
-            contents=prompt
-        )
-        return response.text.strip()
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+        if response and response.text:
+            return response.text.strip()
     except Exception as e:
-        return f"⚠️ AI Explanation Unavailable: {e}"
+        errors.append(f"SDK error: {e}")
+
+    # 2. Try REST API with dynamic GCP project resolution
+    try:
+        import urllib.request
+        import subprocess
+        config = load_gcp_config()
+        project_id = os.environ.get("GOOGLE_CLOUD_PROJECT") or config.get("billing_project") or "billing-350700"
+        
+        token_res = subprocess.run(['gcloud', 'auth', 'print-access-token'], capture_output=True, text=True)
+        if token_res.returncode == 0 and token_res.stdout.strip():
+            token = token_res.stdout.strip()
+            url = f'https://us-central1-aiplatform.googleapis.com/v1/projects/{project_id}/locations/us-central1/publishers/google/models/gemini-2.5-flash:generateContent'
+            headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+            payload = {'contents': [{'parts': [{'text': prompt}]}]}
+            req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as res:
+                data = json.loads(res.read().decode('utf-8'))
+                candidates = data.get('candidates', [])
+                if candidates:
+                    parts = candidates[0].get('content', {}).get('parts', [])
+                    if parts and 'text' in parts[0]:
+                        return parts[0]['text'].strip()
+                errors.append("Empty candidate response from Vertex API")
+        else:
+            errors.append(f"gcloud auth token failure: {token_res.stderr.strip()}")
+    except Exception as e:
+        errors.append(f"HTTP error: {e}")
+
+    # 3. Honest failure reporting (No silent swallowing, no fabricated text)
+    error_summary = "; ".join(errors) if errors else "Service unavailable"
+    return f"⚠️ AI Explanation Unavailable: {error_summary}"
 
 def search_notes(topic, release_type, start_date, limit, output_format, save_path, ai_explain=False):
     """Searches for release notes matching the user parameters."""
