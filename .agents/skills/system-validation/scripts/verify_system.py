@@ -25,6 +25,32 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "../../../.."))
 
 
+def check_gcloud_auth():
+    if not shutil.which("gcloud"):
+        return False, "gcloud CLI is not installed on PATH. Please install Google Cloud SDK."
+    
+    try:
+        res = subprocess.run(
+            ["gcloud", "auth", "list", "--format=json"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if res.returncode != 0:
+            return False, f"gcloud auth check failed: {res.stderr.strip()}"
+        accounts = json.loads(res.stdout) if res.stdout.strip() else []
+        active_acc = None
+        for acc in accounts:
+            if isinstance(acc, dict) and acc.get("status") == "ACTIVE":
+                active_acc = acc.get("account")
+                break
+        if not active_acc:
+            return False, "gcloud CLI installed but no active authenticated account found. Please run <code>gcloud auth login</code> or <code>gcert</code>."
+        return True, f"gcloud CLI verified (active account: <b>{active_acc}</b>)."
+    except Exception as e:
+        return False, f"Failed to verify gcloud auth: {e}"
+
+
 def check_gcp_config():
     path = os.path.join(REPO_ROOT, "gcp_config.txt")
     if not os.path.exists(path):
@@ -244,9 +270,9 @@ def check_cdp_socket_conflicts():
         
     return True, "CDP / Chrome DevTools singleton socket is clear and ready."
 
-def generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=None):
+def generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=None):
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    all_pass = gcp_ok and persona_ok and citc_ok and sc_ok and dep_ok and cdp_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
+    all_pass = gcloud_ok and gcp_ok and persona_ok and citc_ok and sc_ok and dep_ok and cdp_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
     
     overall_status_color = "#137333" if all_pass else "#c5221f"
     overall_status_bg = "#e6f4ea" if all_pass else "#fce8e6"
@@ -290,6 +316,17 @@ def generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, 
     html.append('</thead>')
     html.append('<tbody>')
     
+    gcloud_bg = "#e6f4ea" if gcloud_ok else "#fce8e6"
+    gcloud_color = "#137333" if gcloud_ok else "#c5221f"
+    gcloud_status = "PASS" if gcloud_ok else "FAIL"
+    html.append('<tr style="border-bottom: 1px solid #e8eaed;">')
+    html.append('<td style="padding: 14px 24px; vertical-align: top;">')
+    html.append(f'<span style="background: {gcloud_bg}; color: {gcloud_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">{gcloud_status}</span>')
+    html.append('</td>')
+    html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">gcloud CLI & Authentication Check</td>')
+    html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{gcloud_msg}</td>')
+    html.append('</tr>')
+
     gcp_bg = "#e6f4ea" if gcp_ok else "#fce8e6"
     gcp_color = "#137333" if gcp_ok else "#c5221f"
     gcp_status = "PASS" if gcp_ok else "FAIL"
@@ -405,6 +442,10 @@ def main():
         elif not arg.startswith("-"):
             report_path = arg
         
+    gcloud_ok, gcloud_msg = check_gcloud_auth()
+    print(f"[*] gcloud CLI & Authentication Check: {'PASS' if gcloud_ok else 'FAIL'}")
+    print(f"    {gcloud_msg}\n")
+
     gcp_ok, gcp_msg = check_gcp_config()
     print(f"[*] GCP Configuration Check: {'PASS' if gcp_ok else 'FAIL'}")
     print(f"    {gcp_msg}\n")  # lgtm [py/clear-text-logging-sensitive-data]
@@ -436,7 +477,7 @@ def main():
     print("[*] MCP Servers Connectivity Check:")
     if not mcp_ok:
         print(f"    FAIL: {mcp_results}\n")
-        generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path)
+        generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path)
         sys.exit(1)
         
     all_mcp_pass = True
@@ -449,9 +490,9 @@ def main():
             all_mcp_pass = False
     print()
     
-    generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=report_path)
+    generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=report_path)
     
-    if not gcp_ok or not persona_ok or not citc_ok or not sc_ok or not dep_ok or not cdp_ok or not all_mcp_pass:
+    if not gcloud_ok or not gcp_ok or not persona_ok or not citc_ok or not sc_ok or not dep_ok or not cdp_ok or not all_mcp_pass:
         print("[-] SYSTEM VALIDATION: FAILED")
         print("-" * 60)
         sys.exit(1)

@@ -77,3 +77,16 @@ This satisfies Google Cloud Well-Architected security pillars and allows secure,
 2. In automated scripts, always wait for pod readiness explicitly using:
    `kubectl wait --for=condition=Ready pod/<pod-name> --timeout=300s`
    and avoid passing TTY flags (`-it`) in non-interactive terminal runs.
+
+---
+
+## 5. Non-Interactive kubectl Authentication & gke-gcloud-auth-plugin
+
+### The Gotcha
+
+Modern `kubectl` (≥1.26) has no in-tree GCP authentication providers. Without `gke-gcloud-auth-plugin` installed, `kubectl` falls back to a metadata-server-based ADC path that fails in headless subshells (`no auth` / metadata 404 errors).
+
+### The Fix
+
+Ensure `gke-gcloud-auth-plugin` is installed and `USE_GKE_GCLOUD_AUTH_PLUGIN=True` is set in the environment, then run `gcloud container clusters get-credentials` before any `kubectl` call. Do **not** inject raw tokens into the codelab — the plugin handles headless auth via the active gcloud identity.
+

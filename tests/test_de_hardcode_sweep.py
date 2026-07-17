@@ -106,8 +106,11 @@ def test_onboarding_no_author_argparse_defaults(monkeypatch):
         
     monkeypatch.setattr("builtins.open", mock_open_impl)
     monkeypatch.setattr(os, "makedirs", lambda *args, **kwargs: None)
-    monkeypatch.setattr(os.path, "exists", lambda *args: True)
-    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: subprocess.CompletedProcess(args, 0))
+    def mock_run(*args, **kwargs):
+        return subprocess.CompletedProcess(args, 0, stdout='[{"account": "test@google.com", "status": "ACTIVE"}]')
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    monkeypatch.setattr("shutil.which", lambda cmd: f"/usr/bin/{cmd}")
 
     monkeypatch.setattr(sys, "argv", [
         "onboard.py",
