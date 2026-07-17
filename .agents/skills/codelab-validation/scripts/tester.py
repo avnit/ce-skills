@@ -257,13 +257,13 @@ def sanitize_command(cmd: str, project_id: str = "", custom_vars: dict = None) -
 
 class StatefulCodelabTester:
     """Orchestrates Codelab steps, state transitions, and command execution."""
-    def __init__(self, markdown_file: str, artifact_dir: str = None, timeout: int = 600, skip_cleanup: bool = False):
+    def __init__(self, markdown_file: str, artifact_dir: str = None, timeout: int = 600, phase: str = "test"):
         self.md_path = os.path.abspath(markdown_file)
         self.lab_dir = os.path.dirname(self.md_path)
         self.tester_state_dir = os.path.join(self.lab_dir, ".tester_state")
         self.artifact_dir = artifact_dir
         self.timeout = timeout
-        self.skip_cleanup = skip_cleanup
+        self.phase = phase
         
         # Parse or load step states
         self.steps = []
@@ -310,6 +310,12 @@ class StatefulCodelabTester:
             elif re.search(r"(?i)(click|select|navigate|console|ui|save|dropdown|checkbox|fill out|button|radio button|under the|navigate to)", body):
                 has_gui = True
 
+            # Detect explicit phase marker for cleanup steps
+            is_cleanup = bool(
+                re.search(r"<!--\s*(phase:\s*cleanup|cleanup)\s*-->", body, re.IGNORECASE)
+                or re.search(r"<!--\s*(phase:\s*cleanup|cleanup)\s*-->", title_line, re.IGNORECASE)
+            )
+
             # Standardize instructions from body
             clean_body_lines = [line.strip() for line in body.splitlines() if line.strip() and not line.strip().startswith("```")]
             instructions = " ".join(clean_body_lines[:3]) + "..." if clean_body_lines else "Execute steps."
@@ -323,7 +329,8 @@ class StatefulCodelabTester:
                 "commands": commands,
                 "output": "",
                 "error": "",
-                "has_gui": has_gui
+                "has_gui": has_gui,
+                "is_cleanup": is_cleanup,
             })
             step_num += 1
             
@@ -511,10 +518,14 @@ class StatefulCodelabTester:
                     logging.info("[Tester] Skipping step %d: %s (already DONE)", step["num"], step["title"])
                     continue
                 
-                if self.skip_cleanup and re.search(r"(?i)(clean\s*up|cleanup)", step["title"]):
-                    logging.info("[Tester] Skipping cleanup step %d: %s (skip-cleanup enabled)", step["num"], step["title"])
-                    step["status"] = "DONE"
-                    step["output"] = "Skipped per request to retain resources."
+                is_cleanup_step = step.get("is_cleanup", False)
+                if self.phase == "test" and is_cleanup_step:
+                    logging.info("[Tester] Skipping cleanup step %d: %s (deferred to explicit cleanup phase)", step["num"], step["title"])
+                    step["status"] = "DEFERRED"
+                    step["output"] = "Deferred to explicit cleanup phase."
+                    continue
+                elif self.phase == "cleanup" and not is_cleanup_step:
+                    logging.info("[Tester] Skipping non-cleanup step %d: %s during cleanup phase", step["num"], step["title"])
                     continue
                 
                 logging.info("[Tester] Running step %d: %s...", step["num"], step["title"])
@@ -591,11 +602,13 @@ def main():
     parser.add_argument("markdown_file", help="Path to the codelab markdown guide file.")
     parser.add_argument("--artifact-dir", help="Conversation context artifact directory.")
     parser.add_argument("--timeout", type=int, default=600, help="Step timeout in seconds.")
-    parser.add_argument("--skip-cleanup", action="store_true", help="Skip cleanup steps in the codelab.")
+    parser.add_argument("--phase", choices=["test", "cleanup", "all"], default="test", help="Execution phase (test, cleanup, or all).")
+    parser.add_argument("--cleanup", action="store_true", help="Run explicit cleanup phase (equivalent to --phase cleanup).")
     
     args = parser.parse_args()
     
-    tester = StatefulCodelabTester(args.markdown_file, args.artifact_dir, args.timeout, args.skip_cleanup)
+    phase = "cleanup" if args.cleanup else args.phase
+    tester = StatefulCodelabTester(args.markdown_file, args.artifact_dir, args.timeout, phase=phase)
     success = tester.run()
     
     sys.exit(0 if success else 1)
