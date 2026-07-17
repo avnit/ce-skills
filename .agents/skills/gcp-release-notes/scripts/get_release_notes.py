@@ -103,7 +103,12 @@ def html_to_markdown(html, is_table_mode=False):
 
 def execute_query(query):
     """Executes a query using the bq CLI and handles errors gracefully."""
-    cmd_args = ["bq", "query", "--use_legacy_sql=false", "--max_rows=100000", "--format=json", query]
+    config = load_gcp_config()
+    proj_id = config.get("billing_project") or config.get("project_id") or os.environ.get("GOOGLE_CLOUD_PROJECT")
+    cmd_args = ["bq", "query"]
+    if proj_id:
+        cmd_args.append(f"--project_id={proj_id}")
+    cmd_args.extend(["--use_legacy_sql=false", "--max_rows=100000", "--format=json", query])
     success, stdout, stderr = run_command(cmd_args)
     
     if not success:
