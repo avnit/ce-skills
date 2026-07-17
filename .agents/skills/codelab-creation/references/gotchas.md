@@ -89,4 +89,3 @@ Modern `kubectl` (≥1.26) has no in-tree GCP authentication providers. Without 
 ### The Fix
 
 Ensure `gke-gcloud-auth-plugin` is installed and `USE_GKE_GCLOUD_AUTH_PLUGIN=True` is set in the environment, then run `gcloud container clusters get-credentials` before any `kubectl` call. Do **not** inject raw tokens into the codelab — the plugin handles headless auth via the active gcloud identity.
-
