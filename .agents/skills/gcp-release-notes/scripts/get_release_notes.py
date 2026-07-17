@@ -275,8 +275,11 @@ Be direct, precise, and technical. Do not include introductory phrases like "Thi
     error_summary = "; ".join(errors) if errors else "Service unavailable"
     return f"⚠️ AI Explanation Unavailable: {error_summary}"
 
-def search_notes(topic, release_type, start_date, limit, output_format, save_path, ai_explain=False):
+def search_notes(topic, release_type, start_date, limit, output_format, save_path, ai_explain=False, is_report=False):
     """Searches for release notes matching the user parameters."""
+    if is_report:
+        output_format = 'report'
+
     filters = [f"published_at >= '{start_date}'"]
     
     # Build query condition for topic search
@@ -304,13 +307,21 @@ def search_notes(topic, release_type, start_date, limit, output_format, save_pat
         print(f"\nℹ️ No release notes found matching your criteria since {start_date}.")
         return
         
-    is_table = (output_format == 'table')
+    is_table = (output_format in ['table', 'report'])
     
     # Process and clean results
     processed_results = []
+    links_found = []
+
     for row in results:
         desc_clean = html_to_markdown(row.get('description', ''), is_table_mode=is_table)
         
+        # Extract markdown links [LABEL](URL) for documentation index
+        for match in re.finditer(r'\[(.*?)\]\((https?://[^\s\)]+)\)', desc_clean):
+            label, url = match.group(1), match.group(2)
+            if (label, url) not in links_found:
+                links_found.append((label, url))
+
         ai_impact = ""
         if ai_explain:
             print(f"🤖 Generating AI Explanation for: {row.get('product_name')} ({row.get('published_at')})...")
@@ -323,7 +334,7 @@ def search_notes(topic, release_type, start_date, limit, output_format, save_pat
             'release_note_type': row.get('release_note_type', ''),
             'description': desc_clean
         }
-        if ai_explain:
+        if ai_explain or output_format == 'report':
             item['ai_impact'] = ai_impact
             
         processed_results.append(item)
@@ -331,8 +342,72 @@ def search_notes(topic, release_type, start_date, limit, output_format, save_pat
     if output_format == 'json':
         output_str = json.dumps(processed_results, indent=2)
         print(output_str)
+    elif output_format == 'report':
+        # Generate Complete Executive Reference Report
+        lines = [
+            f"# Reference Report: Google Cloud Release Notes ({topic or 'ALL'})",
+            "",
+            f"- **Topic/Keyword**: \"{topic or 'ALL'}\"",
+            f"- **Release Type Filter**: {release_type or 'ALL'}",
+            f"- **Since Date**: {start_date}",
+            f"- **Results Limit**: {limit}",
+            f"- **Generated At**: {datetime.now().strftime('%Y-%m-%d %I:%M %p')}",
+            "- **Data Source**: `bigquery-public-data.google_cloud_release_notes.release_notes`",
+            "",
+            "---",
+            "",
+            "## Executive Summary",
+            "",
+            f"This reference report summarizes key Google Cloud release notes for **{topic or 'ALL'}** since {start_date}. "
+            f"A total of **{len(processed_results)}** release notes were evaluated covering feature launches, infrastructure improvements, and service updates.",
+            "",
+            "---",
+            "",
+            "## Formatted Release Notes & AI Architect Impact",
+            ""
+        ]
+
+        headers = ["Published At", "Product Name", "Type", "Description"]
+        alignments = [":---", ":---", ":---", ":---"]
+        if ai_explain:
+            headers.append("AI Architect Impact")
+            alignments.append(":---")
+
+        lines.append("| " + " | ".join(headers) + " |")
+        lines.append("| " + " | ".join(alignments) + " |")
+
+        for row in processed_results:
+            row_cells = [row['published_at'], row['product_name'], row['release_note_type'], row['description']]
+            if ai_explain:
+                row_cells.append(row.get('ai_impact', ''))
+            lines.append("| " + " | ".join(row_cells) + " |")
+
+        lines.extend([
+            "",
+            "---",
+            "",
+            "## Strategic Architectural Guidance & Key Recommendations",
+            "",
+            "1. **Review Feature Launch Stages**: Verify whether features are in Preview vs. General Availability before deploying to production environments.",
+            "2. **Evaluate Security & Network Controls**: Align new release parameters with enterprise organizational security and governance policies.",
+            "3. **Update Infrastructure Specifications**: Incorporate updated API parameters, resource limits, and quota enhancements into IaC modules (Terraform/gcloud).",
+            "",
+            "---",
+            "",
+            "## Canonical External Documentation Reference Index",
+            ""
+        ])
+
+        if links_found:
+            for label, url in links_found:
+                lines.append(f"- 🔗 [{label}]({url})")
+        else:
+            lines.append("- *No external documentation links parsed in this release set.*")
+
+        output_str = "\n".join(lines)
+        print(output_str)
     else:
-        # Generate Markdown Table
+        # Generate Standard Markdown Table
         headers = ["Published At", "Product Name", "Type", "Description"]
         alignments = [":---", ":---", ":---", ":---"]
         if ai_explain:
@@ -382,17 +457,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Search for GKETopic:
+  # Search for GKE Topic:
   python3 get_release_notes.py --topic "GKE" --limit 5
 
-  # Search for GKE Features only, since 2025-01-01:
-  python3 get_release_notes.py --topic "GKE" --type FEATURE --start-date 2025-01-01
-
-  # List all available products in alphabetical order:
-  python3 get_release_notes.py --list-products
-
-  # Save search results as a Markdown table to a file:
-  python3 get_release_notes.py --topic "session affinity" --save-artifact "artifacts/session_affinity_notes.md"
+  # Generate a full Executive Reference Report:
+  python3 get_release_notes.py --topic "Cloud Load Balancing" --report --save-artifact report.md
 """
     )
     
@@ -400,7 +469,8 @@ Examples:
     parser.add_argument("--type", help="Filter by specific release type (e.g., FEATURE, FIX, DEPRECATION).")
     parser.add_argument("--start-date", default="2024-01-01", type=validate_date, help="Start date for search filtering (YYYY-MM-DD). Default is 2024-01-01.")
     parser.add_argument("--limit", default=10, type=int, help="Maximum number of release notes to return (1 to 1000). Default is 10.")
-    parser.add_argument("--output", default="table", choices=["table", "json"], help="Console and file output format. 'table' outputs a beautiful Markdown table, 'json' outputs structured JSON.")
+    parser.add_argument("--output", default="table", choices=["table", "json", "report"], help="Console and file output format. 'table' outputs a Markdown table, 'json' outputs JSON, 'report' outputs a full executive report.")
+    parser.add_argument("--report", action="store_true", help="Shortcut to output a full executive reference report format.")
     parser.add_argument("--save-artifact", help="Absolute or relative path to write the search results to.")
     parser.add_argument("--list-products", action="store_true", help="Query and list all unique products available in the release notes.")
     parser.add_argument("--list-types", action="store_true", help="Query and list all unique release note types.")
@@ -428,7 +498,8 @@ Examples:
             limit=args.limit,
             output_format=args.output,
             save_path=args.save_artifact,
-            ai_explain=args.ai_explain
+            ai_explain=args.ai_explain,
+            is_report=args.report
         )
 
 if __name__ == "__main__":

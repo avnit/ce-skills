@@ -49,6 +49,18 @@ When outputting release notes, adhere to the following table formatting and cell
    - **Escaped Pipe Characters**: Escape pipe characters (`|`) within description text as `\|`.
    - **Clean Markdown Formatting**: Convert standard HTML elements to clean Markdown syntax (`<strong>`/`<b>` to `**text**`, `<em>`/`<i>` to `*text*`, `<code>` to `` `code` ``, `<a href="URL">LABEL</a>` to `[LABEL](URL)`).
 
+## Mandatory Report Generation Requirement
+
+When this skill is invoked or used by an AI agent, the agent **MUST ALWAYS** generate a comprehensive **Release Notes Report Artifact** (`.md`) in addition to any inline responses. The generated report artifact must contain:
+
+1. **Metadata Header Block**: Key search criteria (`Topic/Keyword`, `Release Type Filter`, `Since Date`, `Results Limit`, `Generated At`, `Data Source`).
+2. **Executive Summary**: High-level synthesis of major changes, launches, and trends across the period.
+3. **Formatted Release Notes & AI Architect Impact Table**: Clean Markdown table with `Published At`, `Product Name`, `Type`, `Description`, and `AI Architect Impact` columns (using `--ai-explain`).
+4. **Strategic Architectural Guidance & Key Recommendations**: Bulleted, actionable recommendations for cloud architects and DevOps engineers based on the release notes.
+5. **Canonical External Documentation Reference Index**: A compiled list of clickable links to official documentation referenced in the release notes.
+
+The agent MUST save the report artifact to the active conversation artifact path and provide the user with a clickable link to the generated report file.
+
 ## Reference Report & Examples
 
 For a complete example of a generated GCP Release Notes Report including executive summary, formatted table, and architectural recommendations, see [sample_release_notes_report.md](file:///.agents/skills/gcp-release-notes/examples/sample_release_notes_report.md).
