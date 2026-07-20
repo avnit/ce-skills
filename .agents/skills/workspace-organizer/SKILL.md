@@ -37,7 +37,7 @@ Run the local audit script to discover flat root files and untracked directories
 python3 .agents/skills/workspace-organizer/scripts/audit_workspace.py
 ```
 
-- **Mandatory Root File Whitelist (Ignore Rules)**: Under no circumstances should the audit script or agent propose to relocate or delete critical configuration and system files that are mandated to sit directly in the repository root. You MUST automatically whitelist and ignore:
+- **Root File Whitelist (Ignore Rules)**: Whitelist and ignore root system files to prevent breaking repository tooling, credential resolution, or git state:
   - `gcp_config.txt` (GCP Provisioning Credentials)
   - `.gitignore` (Git Exclusion List)
   - `.antigravityignore` (Platform Exclusion List)
@@ -45,7 +45,7 @@ python3 .agents/skills/workspace-organizer/scripts/audit_workspace.py
 
 ### 📊 Step 2: Author Live Audit Report Artifact
 
-**CRITICAL DECOUPLED UI RULE**: Do NOT output complex comparative markdown tables directly into terminal responses or `ask_question` title fields, as interactive UI modals strip and collapse line breaks and grid syntax, making them unreadable.
+**Decoupled UI Artifact Rule**: Author markdown reports as dedicated artifact files rather than outputting raw tables inside terminal responses or `ask_question` titles, as interactive UI modals collapse line breaks and grid syntax.
 Instead, author a dedicated live full markdown artifact file (`workspace_audit_report.md`) saved to the active conversation artifacts directory (`<appDataDir>/brain/<conversation-id>/workspace_audit_report.md`). Structure the file beautifully with standard Markdown formatting:
 
 > [!NOTE]

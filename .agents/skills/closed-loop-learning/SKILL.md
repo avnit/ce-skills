@@ -17,9 +17,9 @@ python3 .agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py -
 
 This script reads all `bug_*.json` files that haven't been processed, uses Vertex AI to extract a generalized lesson, and pushes it to the centralized Firebase backend for human curation in the Admin Portal.
 
-## Autonomous Bug Resolution & Feedback Logging (Mandatory Protocol)
+## Autonomous Bug Resolution & Feedback Logging
 
-Whenever an orchestrator or agent autonomously solves a validation failure, test error, infrastructure block, or script bug during execution, it **MUST strictly log** what failed, what worked, and how it resolved the bug back into the RAG memory before proceeding. Note that `bug_to_lesson_processor.py` ignores any bug file where `status != "FIXED"`. Therefore, whenever an autonomous fix occurs, you must update the bug state and trigger ingestion immediately.
+Whenever an orchestrator or agent autonomously solves a validation failure, test error, infrastructure block, or script bug during execution, log what failed, what worked, and how it resolved the bug back into RAG memory so that downstream test runs benefit from the identified pattern. Because `bug_to_lesson_processor.py` ignores bug files where `status != "FIXED"`, update the bug state and trigger ingestion immediately whenever an autonomous fix succeeds.
 
 ### Protocol Steps:
 
