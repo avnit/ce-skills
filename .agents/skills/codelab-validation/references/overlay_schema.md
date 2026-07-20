@@ -3,6 +3,7 @@
 The per-lab overlay file (`labs/validate/<lab_name>/overlay.json`) allows specifying lab-specific transformations without polluting the generic engine policies in `validator.py`.
 
 ## Overlay File Location
+
 When validating a lab, `validator.py` checks for `overlay.json` inside the lab's validation directory (`labs/validate/<lab_name>/overlay.json`). If present, rules are executed after generic engine policies (such as interactive login commenting and project ID substitution).
 
 `overlay.json` is preserved across validation runs during run-directory state cleanup.
@@ -33,14 +34,14 @@ When validating a lab, `validator.py` checks for `overlay.json` inside the lab's
 
 ### Fields
 
-- `description` *(string, optional)*: Explains the architectural or lab-specific motivation for the overlay.
-- `replacements` *(array of objects, optional)*:
-  - `find` *(string, required)*: The target string or regular expression pattern.
-  - `replace` *(string, required)*: The replacement string.
-  - `regex` *(boolean, optional, default: `false`)*: If `true`, `find` is evaluated as a regular expression via `re.sub()`. If `false`, literal string replacement (`str.replace()`) is performed.
-- `append_after_match` *(array of objects, optional)*:
-  - `match` *(string, required)*: Pattern to look for inside executable ` ```bash ` blocks.
-  - `append_lines` *(array of strings, required)*: Lines appended to the end of any bash block containing `match`.
+- `description` _(string, optional)_: Explains the architectural or lab-specific motivation for the overlay.
+- `replacements` _(array of objects, optional)_:
+  - `find` _(string, required)_: The target string or regular expression pattern.
+  - `replace` _(string, required)_: The replacement string.
+  - `regex` _(boolean, optional, default: `false`)_: If `true`, `find` is evaluated as a regular expression via `re.sub()`. If `false`, literal string replacement (`str.replace()`) is performed.
+- `append_after_match` _(array of objects, optional)_:
+  - `match` _(string, required)_: Pattern to look for inside executable ` ```bash ` blocks.
+  - `append_lines` _(array of strings, required)_: Lines appended to the end of any bash block containing `match`.
 
 ## Realistic Example
 
@@ -72,5 +73,6 @@ When validating a lab, `validator.py` checks for `overlay.json` inside the lab's
 ```
 
 ## Audit & Error Handling
+
 - **Audit**: All applied overlay rules are printed to stdout by `validator.py` and rendered in `validation-report.md` under the `## Applied Overlay Transforms` section.
 - **Error Handling**: Malformed JSON or unreadable `overlay.json` files trigger a hard error (`exit 1`) to ensure lab validation fails explicitly and auditably.
