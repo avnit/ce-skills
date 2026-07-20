@@ -47,7 +47,7 @@ This Test Plan acts as the structured validation harness manifest. It binds our 
 
 - **Reference Design**: `[design_blueprint.md](design_blueprint.md)`
 - **Execution Codelab**: `[customer-a-storage.lab.md](../../labs/dev/customer-a-storage/customer-a-storage.lab.md)`
-- **Verification Engine**: `[codelab-validation/tester.py](../../.agents/skills/codelab-validation/scripts/tester.py)`
+- **Verification Engine**: `[codelab-validation/tester.py](../codelab-validation/scripts/tester.py)`
 
 ---
 
