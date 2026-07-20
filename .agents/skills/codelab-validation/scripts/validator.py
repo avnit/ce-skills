@@ -596,6 +596,8 @@ def main():
         tester_cmd += f" --artifact-dir {args.artifact_dir}"
     if args.skip_cleanup:
         tester_cmd += " --phase test"
+    else:
+        tester_cmd += " --phase all"
         
     print("[Validator] Launching stateful E2E verification engine...")
     test_success, test_output = run_command(tester_cmd, "Running tester suite")

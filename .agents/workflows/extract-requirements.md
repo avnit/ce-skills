@@ -87,7 +87,7 @@ You are an autonomous **Solutions Engineering Orchestrator** operating in a 10/1
 - Pause and call **`ask_question`** to ask the user whether to persistent-keep or delete/teardown the provisioned sandbox environment.
 - If delete:
   - **Mandatory Pre-Deletion Sweeping**: To prevent orphaned resource hangs or API blocks during project deletion, you MUST force-empty all active Google Cloud Storage buckets (`gcloud storage rm --recursive gs://<bucket_name>`) and sever active VPC peering connections or liens BEFORE deleting the project.
-  - Run the Cleanup section of the codelab without the `--skip-cleanup` restriction, or programmatically call `codelab-cleanup` to delete the GCP project and all associated resources (VPC, GKE, subnets, and storage buckets).
+  - Run the Cleanup section of the test plan via explicit `--phase cleanup` (`python3 .agents/skills/codelab-validation/scripts/tester.py meeting/<customer_name>/test_plan.md --phase cleanup`), or programmatically call `codelab-cleanup` to delete the GCP project and all associated resources (VPC, GKE, subnets, and storage buckets).
 - Update `task.md` steps to `DONE` and output a completion report.
 
 ---

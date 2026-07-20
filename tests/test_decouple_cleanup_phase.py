@@ -130,11 +130,21 @@ class TestDecoupleCleanupPhase(unittest.TestCase):
             md_file.write_text(md_content, encoding="utf-8")
 
             mock_runner = MockSubshellRunner()
+            real_init = tester.StatefulCodelabTester.__init__
+            created_testers = []
+
+            def spy_init(self, *args, **kwargs):
+                real_init(self, *args, **kwargs)
+                created_testers.append(self)
+
             with patch.object(tester, "SubshellRunner", return_value=mock_runner), \
+                 patch.object(tester.StatefulCodelabTester, "__init__", spy_init), \
                  patch.object(sys, "argv", ["tester.py", str(md_file), "--skip-cleanup"]), \
                  patch.object(sys, "exit") as mock_exit:
                 tester.main()
                 mock_exit.assert_called_once_with(0)
+                self.assertEqual(len(created_testers), 1)
+                self.assertEqual(created_testers[0].steps[1]["status"], "DEFERRED")
 
     def test_validator_arg_passing(self):
         with patch.object(validator, "run_command") as mock_run_cmd, \
@@ -153,6 +163,24 @@ class TestDecoupleCleanupPhase(unittest.TestCase):
             tester_calls = [cmd for cmd in executed_cmds if "tester.py" in cmd]
             self.assertTrue(len(tester_calls) > 0)
             self.assertIn("--phase test", tester_calls[0])
+
+    def test_validator_default_passes_phase_all(self):
+        with patch.object(validator, "run_command") as mock_run_cmd, \
+             patch.object(validator, "setup_active_lab"), \
+             patch.object(validator, "scan_placeholders", return_value=[]), \
+             patch.object(validator, "compile_report"), \
+             patch.object(os, "makedirs"), \
+             patch("builtins.open", unittest.mock.mock_open()), \
+             patch.object(sys, "argv", ["validator.py", "--src", "dummy.lab.md", "--project-id", "test-proj"]), \
+             patch.object(sys, "exit"):
+            mock_run_cmd.return_value = (True, "success")
+            validator.main()
+
+            # Verify tester.py was invoked with --phase all when --skip-cleanup is omitted
+            executed_cmds = [call.args[0] for call in mock_run_cmd.call_args_list]
+            tester_calls = [cmd for cmd in executed_cmds if "tester.py" in cmd]
+            self.assertTrue(len(tester_calls) > 0)
+            self.assertIn("--phase all", tester_calls[0])
 
     def test_bug_json_keys_and_step_schema_preserved(self):
         md_content = (
