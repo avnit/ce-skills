@@ -48,6 +48,9 @@ python3 .agents/skills/workspace-organizer/scripts/audit_workspace.py
 **CRITICAL DECOUPLED UI RULE**: Do NOT output complex comparative markdown tables directly into terminal responses or `ask_question` title fields, as interactive UI modals strip and collapse line breaks and grid syntax, making them unreadable.
 Instead, author a dedicated live full markdown artifact file (`workspace_audit_report.md`) saved to the active conversation artifacts directory (`<appDataDir>/brain/<conversation-id>/workspace_audit_report.md`). Structure the file beautifully with standard Markdown formatting:
 
+> [!NOTE]
+> **Resolving `<appDataDir>`**: When running under JetSki, `<appDataDir>` resolves to the platform conversation data directory (honored via the `ANTIGRAVITY_EXECUTABLE_DATA_DIR` environment variable, e.g., `~/.gemini/jetski`). In standard plain-CLI environments where this environment variable is un-set, the skill falls back to creating a local `./artifacts` directory within the workspace root to store the artifact report.
+
 - **Executive Summary**: Total flat files discovered.
 - **Findings Grid**: Clear table listing `Asset Name`, `Current Location`, `Proposed Action` (Move, Delete, Ignore), and `Target Namespace Folder`.
 - **Visual Guidance**: GitHub alerts highlighting specific file risks or dependencies.
