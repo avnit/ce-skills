@@ -6,11 +6,13 @@ it, `.github/workflows/*`, or `.github/agent-allowlist.json` without an architec
 
 ## Roles
 
-| Role          | Who                                                        | Authority                                                      |
-| ------------- | ---------------------------------------------------------- | -------------------------------------------------------------- |
-| **Owner**     | shacharb                                                   | Priorities, decisions, merges, live verification gates         |
-| **Architect** | interactive session, invoked by the owner                  | Design, reviews **every** PR, `ARCH-APPROVED <sha>` merge gate |
-| **Dev agent** | you (Antigravity queue worker / hub-dispatched task cards) | Implementation via small PRs with tests                        |
+| Role          | Who                                                        | Authority                                                                                      |
+| ------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Owner**     | shacharb                                                   | Priorities, decisions, verification gates                                                      |
+| **Architect** | interactive session, invoked by the owner                  | Design, reviews **every** PR, `ARCH-APPROVED <sha>` merge gate                                 |
+| **Dev agent** | you (Antigravity queue worker / hub-dispatched task cards) | Implementation via small PRs with tests; merges PRs once green CI and `ARCH-APPROVED` assigned |
+
+_The PR gate chain requires green CI, followed by the architect posting `ARCH-APPROVED <sha>` for the latest commit, before the dev agent executes the merge._
 
 ## Source of truth
 
