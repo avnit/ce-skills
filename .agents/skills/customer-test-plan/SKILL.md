@@ -59,6 +59,7 @@ To execute the E2E validation tests, run our centralized, stateful `tester.py` e
 # Run the unified stateful validation engine
 python3 .agents/skills/codelab-validation/scripts/tester.py \
     meeting/customer_a/test_plan.md \
+    --project-id "<PROJECT_ID>" \
     --artifact-dir meeting/customer_a/validation_artifacts \
     --skip-cleanup
 ```

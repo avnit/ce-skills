@@ -139,7 +139,7 @@ class TestDecoupleCleanupPhase(unittest.TestCase):
 
             with patch.object(tester, "SubshellRunner", return_value=mock_runner), \
                  patch.object(tester.StatefulCodelabTester, "__init__", spy_init), \
-                 patch.object(sys, "argv", ["tester.py", str(md_file), "--skip-cleanup"]), \
+                 patch.object(sys, "argv", ["tester.py", str(md_file), "--skip-cleanup", "--project-id", "test-proj"]), \
                  patch.object(sys, "exit") as mock_exit:
                 tester.main()
                 mock_exit.assert_called_once_with(0)
@@ -158,11 +158,12 @@ class TestDecoupleCleanupPhase(unittest.TestCase):
             mock_run_cmd.return_value = (True, "success")
             validator.main()
 
-            # Verify tester.py was invoked with --phase test
+            # Verify tester.py was invoked with --phase test and --project-id test-proj
             executed_cmds = [call.args[0] for call in mock_run_cmd.call_args_list]
             tester_calls = [cmd for cmd in executed_cmds if "tester.py" in cmd]
             self.assertTrue(len(tester_calls) > 0)
             self.assertIn("--phase test", tester_calls[0])
+            self.assertIn("--project-id test-proj", tester_calls[0])
 
     def test_validator_default_passes_phase_all(self):
         with patch.object(validator, "run_command") as mock_run_cmd, \
@@ -181,6 +182,7 @@ class TestDecoupleCleanupPhase(unittest.TestCase):
             tester_calls = [cmd for cmd in executed_cmds if "tester.py" in cmd]
             self.assertTrue(len(tester_calls) > 0)
             self.assertIn("--phase all", tester_calls[0])
+            self.assertIn("--project-id test-proj", tester_calls[0])
 
     def test_bug_json_keys_and_step_schema_preserved(self):
         md_content = (

@@ -608,7 +608,7 @@ def main():
     run_command(f"gcloud config set project {project_id}", "Setting gcloud active project")
     
     # 3. Run Tester Suite
-    tester_cmd = f"python3 .agents/skills/codelab-validation/scripts/tester.py {active_lab_path}"
+    tester_cmd = f"python3 .agents/skills/codelab-validation/scripts/tester.py {active_lab_path} --project-id {project_id}"
     if args.artifact_dir:
         tester_cmd += f" --artifact-dir {args.artifact_dir}"
     if args.skip_cleanup:

@@ -18,7 +18,7 @@ You **MUST** use the unified `tester.py` script as the exclusive execution engin
 ### How to Run
 
 ```bash
-python3 .agents/skills/codelab-validation/scripts/tester.py path/to/your/codelab.md --artifact-dir <appDataDir>/brain/<conversation-id>
+python3 .agents/skills/codelab-validation/scripts/tester.py path/to/your/codelab.md --project-id "<PROJECT_ID>" --artifact-dir <appDataDir>/brain/<conversation-id>
 ```
 
 This merges the state tracking of `codelab-validation` with the persistent command execution of `deterministic_runner.py` into a single execution harness.
