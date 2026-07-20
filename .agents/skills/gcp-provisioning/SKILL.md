@@ -10,7 +10,7 @@ This skill provides instructions and scripts for provisioning Google Cloud proje
 ## Prerequisites
 
 You need a `gcp_config.txt` file sitting directly in the repository root directory (`./gcp_config.txt`).
-Copy the template from `resources/gcp_config.txt.template` and fill in your details:
+Copy the template from [resources/gcp_config.txt.template](resources/gcp_config.txt.template) and fill in your details:
 
 ```text
 folder_id=YOUR_FOLDER_ID
