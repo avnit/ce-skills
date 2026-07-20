@@ -65,7 +65,7 @@ Overall Orchestration Lifecycle:
    - Update `task.md` to mark narrative generation complete. If the "Artifacts Only" scope was selected, transition directly to Phase 6 (Retrospective & Continuous Improvement).
 6. **Phase 4: Hermetic Verification (Full E2E Scope Only)**
    - Provision a pristine sandboxed test environment delegating initialization tasks to the **create-project** workflow and **gcp-provisioning** skill.
-   - Verify terminal execution reproducibility statefully by executing the unified **codelab-validation** stateful tester script. **CRITICAL**: You MUST pass the active workspace artifact path down using the `--artifact-dir` command flag to route ephemeral status updates directly into live rendered HTML `task.md` preview buffers. If the user selected "Retain active sandbox resources" in Question 4, you MUST also append the `--skip-cleanup` command flag to the tester execution call.
+   - Verify terminal execution reproducibility statefully by executing the unified **codelab-validation** stateful tester script. **CRITICAL**: You MUST pass the active workspace artifact path down using the `--artifact-dir` command flag to route ephemeral status updates directly into live rendered HTML `task.md` preview buffers. If the user selected "Retain active sandbox resources" in Question 4, you MUST also append the `--phase test` (or deprecated `--skip-cleanup` alias) command flag to the tester execution call.
    - Reflect runtime execution outputs inside the `task.md` output block containers.
 7. **Phase 5: Quality Review, Clean-up Choice & Final Delivery (Full E2E Scope Only)**
    - Delegate content quality checks to the **[reviewer.md](prompts/reviewer.md)** persona guidelines.

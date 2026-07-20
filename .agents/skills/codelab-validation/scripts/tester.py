@@ -310,11 +310,15 @@ class StatefulCodelabTester:
             elif re.search(r"(?i)(click|select|navigate|console|ui|save|dropdown|checkbox|fill out|button|radio button|under the|navigate to)", body):
                 has_gui = True
 
-            # Detect explicit phase marker for cleanup steps
-            is_cleanup = bool(
+            # Detect explicit phase marker for cleanup steps, falling back to title regex if no marker exists
+            has_marker = bool(
                 re.search(r"<!--\s*(phase:\s*cleanup|cleanup)\s*-->", body, re.IGNORECASE)
                 or re.search(r"<!--\s*(phase:\s*cleanup|cleanup)\s*-->", title_line, re.IGNORECASE)
             )
+            if has_marker:
+                is_cleanup = True
+            else:
+                is_cleanup = bool(re.search(r"(?i)(clean\s*up|cleanup)", title))
 
             # Standardize instructions from body
             clean_body_lines = [line.strip() for line in body.splitlines() if line.strip() and not line.strip().startswith("```")]
@@ -604,10 +608,16 @@ def main():
     parser.add_argument("--timeout", type=int, default=600, help="Step timeout in seconds.")
     parser.add_argument("--phase", choices=["test", "cleanup", "all"], default="test", help="Execution phase (test, cleanup, or all).")
     parser.add_argument("--cleanup", action="store_true", help="Run explicit cleanup phase (equivalent to --phase cleanup).")
-    
+    parser.add_argument("--skip-cleanup", action="store_true", help="Deprecated alias for --phase test.")
+
     args = parser.parse_args()
-    
-    phase = "cleanup" if args.cleanup else args.phase
+
+    if args.cleanup:
+        phase = "cleanup"
+    elif args.skip_cleanup:
+        phase = "test"
+    else:
+        phase = args.phase
     tester = StatefulCodelabTester(args.markdown_file, args.artifact_dir, args.timeout, phase=phase)
     success = tester.run()
     

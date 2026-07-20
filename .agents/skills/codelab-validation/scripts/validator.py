@@ -434,6 +434,8 @@ def compile_report(tester_state_dir, report_dir, report_path, project_id, overal
             badge = "🟡 BLOCKED"
         elif status == "RUNNING":
             badge = "🔵 RUNNING"
+        elif status == "DEFERRED":
+            badge = "⏸️ DEFERRED"
         else:
             badge = "⚪ PENDING"
             
@@ -593,7 +595,7 @@ def main():
     if args.artifact_dir:
         tester_cmd += f" --artifact-dir {args.artifact_dir}"
     if args.skip_cleanup:
-        tester_cmd += " --skip-cleanup"
+        tester_cmd += " --phase test"
         
     print("[Validator] Launching stateful E2E verification engine...")
     test_success, test_output = run_command(tester_cmd, "Running tester suite")
