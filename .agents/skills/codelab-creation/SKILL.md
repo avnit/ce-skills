@@ -43,6 +43,7 @@ Follow this interactive checklist to create a codelab:
   - **Clean-up Choice Gate**: Present a mandatory choice to the user via `ask_question` to either **delete** the sandboxed test project (to control cloud costs) or **retain** it (to allow the user to manually test or demo).
 - [ ] **Phase 6: Final Delivery**
   - Convert to Google Doc if requested by the user.
+  - For DevSite submission, refer to [codelab-markdown-submit](../codelab-markdown-submit/SKILL.md) and follow its "Staging from labs/dev" checklist to stage the lab into the target DevSite directory.
 - [ ] **Phase 7: Retrospective & Continuous Improvement**
   - **Mandatory Post-Mortem**: At the conclusion of the run, the Commander must execute a mandatory retrospective following the [Post-Mortem Retrospective Standard](references/post_mortem_standard.md).
   - Draft a structured `post_mortem.md` file in the active session brain folder analyzing process adherence, defect causes, and prevention mechanics.
