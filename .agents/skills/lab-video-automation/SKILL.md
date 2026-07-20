@@ -42,7 +42,7 @@ The script connects to your active multi-profile debugging server over `localhos
 
 1. **The Parsing Engine:** Scans raw markdown files, strips explanatory prose, extracts command sets, computes SHA-256 block hashes, applies negative filters, and compiles highly structured JSON execution plans.
 2. **The Page-Level CDP Controller (Playwright):** Dynamically fetches isolated target descriptor paths (`webSocketDebuggerUrl`) via HTTP queries to attach directly to specific user document scopes securely bypassing root-level context constraints.
-3. **Stateful Checkpointing & Skipping:** Maintains perfect alignment with `deterministic_runner.py` tracking persistence. Successfully executed block hashes are saved to `<lab_basename>.state`, allowing resume flows to bypass already-completed operations automatically.
+3. **Stateful Checkpointing & Skipping:** Maintains perfect alignment with `tester.py` tracking persistence. Successfully executed block hashes are saved to `<lab_basename>.state`, allowing resume flows to bypass already-completed operations automatically.
 4. **The Terminal Guardrail:** Observes terminal text buffers for input prompt stabilization indicators (`$`, `>`), actively monitors runtime execution deltas for critical error signatures, and intercepts unexpected interactive terminal confirmation requests.
 
 ---
