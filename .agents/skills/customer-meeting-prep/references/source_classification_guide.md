@@ -15,7 +15,7 @@ To maximize search precision and relevance, `csa_cli.par` does not run generic u
 ### Persona Prompt Injection Formula:
 
 ```bash
-/google/bin/releases/csa-cli/csa_cli.par \
+${CSA_CLI:-/google/bin/releases/csa-cli/csa_cli.par} \
   --user_prompt="Find all communications, email discussions, docs, calendar events, and chat messages regarding {Customer Name} in the last 14 days. Prioritize topics, architectural decisions, tickets, open blockers, and discussions specifically relevant to {Selected Persona Focus / Specialization, e.g. Networking, Infrastructure, PSC, Load Balancing, Security, Data/AI} at {Selected Depth Level, e.g. Level 300/400 Deep Architecture}." \
   --allowed_corpora="GMAIL,DRIVE,CALENDAR,CHAT" \
   --latency_budget_seconds=60 \

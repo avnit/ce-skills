@@ -13,6 +13,9 @@ class TestNoStaleReferences(unittest.TestCase):
         # Root-pointing file:/// URIs (e.g. file:///.agents/..., file:///prompts/...) fail to resolve workspace-relative paths.
         # Placeholder templates intended for runtime expansion (e.g. file:///<appDataDir>..., file:///{workspace_dir}...) are allowed.
         root_file_uri_pattern = re.compile(r"file:///(\.agents|prompts|references|labs|doc)/")
+        # Hardcoded binary paths under /google/bin/releases/ must use bash inline-default form (e.g. ${CSA_CLI:-/google/bin/releases/...})
+        # to ensure tools work seamlessly with or without an environment alias configured.
+        unaliased_bin_release_pattern = re.compile(r"(?<!:-)/google/bin/releases")
 
         targets = [REPO / ".agents", REPO / "prompts", REPO / "README.md"]
 
@@ -40,6 +43,15 @@ class TestNoStaleReferences(unittest.TestCase):
                 match = root_file_uri_pattern.search(content)
                 if match:
                     hits.append(f"{file_path.relative_to(REPO)}: contains root-pointing URI '{match.group(0)}'")
+
+                # Hardcoded binary paths under /google/bin/releases/ must use bash inline-default form (e.g. ${CSA_CLI:-/google/bin/releases/...})
+                # to ensure tools work seamlessly with or without an environment alias configured.
+                if file_path.suffix == ".md":
+                    bin_match = unaliased_bin_release_pattern.search(content)
+                    if bin_match:
+                        hits.append(
+                            f"{file_path.relative_to(REPO)}: contains un-aliased binary path '/google/bin/releases' without inline default ':-'"
+                        )
 
         self.assertEqual(hits, [], "Found stale/forbidden references:\n" + "\n".join(hits))
 

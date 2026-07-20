@@ -160,6 +160,39 @@ class TestOnboardingPreflight(unittest.TestCase):
             "my-custom-proj",
         )
 
+    @patch("os.path.exists")
+    def test_docs_mcp_env_override(self, mock_exists):
+        mock_exists.return_value = True
+        mcp_servers = {}
+        with patch.dict(os.environ, {"DOCS_MCP_SERVER": "/custom/path/docs_mcp.par"}, clear=False):
+            onboard.configure_docs_mcp(mcp_servers)
+            self.assertEqual(
+                mcp_servers["google-developer-documentation-mcp"]["command"],
+                "/custom/path/docs_mcp.par",
+            )
+
+        mcp_servers = {}
+        with patch.dict(os.environ, {}, clear=True):
+            onboard.configure_docs_mcp(mcp_servers)
+            self.assertEqual(
+                mcp_servers["google-developer-documentation-mcp"]["command"],
+                "/google/bin/releases/docs-mcp-local/docs_mcp_server.par",
+            )
+
+    def test_workspace_mcp_env_override(self):
+        mcp_servers = {}
+        with patch.dict(os.environ, {"WORKSPACE_MCP_SERVER": "/custom/path/workspace_server.par"}, clear=False):
+            onboard.configure_workspace_mcp(mcp_servers)
+            self.assertEqual(mcp_servers["workspace"]["command"], "/custom/path/workspace_server.par")
+
+        mcp_servers = {}
+        with patch.dict(os.environ, {}, clear=True):
+            onboard.configure_workspace_mcp(mcp_servers)
+            self.assertEqual(
+                mcp_servers["workspace"]["command"],
+                "/google/bin/releases/codemind-mcp-servers/workspace_server.par",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

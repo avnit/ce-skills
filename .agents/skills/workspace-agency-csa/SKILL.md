@@ -19,7 +19,7 @@ To execute a semantic search, run the binary in your terminal or wrap it inside 
 Run the binary directly in your bash shell:
 
 ```bash
-/google/bin/releases/csa-cli/csa_cli.par \
+${CSA_CLI:-/google/bin/releases/csa-cli/csa_cli.par} \
   --user_prompt="{your_detailed_search_prompt}" \
   --allowed_corpora=GMAIL,DRIVE,CALENDAR,CHAT \
   --latency_budget_seconds=45 \
@@ -39,7 +39,7 @@ Run the binary directly in your bash shell:
 To generate a consolidated account review of all customer interactions in the last 30 days, run the following parameterized query:
 
 ```bash
-/google/bin/releases/csa-cli/csa_cli.par \
+${CSA_CLI:-/google/bin/releases/csa-cli/csa_cli.par} \
   --user_prompt="Find all emails, calendar invites, chat escalations, and shared architectural blueprints regarding the customer '{account_name}' in the last 30 days." \
   --allowed_corpora=GMAIL,DRIVE,CALENDAR,CHAT \
   --latency_budget_seconds=45
