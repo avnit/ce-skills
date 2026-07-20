@@ -34,7 +34,7 @@ Before selecting the hybrid interconnect topology, the following priorities were
 
 ![High-Fidelity Architecture Diagram](assets/architecture_diagram.png)
 
-_Note: Rendered via `creating_gcp_diagrams` and stored in `assets/architecture_diagram.png`._
+_Note: Rendered via `creating-gcp-diagrams` and stored in `assets/architecture_diagram.png`._
 
 #### Architectural Topology Draft (Mermaid)
 

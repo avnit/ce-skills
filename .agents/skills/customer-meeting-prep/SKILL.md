@@ -118,7 +118,7 @@ Once `csa_cli.par` returns the broad payload:
 To guarantee that 100% of links in the One-Pager are real and clickable, agents MUST execute the verification script gate:
 
 ```bash
-python3 .agents/skills/customer_meeting_prep/scripts/verify_links.py \
+python3 .agents/skills/customer-meeting-prep/scripts/verify_links.py \
   <path_to_one_pager.md>
 ```
 
