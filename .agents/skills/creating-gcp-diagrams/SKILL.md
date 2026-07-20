@@ -96,7 +96,7 @@ Call the `generate_image` tool directly in the active context to render the diag
 
 #### 3. Steering Guidelines & Brand Compliance (For Premium Aesthetics)
 
-Ensure your prompt instructs the image generation model to strictly follow the official Google Cloud Architecture Diagram Style Guidelines (go/diagram-style):
+Ensure your prompt instructs the image generation model to strictly follow the official Google Cloud Architecture Diagram Style Guidelines ([go/diagram-style](http://go/diagram-style) — Google-internal link):
 
 ##### A. Typography Specifications
 
