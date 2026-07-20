@@ -16,7 +16,7 @@ it, `.github/workflows/*`, or `.github/agent-allowlist.json` without an architec
 
 1. The GitHub **issue** you are implementing (acceptance criteria live there).
 2. The Wave-4 design: `doc/wave4_client_cutover.md` **in the backend repo**
-   (`cloud-gtm/ce-skills-close-loop-learning`), plus its parent `doc/mcp_migration_design.md`
+   ([`cloud-gtm/ce-skills-close-loop-learning`](https://github.com/cloud-gtm/ce-skills-close-loop-learning)), plus its parent `doc/mcp_migration_design.md`
    and the contract schemas under `doc/contracts/`. If an issue conflicts with the design,
    stop and ask on the issue.
 3. `AGENT_HUB_HANDOFF.md` — operational summary of the hub (gates, pickup protocol, gotchas).
