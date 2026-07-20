@@ -228,12 +228,16 @@ def apply_overlay(content, overlay_path):
                 rule_desc = f"Regex replacement: r'{find_str}' -> '{replace_str}'"
                 print(f"[Validator] Applied overlay: {rule_desc}")
                 applied_rules.append(rule_desc)
+            else:
+                print(f"[Validator] Overlay rule did not match: Regex r'{find_str}'")
         else:
             if find_str in content:
                 content = content.replace(find_str, replace_str)
                 rule_desc = f"Literal replacement: '{find_str}' -> '{replace_str}'"
                 print(f"[Validator] Applied overlay: {rule_desc}")
                 applied_rules.append(rule_desc)
+            else:
+                print(f"[Validator] Overlay rule did not match: Literal '{find_str}'")
 
     # 2. Apply append_after_match
     append_rules = overlay_data.get("append_after_match", [])
@@ -252,11 +256,14 @@ def apply_overlay(content, overlay_path):
             print(f"[Validator] ERROR: 'append_lines' in rule #{idx+1} must be a list of strings.")
             sys.exit(1)
 
-        lines_to_append = "\n" + "\n".join(append_lines)
+        joined_lines = "\n".join(append_lines)
+        lines_to_append = "\n" + joined_lines
 
         def transform_bash_block(block_match):
             block_code = block_match.group(1)
             if match_str in block_code:
+                if joined_lines in block_code:
+                    return block_match.group(0)
                 updated_code = block_code.rstrip() + lines_to_append + "\n"
                 return f"```bash\n{updated_code}```"
             return block_match.group(0)
@@ -268,6 +275,8 @@ def apply_overlay(content, overlay_path):
             rule_desc = f"Append after match '{match_str}': Appended {len(append_lines)} lines"
             print(f"[Validator] Applied overlay: {rule_desc}")
             applied_rules.append(rule_desc)
+        else:
+            print(f"[Validator] Overlay rule did not match or already applied: Append after match '{match_str}'")
 
     return content, applied_rules
 

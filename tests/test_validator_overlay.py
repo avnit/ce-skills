@@ -185,6 +185,35 @@ class TestValidatorOverlay(unittest.TestCase):
         report_content_none = report_path.read_text(encoding="utf-8")
         self.assertIn("None — lab validated as written", report_content_none)
 
+    def test_append_after_match_idempotent_on_repeat_call(self):
+        """Calling apply_overlay twice on the same content does not duplicate appended lines."""
+        src_content = (
+            "# Lab\n\n"
+            "```bash\n"
+            "gcloud compute instances create my-vm\n"
+            "```\n"
+        )
+        overlay_data = {
+            "description": "Test idempotency",
+            "append_after_match": [
+                {
+                    "match": "gcloud compute instances create",
+                    "append_lines": ["echo VM creation completed"]
+                }
+            ]
+        }
+        overlay_file = self.validate_dir / "overlay.json"
+        overlay_file.write_text(json.dumps(overlay_data), encoding="utf-8")
+
+        res1, transforms1 = validator.apply_overlay(src_content, str(overlay_file))
+        self.assertEqual(len(transforms1), 1)
+        self.assertEqual(res1.count("echo VM creation completed"), 1)
+
+        # Call apply_overlay a second time on the transformed output
+        res2, transforms2 = validator.apply_overlay(res1, str(overlay_file))
+        self.assertEqual(len(transforms2), 0)
+        self.assertEqual(res2.count("echo VM creation completed"), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
