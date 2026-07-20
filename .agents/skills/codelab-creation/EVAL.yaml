@@ -22,8 +22,8 @@ cases:
     skills: [codelab-creation]
     rubric: |
       The agent must:
-      - Point to the codelab-testing skill or the deterministic_runner.py script.
+      - Point to the codelab-validation skill or the tester.py script.
       - Explain that it extracts and runs commands to verify them.
     expect_keywords:
       - "validate"
-      - "deterministic_runner.py"
+      - "tester.py"
