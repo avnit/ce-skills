@@ -46,5 +46,5 @@ This workflow guides you through generating a premium, Google Cloud-styled archi
 2.  Proactively copy the generated image from your App Data artifacts directory (`{app_data_dir}/artifacts/<image_name>.png`) into your specified destination folder in the workspace.
 3.  Output the final Markdown absolute local URI link so the user can paste it directly into their documents:
     ```markdown
-    ![GCP Architecture Diagram](<destination_folder>/<image_name>.png)
+    ![GCP Architecture Diagram](file:///{workspace_dir}/<destination_folder>/<image_name>.png)
     ```
