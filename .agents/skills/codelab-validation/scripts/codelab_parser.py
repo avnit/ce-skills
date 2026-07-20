@@ -11,6 +11,14 @@ import re
 _EXECUTABLE_FENCE_LANGS = {"", "bash", "sh", "shell", "console"}
 _FENCE_LINE_RE = re.compile(r"^[ \t]*```[ \t]*([^\s`]*)")
 
+_CONTROL_FLOW_KEYWORDS = {
+    "if", "then", "elif", "else", "fi",
+    "for", "while", "until", "do", "done",
+    "case", "esac", "{", "}", "(", ")"
+}
+
+_STATE_MUTATING_CMDS = {"export", "cd", "source", "alias", "unset"}
+
 
 def _filter_hermetic_commands(commands: list[str]) -> list[str]:
     clean = []
@@ -74,3 +82,108 @@ def normalize_command(cmd: str) -> str:
 
 def get_cmd_hash(cmd: str) -> str:
     return hashlib.sha256(normalize_command(cmd).encode("utf-8")).hexdigest()
+
+
+def classify_block(block: str) -> tuple[str, list[str]]:
+    """Classifies a shell code block into an execution tier and returns its logical executable units.
+
+    Tiers:
+      - "flat": simple sequential logical lines. Units are individual logical lines.
+      - "compound_pure": complex/compound structure without state-mutating commands. Unit is [whole block].
+      - "compound_stateful": complex/compound structure with state-mutating commands. Unit is [whole block].
+    """
+    raw_block = block.strip()
+    if not raw_block:
+        return "flat", []
+
+    # 1. Join backslash line continuations into logical lines
+    lines = block.splitlines()
+    logical_lines = []
+    current = []
+
+    for raw_line in lines:
+        line = raw_line.rstrip()
+        if line.endswith("\\"):
+            content = line[:-1].strip() if current else line[:-1].rstrip()
+            if content:
+                current.append(content)
+        else:
+            content = line.strip() if current else line
+            if content:
+                current.append(content)
+            logical_lines.append(" ".join(current).strip())
+            current = []
+
+    if current:
+        logical_lines.append(" ".join(current).strip())
+
+    # Filter out blank lines and comment-only lines
+    non_comment_lines = []
+    for ll in logical_lines:
+        if ll and not ll.startswith("#"):
+            non_comment_lines.append(ll)
+
+    if not non_comment_lines:
+        return "flat", []
+
+    is_compound = False
+
+    # 2. Check for Heredocs (<< or <<-)
+    if re.search(r"<<-?\s*", block):
+        is_compound = True
+
+    # 3. Check for control-flow keywords at line start or anywhere in block
+    if not is_compound:
+        for line in non_comment_lines:
+            tokens = line.split()
+            if tokens and tokens[0] in _CONTROL_FLOW_KEYWORDS:
+                is_compound = True
+                break
+            if any(t in {"then", "elif", "else", "fi", "do", "done", "esac"} for t in tokens):
+                is_compound = True
+                break
+
+    # 4. Check for trailing & (and not &&)
+    if not is_compound:
+        for line in non_comment_lines:
+            if re.search(r"(?<!&)&\s*$", line):
+                is_compound = True
+                break
+
+    # 5. Check for unbalanced quotes or parens
+    if not is_compound:
+        sq_count = block.count("'")
+        dq_count = len(re.findall(r'(?<!\\)"', block))
+        paren_open = block.count("(")
+        paren_close = block.count(")")
+
+        if sq_count % 2 != 0 or dq_count % 2 != 0 or paren_open != paren_close:
+            is_compound = True
+
+    if not is_compound:
+        for line in non_comment_lines:
+            sq = line.count("'")
+            dq = len(re.findall(r'(?<!\\)"', line))
+            if sq % 2 != 0 or dq % 2 != 0:
+                is_compound = True
+                break
+
+    if is_compound:
+        # Check if compound block contains state-mutating commands (export, cd, source, alias, unset)
+        has_state_mutation = False
+        for line in non_comment_lines:
+            sub_cmds = re.split(r";|&&|\|\||\|", line)
+            for sub in sub_cmds:
+                words = sub.strip().split()
+                if words and words[0] in _STATE_MUTATING_CMDS:
+                    has_state_mutation = True
+                    break
+            if has_state_mutation:
+                break
+
+        if has_state_mutation:
+            return "compound_stateful", [raw_block]
+        else:
+            return "compound_pure", [raw_block]
+
+    return "flat", non_comment_lines

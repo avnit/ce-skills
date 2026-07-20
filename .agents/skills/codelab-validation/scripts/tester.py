@@ -27,6 +27,7 @@ from codelab_parser import (  # noqa: E402
     _FENCE_LINE_RE as _FENCE_LINE_RE,
     _extract_command_blocks as _extract_command_blocks,
     _filter_hermetic_commands as _filter_hermetic_commands,
+    classify_block as classify_block,
     get_cmd_hash as get_cmd_hash,
     normalize_command as normalize_command,
 )
