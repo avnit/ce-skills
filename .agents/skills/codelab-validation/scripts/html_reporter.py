@@ -42,6 +42,7 @@ BADGE_MAP = {
     "BLOCKED": '<span style="background: #ffebee; color: #c53929; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">BLOCKED</span>',
     "IN PROGRESS": '<span style="background: #e8f0fe; color: #1a73e8; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">IN PROGRESS</span>',
     "COMPLETED": '<span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">COMPLETED</span>',
+    "DEFERRED": '<span style="background: #e8eaed; color: #3c4043; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">DEFERRED</span>',
     "SKIPPED/NO-OP": '<span style="background: #f1f3f4; color: #5f6368; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">SKIPPED/NO-OP</span>'
 }
 

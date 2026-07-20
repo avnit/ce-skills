@@ -76,3 +76,7 @@ Zip](https://www.google.com)</button>`
 
 - **Conversational**: Use active voice and conversational tone ("we" and "you").
 - **Verification Steps**: For ALL labs, verification steps MUST show the expected outcome. After an important action, show the reader what they should see. Use phrases like "You should see output similar to:".
+
+## Cleanup Phase Marker
+
+Steps that tear down or delete provisioned GCP resources should include an explicit HTML phase marker `<!-- phase: cleanup -->` in the step heading or body (e.g., `## Step N: Teardown Infrastructure <!-- phase: cleanup -->`). During validation in `--phase test` mode, steps marked for cleanup (or matching title regex `(?i)(clean\s*up|cleanup)`) are deferred to prevent early resource teardown.

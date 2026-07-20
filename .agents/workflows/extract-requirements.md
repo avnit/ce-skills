@@ -69,8 +69,8 @@ You are an autonomous **Solutions Engineering Orchestrator** operating in a 10/1
   - **MANDATORY CLEAN PROVISIONING**: Execute `python3 .agents/skills/gcp-provisioning/scripts/create_project.py <customer_name>-poc` to spin up a fresh sandbox project and run `disable_org_policies.sh`. NEVER reuse developer project IDs.
   - **ARCHITECTURAL-VALIDATION PARITY**: Steps in `test_plan.md` MUST strictly match `design_blueprint.md` topology. Include commands to verify or provision specific resources.
   - **Pre-Execution Interaction**: Parse `test_plan.md` and ask user to confirm missing runtime environment variables before execution.
-  - **Self-Healing Execution Loop**: Execute validation engine: `python3 .agents/skills/codelab-validation/scripts/tester.py meeting/<customer_name>/test_plan.md --artifact-dir <appDataDir>/brain/<conversation-id> --skip-cleanup`. Autonomously patch or poll up to 3 times on transient errors. Whenever you autonomously solve a validation or script error, strictly update the bug JSON status to `FIXED`, log what failed, what worked, and how it resolved the bug into `remediation`, and run `python3 .agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py --scan-dir meeting/<customer_name>/bugs` before proceeding.
-  - **CRITICAL SAFETY RULE**: Append `--skip-cleanup` to `tester.py` to prevent teardown.
+  - **Self-Healing Execution Loop**: Execute validation engine: `python3 .agents/skills/codelab-validation/scripts/tester.py meeting/<customer_name>/test_plan.md --artifact-dir <appDataDir>/brain/<conversation-id> --phase test`. Autonomously patch or poll up to 3 times on transient errors. Whenever you autonomously solve a validation or script error, strictly update the bug JSON status to `FIXED`, log what failed, what worked, and how it resolved the bug into `remediation`, and run `python3 .agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py --scan-dir meeting/<customer_name>/bugs` before proceeding.
+  - **CRITICAL SAFETY RULE**: Pass `--phase test` (or deprecated `--skip-cleanup` alias) to `tester.py` to prevent teardown.
 
 ### 7. Phase 7: Gate C - Downstream Strategic Deliverables
 
@@ -87,7 +87,7 @@ You are an autonomous **Solutions Engineering Orchestrator** operating in a 10/1
 - Pause and call **`ask_question`** to ask the user whether to persistent-keep or delete/teardown the provisioned sandbox environment.
 - If delete:
   - **Mandatory Pre-Deletion Sweeping**: To prevent orphaned resource hangs or API blocks during project deletion, you MUST force-empty all active Google Cloud Storage buckets (`gcloud storage rm --recursive gs://<bucket_name>`) and sever active VPC peering connections or liens BEFORE deleting the project.
-  - Run the Cleanup section of the codelab without the `--skip-cleanup` restriction, or programmatically call `codelab-cleanup` to delete the GCP project and all associated resources (VPC, GKE, subnets, and storage buckets).
+  - Run the Cleanup section of the test plan via explicit `--phase cleanup` (`python3 .agents/skills/codelab-validation/scripts/tester.py meeting/<customer_name>/test_plan.md --phase cleanup`), or programmatically call `codelab-cleanup` to delete the GCP project and all associated resources (VPC, GKE, subnets, and storage buckets).
 - Update `task.md` steps to `DONE` and output a completion report.
 
 ---
