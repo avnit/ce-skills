@@ -70,6 +70,26 @@ class TestCodelabParser(unittest.TestCase):
             ["gcloud compute instances create my-vm --zone=us-central1-a --machine-type=e2-micro"],
         )
 
+    def test_operator_continuation_and_operator(self):
+        """Line ending in && continues onto next line as a single flat unit."""
+        block = (
+            "gsutil cp x y &&\n"
+            "echo done"
+        )
+        tier, units = codelab_parser.classify_block(block)
+        self.assertEqual(tier, "flat")
+        self.assertEqual(units, ["gsutil cp x y && echo done"])
+
+    def test_operator_continuation_pipe(self):
+        """Line ending in | continues onto next line as a single flat unit."""
+        block = (
+            "cat file |\n"
+            "grep pattern"
+        )
+        tier, units = codelab_parser.classify_block(block)
+        self.assertEqual(tier, "flat")
+        self.assertEqual(units, ["cat file | grep pattern"])
+
     def test_flat_three_line_block(self):
         """Flat 3-line block splits into 3 logical units."""
         block = "echo 1\necho 2\necho 3"
@@ -113,6 +133,28 @@ class TestCodelabParser(unittest.TestCase):
         self.assertEqual(tier, "compound_stateful")
         self.assertEqual(units, [block])
 
+    def test_control_flow_with_dot_source_compound_stateful(self):
+        """Control-flow block with dot-source (. ./env.sh) is compound_stateful."""
+        block = (
+            "if [ -f env.sh ]; then\n"
+            "    . ./env.sh\n"
+            "fi"
+        )
+        tier, units = codelab_parser.classify_block(block)
+        self.assertEqual(tier, "compound_stateful")
+        self.assertEqual(units, [block])
+
+    def test_control_flow_with_bare_assignment_compound_stateful(self):
+        """Control-flow block with bare variable assignment (FOO=bar) is compound_stateful."""
+        block = (
+            "if [ -f env.sh ]; then\n"
+            "    FOO=bar\n"
+            "fi"
+        )
+        tier, units = codelab_parser.classify_block(block)
+        self.assertEqual(tier, "compound_stateful")
+        self.assertEqual(units, [block])
+
     def test_flat_block_with_export_remains_flat(self):
         """Flat block with export line is still flat (export is a valid flat unit)."""
         block = (
@@ -124,11 +166,18 @@ class TestCodelabParser(unittest.TestCase):
         self.assertEqual(units, ["export FOO=bar", "echo $FOO"])
 
     def test_and_operator_stays_single_unit(self):
-        """Logical operators (&&, ||, ;) stay as ONE unit in flat tier."""
+        """Logical operators (&&, ||) on same line stay as ONE unit in flat tier."""
         block = "echo 1 && echo 2"
         tier, units = codelab_parser.classify_block(block)
         self.assertEqual(tier, "flat")
         self.assertEqual(units, ["echo 1 && echo 2"])
+
+    def test_semicolon_separated_flat_unit(self):
+        """Semicolon-separated statements (a; b) stay as ONE unit in flat tier."""
+        block = "echo 1; echo 2"
+        tier, units = codelab_parser.classify_block(block)
+        self.assertEqual(tier, "flat")
+        self.assertEqual(units, ["echo 1; echo 2"])
 
     def test_trailing_ampersand_compound_pure(self):
         """Trailing & classifies block as compound_pure."""

@@ -14,10 +14,15 @@ _FENCE_LINE_RE = re.compile(r"^[ \t]*```[ \t]*([^\s`]*)")
 _CONTROL_FLOW_KEYWORDS = {
     "if", "then", "elif", "else", "fi",
     "for", "while", "until", "do", "done",
-    "case", "esac", "{", "}", "(", ")"
+    "case", "esac", "function", "{", "}", "(", ")"
 }
 
-_STATE_MUTATING_CMDS = {"export", "cd", "source", "alias", "unset"}
+_STATE_MUTATING_CMDS = {
+    "export", "cd", "source", ".", "alias", "unset",
+    "pushd", "popd", "declare", "readonly", "eval"
+}
+
+_BARE_ASSIGN_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 
 
 def _filter_hermetic_commands(commands: list[str]) -> list[str]:
@@ -91,12 +96,16 @@ def classify_block(block: str) -> tuple[str, list[str]]:
       - "flat": simple sequential logical lines. Units are individual logical lines.
       - "compound_pure": complex/compound structure without state-mutating commands. Unit is [whole block].
       - "compound_stateful": complex/compound structure with state-mutating commands. Unit is [whole block].
+
+    Note: A backslash '\\' followed by trailing whitespace is stripped and treated as an intended
+    line continuation matching author intent. Operator continuations ('&&', '||', '|') at line end
+    are also joined into logical lines without requiring backslashes.
     """
     raw_block = block.strip()
     if not raw_block:
         return "flat", []
 
-    # 1. Join backslash line continuations into logical lines
+    # 1. Join backslash line continuations and operator continuations (&&, ||, |) into logical lines
     lines = block.splitlines()
     logical_lines = []
     current = []
@@ -105,6 +114,10 @@ def classify_block(block: str) -> tuple[str, list[str]]:
         line = raw_line.rstrip()
         if line.endswith("\\"):
             content = line[:-1].strip() if current else line[:-1].rstrip()
+            if content:
+                current.append(content)
+        elif line.endswith("&&") or line.endswith("||") or line.endswith("|"):
+            content = line.strip() if current else line.rstrip()
             if content:
                 current.append(content)
         else:
@@ -132,15 +145,16 @@ def classify_block(block: str) -> tuple[str, list[str]]:
     if re.search(r"<<-?\s*", block):
         is_compound = True
 
-    # 3. Check for control-flow keywords at line start or anywhere in block
+    # 3. Check for control-flow keywords at statement start
     if not is_compound:
         for line in non_comment_lines:
-            tokens = line.split()
-            if tokens and tokens[0] in _CONTROL_FLOW_KEYWORDS:
-                is_compound = True
-                break
-            if any(t in {"then", "elif", "else", "fi", "do", "done", "esac"} for t in tokens):
-                is_compound = True
+            sub_cmds = re.split(r";|&&|\|\||\|", line)
+            for sub in sub_cmds:
+                words = sub.strip().split()
+                if words and words[0] in _CONTROL_FLOW_KEYWORDS:
+                    is_compound = True
+                    break
+            if is_compound:
                 break
 
     # 4. Check for trailing & (and not &&)
@@ -169,15 +183,17 @@ def classify_block(block: str) -> tuple[str, list[str]]:
                 break
 
     if is_compound:
-        # Check if compound block contains state-mutating commands (export, cd, source, alias, unset)
+        # Check if compound block contains state-mutating commands or variable assignments
         has_state_mutation = False
         for line in non_comment_lines:
             sub_cmds = re.split(r";|&&|\|\||\|", line)
             for sub in sub_cmds:
                 words = sub.strip().split()
-                if words and words[0] in _STATE_MUTATING_CMDS:
-                    has_state_mutation = True
-                    break
+                if words:
+                    cmd_name = words[0]
+                    if cmd_name in _STATE_MUTATING_CMDS or _BARE_ASSIGN_RE.match(cmd_name):
+                        has_state_mutation = True
+                        break
             if has_state_mutation:
                 break
 
