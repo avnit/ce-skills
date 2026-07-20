@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 OPEN_BUG_DIR = os.path.join(REPO_ROOT, ".agents", "skills", "open-bug", "scripts")
@@ -22,40 +22,56 @@ class TestScriptEnvBinaryPaths(unittest.TestCase):
         """Assert open_bug module imports cleanly without NameError or missing dependencies."""
         self.assertTrue(hasattr(open_bug, "main"))
 
-    def test_open_bug_issues_cli_env_override(self):
-        """Assert ISSUES environment variable overrides issues_cli path in open_bug."""
-        with patch.dict(os.environ, {"ISSUES": "/custom/path/issues"}, clear=False):
-            resolved = os.environ.get("ISSUES", "/google/bin/releases/issues-cli/issues")
-            self.assertEqual(resolved, "/custom/path/issues")
+    @patch("subprocess.run")
+    def test_open_bug_issues_cli_env_override(self, mock_run):
+        """Assert open_bug.main() uses ISSUES env var override or defaults to /google/bin/releases/issues-cli/issues."""
+        mock_run.return_value = MagicMock(returncode=0, stdout="Bug 123 created", stderr="")
+        test_args = ["open_bug.py", "--title", "Test Bug", "--description", "Test details"]
 
-        with patch.dict(os.environ, {}, clear=True):
-            resolved = os.environ.get("ISSUES", "/google/bin/releases/issues-cli/issues")
-            self.assertEqual(resolved, "/google/bin/releases/issues-cli/issues")
+        with patch.object(sys, "argv", test_args):
+            with patch.dict(os.environ, {"ISSUES": "/custom/path/issues"}, clear=False):
+                open_bug.main()
+                mock_run.assert_called_once()
+                cmd = mock_run.call_args[0][0]
+                self.assertEqual(cmd[0], "/custom/path/issues")
+
+        mock_run.reset_mock()
+        with patch.object(sys, "argv", test_args):
+            with patch.dict(os.environ, {}, clear=True):
+                open_bug.main()
+                mock_run.assert_called_once()
+                cmd = mock_run.call_args[0][0]
+                self.assertEqual(cmd[0], "/google/bin/releases/issues-cli/issues")
 
     def test_send_email_imports_cleanly(self):
         """Assert send_email module imports cleanly without NameError."""
         self.assertTrue(hasattr(send_email, "send_email_api"))
 
-    def test_send_email_sendgmr_env_override(self):
-        """Assert SENDGMR environment variable overrides sendgmr_bin path in send_email."""
+    @patch("send_email.run_command")
+    @patch("os.path.exists")
+    def test_send_email_sendgmr_env_override(self, mock_exists, mock_run_cmd):
+        """Assert send_email_api() uses SENDGMR env var override or defaults to /google/bin/releases/gws-sre/files/sendgmr/sendgmr."""
+        mock_exists.return_value = True
+        mock_run_cmd.return_value = (True, "OK", "")
+
         with patch.dict(os.environ, {"SENDGMR": "/custom/path/sendgmr"}, clear=False):
-            resolved = os.environ.get("SENDGMR", "/google/bin/releases/gws-sre/files/sendgmr/sendgmr")
-            self.assertEqual(resolved, "/custom/path/sendgmr")
+            res = send_email.send_email_api("user@google.com", "Test Subject", "Test Body")
+            self.assertTrue(res)
+            mock_run_cmd.assert_called_once()
+            cmd = mock_run_cmd.call_args[0][0]
+            self.assertEqual(cmd[0], "/custom/path/sendgmr")
 
+        mock_run_cmd.reset_mock()
         with patch.dict(os.environ, {}, clear=True):
-            resolved = os.environ.get("SENDGMR", "/google/bin/releases/gws-sre/files/sendgmr/sendgmr")
-            self.assertEqual(resolved, "/google/bin/releases/gws-sre/files/sendgmr/sendgmr")
+            res = send_email.send_email_api("user@google.com", "Test Subject", "Test Body")
+            self.assertTrue(res)
+            mock_run_cmd.assert_called_once()
+            cmd = mock_run_cmd.call_args[0][0]
+            self.assertEqual(cmd[0], "/google/bin/releases/gws-sre/files/sendgmr/sendgmr")
 
-    def test_csa_cli_env_override(self):
-        """Assert CSA_CLI environment variable overrides csa_bin path in subprocess_execution."""
+    def test_csa_cli_imports_cleanly(self):
+        """Assert subprocess_execution module imports cleanly and exposes query_workspace_context."""
         self.assertTrue(hasattr(subprocess_execution, "query_workspace_context"))
-        with patch.dict(os.environ, {"CSA_CLI": "/custom/path/csa_cli.par"}, clear=False):
-            resolved = os.environ.get("CSA_CLI", "/google/bin/releases/csa-cli/csa_cli.par")
-            self.assertEqual(resolved, "/custom/path/csa_cli.par")
-
-        with patch.dict(os.environ, {}, clear=True):
-            resolved = os.environ.get("CSA_CLI", "/google/bin/releases/csa-cli/csa_cli.par")
-            self.assertEqual(resolved, "/google/bin/releases/csa-cli/csa_cli.par")
 
 
 if __name__ == "__main__":

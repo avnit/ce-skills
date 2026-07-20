@@ -134,6 +134,22 @@ def configure_docs_mcp(mcp_servers: dict, knowledge_project: str = None) -> None
         print(f"✅ Injected X-goog-user-project header ({knowledge_project}) into MCP config.")
 
 
+def configure_workspace_mcp(mcp_servers: dict) -> None:
+    """Configures the 'workspace' MCP server entry if missing."""
+    if "workspace" not in mcp_servers:
+        ws_bin = os.environ.get(
+            "WORKSPACE_MCP_SERVER",
+            "/google/bin/releases/codemind-mcp-servers/workspace_server.par",
+        )
+        mcp_servers["workspace"] = {
+            "$typeName": "exa.cascade_plugins_pb.CascadePluginCommandTemplate",
+            "command": ws_bin,
+            "args": [],
+            "env": {},
+        }
+        print("✅ Injected 'workspace' MCP server configuration.")
+
+
 def main():
     username = os.environ.get("USER") or os.environ.get("LOGNAME") or getpass.getuser()
     
@@ -261,14 +277,7 @@ The user environment is operating under the following primary Customer Engineeri
     mcp_servers = mcp_data.setdefault("mcpServers", {})
     
     # Inject workspace server if missing
-    if "workspace" not in mcp_servers:
-        mcp_servers["workspace"] = {
-            "$typeName": "exa.cascade_plugins_pb.CascadePluginCommandTemplate",
-            "command": os.environ.get("WORKSPACE_MCP_SERVER", "/google/bin/releases/codemind-mcp-servers/workspace_server.par"),
-            "args": [],
-            "env": {}
-        }
-        print("✅ Injected 'workspace' MCP server configuration.")
+    configure_workspace_mcp(mcp_servers)
 
     # Configure google-developer-documentation-mcp server
     configure_docs_mcp(mcp_servers, args.knowledge_project)
