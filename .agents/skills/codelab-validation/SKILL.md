@@ -91,7 +91,7 @@ When `tester.py` returns `FAILED`:
 If remediation fails after 3 attempts:
 
 1. `tester.py` automatically files a bug JSON in `<lab_dir>/bugs/bug_*.json` and central `~/.gemini/jetski/bugs/`.
-2. File a tracking issue using `${ISSUES:-/google/bin/releases/issues-cli/issues}` CLI (e.g. `${ISSUES:-/google/bin/releases/issues-cli/issues} create --title "[Codelab Failure] <Title>" --description "<Details>" --component_id 2022529`). _Note_: If `${ISSUES:-/google/bin/releases/issues-cli/issues}` environment alias is unavailable, reference the automatically generated `<lab_dir>/bugs/bug_*.json` file directly.
+2. File a tracking issue using the issues CLI (e.g. `${ISSUES:-/google/bin/releases/issues-cli/issues}` create --title "[Codelab Failure] <Title>" --description "<Details>" --component_id 2022529). _Note_: If the issues CLI binary is unavailable (non-Google environment), reference the automatically generated `<lab_dir>/bugs/bug_*.json` file directly.
 3. Report the failure and bug details to the user.
 
 ## Status Tracking & Reporting

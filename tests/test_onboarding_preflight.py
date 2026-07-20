@@ -160,6 +160,55 @@ class TestOnboardingPreflight(unittest.TestCase):
             "my-custom-proj",
         )
 
+    @patch("os.path.exists")
+    def test_docs_mcp_env_override(self, mock_exists):
+        mock_exists.return_value = True
+        mcp_servers = {}
+        with patch.dict(os.environ, {"DOCS_MCP_SERVER": "/custom/path/docs_mcp.par"}, clear=False):
+            onboard.configure_docs_mcp(mcp_servers)
+            self.assertEqual(
+                mcp_servers["google-developer-documentation-mcp"]["command"],
+                "/custom/path/docs_mcp.par",
+            )
+
+        mcp_servers = {}
+        with patch.dict(os.environ, {}, clear=True):
+            onboard.configure_docs_mcp(mcp_servers)
+            self.assertEqual(
+                mcp_servers["google-developer-documentation-mcp"]["command"],
+                "/google/bin/releases/docs-mcp-local/docs_mcp_server.par",
+            )
+
+    @patch("onboard.configure_docs_mcp")
+    @patch("onboard.install_cluster_tooling")
+    @patch("onboard.check_gcloud_preflight")
+    def test_workspace_mcp_env_override(self, mock_preflight, mock_tooling, mock_docs_mcp):
+        mock_tooling.return_value = True
+        mcp_data = {}
+
+        with patch.dict(os.environ, {"WORKSPACE_MCP_SERVER": "/custom/path/workspace_server.par"}, clear=False):
+            mcp_servers = mcp_data.setdefault("mcpServers", {})
+            if "workspace" not in mcp_servers:
+                mcp_servers["workspace"] = {
+                    "$typeName": "exa.cascade_plugins_pb.CascadePluginCommandTemplate",
+                    "command": os.environ.get("WORKSPACE_MCP_SERVER", "/google/bin/releases/codemind-mcp-servers/workspace_server.par"),
+                    "args": [],
+                    "env": {},
+                }
+            self.assertEqual(mcp_servers["workspace"]["command"], "/custom/path/workspace_server.par")
+
+        with patch.dict(os.environ, {}, clear=True):
+            mcp_data = {}
+            mcp_servers = mcp_data.setdefault("mcpServers", {})
+            if "workspace" not in mcp_servers:
+                mcp_servers["workspace"] = {
+                    "$typeName": "exa.cascade_plugins_pb.CascadePluginCommandTemplate",
+                    "command": os.environ.get("WORKSPACE_MCP_SERVER", "/google/bin/releases/codemind-mcp-servers/workspace_server.par"),
+                    "args": [],
+                    "env": {},
+                }
+            self.assertEqual(mcp_servers["workspace"]["command"], "/google/bin/releases/codemind-mcp-servers/workspace_server.par")
+
 
 if __name__ == "__main__":
     unittest.main()
