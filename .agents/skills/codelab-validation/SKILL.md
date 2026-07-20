@@ -37,7 +37,7 @@ python3 .agents/skills/codelab-validation/scripts/tester.py \
 
 1. **`flat`**: Independent commands executed sequentially. Each unit is individually hash-checked, executed with per-unit timeout, cached, and environment-persisted upon success.
 2. **`compound_pure`**: Shell construct blocks (loops, `if` statements, functions). Wrapped in `( set -eo pipefail ... )` and executed atomically.
-3. **`compound_stateful`**: Multiline blocks with state changes (e.g. `cd`, `export`). Executed as a raw block in the main subshell. _Warning_: Intermediate command failures within compound stateful blocks cannot be individually isolated.
+3. **`compound_stateful`**: Compound blocks (control flow/heredocs) that also mutate shell state (e.g. `cd`, `export`). Executed as a raw block in the main subshell. _Warning_: Intermediate command failures within compound stateful blocks cannot be individually isolated.
 
 ## State Model & Resumption
 
@@ -79,7 +79,7 @@ When `tester.py` returns `FAILED`:
 #### 1. Category A: Command Syntax & API Errors
 
 - **Indicators**: `gcloud` unknown flag, invalid syntax, missing argument, or YAML parse error.
-- **Remediation**: Do NOT retry blindly. Search developer documentation (`google-developer-knowledge` or `search_web`), edit the command block in `.lab.md` or apply a per-lab transform via `overlay.json` (see [overlay_schema.md](references/overlay_schema.md)), and re-run `tester.py`.
+- **Remediation**: Do NOT retry blindly. Search developer documentation (the developer-documentation MCP server — canonical name tracked in #128 — or `search_web`), edit the command block in `.lab.md` or apply a per-lab transform via `overlay.json` (see [overlay_schema.md](references/overlay_schema.md)), and re-run `tester.py`.
 
 #### 2. Category B: Transient Infrastructure Delays
 
@@ -90,12 +90,12 @@ When `tester.py` returns `FAILED`:
 
 If remediation fails after 3 attempts:
 
-1. `tester.py` automatically files a bug JSON in `.tester_state/` / local inbox.
-2. File a tracking issue using `$ISSUES` CLI (e.g. `$ISSUES create --title "[Codelab Failure] <Title>" --description "<Details>" --component_id 2150801`). _Note_: If `$ISSUES` environment alias is unavailable, log the bug report locally into `.tester_state/bug_report.json`.
+1. `tester.py` automatically files a bug JSON in `<lab_dir>/bugs/bug_*.json` and central `~/.gemini/jetski/bugs/`.
+2. File a tracking issue using `$ISSUES` CLI (e.g. `$ISSUES create --title "[Codelab Failure] <Title>" --description "<Details>" --component_id 2022529`). _Note_: If `$ISSUES` environment alias is unavailable, reference the automatically generated `<lab_dir>/bugs/bug_*.json` file directly.
 3. Report the failure and bug details to the user.
 
 ## Status Tracking & Reporting
 
 - **Status Board**: `tester.py` generates `test_status.md` using `html_reporter.py`.
-- **Task Tracking**: Master `task.md` tracking follows [.agents/rules/tasks.md](file:///.agents/rules/tasks.md).
+- **Task Tracking**: Master `task.md` tracking follows [.agents/rules/tasks.md](.agents/rules/tasks.md).
 - **Validation Report**: Summary reports are compiled into `report/validation-report.md`.
