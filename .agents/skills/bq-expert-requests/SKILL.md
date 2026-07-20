@@ -5,6 +5,8 @@ description: |
   Provides schema mappings for expert_requests, joins to workloads and opportunities,
   tracking in-flight vs completed ER metrics, calculating attached ARR/ACV, measuring stage progression,
   and auditing CE rep productivity.
+  Use when: querying raw BigQuery expert_requests tables directly, joining with workloads or opportunities, calculating attached ARR/ACV metrics, or building custom SQL queries for CE productivity.
+  Don't use for: running structured CLI spend/segmentation reports on Service CloudBI opportunities (use expert-request-management instead).
 ---
 
 # Customer Engineering (CE) Expert Requests (ER) Query Guide
