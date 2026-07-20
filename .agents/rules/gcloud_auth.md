@@ -14,7 +14,7 @@ Before executing any workflow run, deploying workloads, provisioning resources, 
    - Run `python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py` to retrieve the active and credentialed accounts.
 
 2. **Conditional ask_question Modal**:
-   - If the active `gcloud` account matches the target environment (Sandbox for GCP work; Corporate for corp-service work), proceed automatically without prompting.
+   - If the active `gcloud` account matches the target environment (Sandbox for GCP work; Corporate for corp-service work), log the active identity (`Active gcloud account: <ACCOUNT>`) and proceed automatically without prompting.
    - Present the **`ask_question`** tool modal ONLY when an account switch or user decision is required.
    - When presenting the modal, populate choices dynamically (Keep active, Switch to existing accounts, Authenticate new account, Configure ADC).
    - If the user selects a different existing account, execute `gcloud config set account <ACCOUNT>` on their behalf before running the workflow.
