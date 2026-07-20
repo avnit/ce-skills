@@ -488,40 +488,93 @@ class StatefulCodelabTester:
                 step_failed = False
                 step_outputs = []
                 step_errors = []
-                
-                for cmd in step["commands"]:
-                    # Sanitize variables and deduplicate flags
-                    evaluated_cmd = sanitize_command(cmd, project_id=self.project_id, custom_vars=custom_vars)
-                    
-                    # Compute hash on evaluated command so runtime variable updates properly invalidate cache
-                    cmd_hash = get_cmd_hash(evaluated_cmd)
-                    if cmd_hash in executed_hashes:
-                        logging.info("[Tester] Command already in cache. Skipping execution.")
-                        continue
-                    
-                    # Run command in persistent subshell
-                    status, output = runner.run_command(evaluated_cmd, timeout=self.timeout)
-                    
-                    if status != 0:
-                        step_failed = True
-                        step["status"] = "FAILED"
-                        step["error"] = f"Command failed with status {status}.\nOutput:\n{output}"
-                        step_errors.append(step["error"])
-                        break
-                    
-                    step_outputs.append(output)
-                    executed_hashes.append(cmd_hash)
-                    with open(state_file, "a") as f:
-                        f.write(cmd_hash + "\n")
-                        
-                    # Export environment variables to cache
-                    runner.run_command(f"export -p > {env_file}")
+                failed_command_str = ""
+
+                for block in step["commands"]:
+                    sanitized_block = sanitize_command(block, project_id=self.project_id, custom_vars=custom_vars)
+                    tier, units = classify_block(sanitized_block)
+
+                    if tier == "flat":
+                        for unit in units:
+                            unit_hash = get_cmd_hash(unit)
+                            if unit_hash in executed_hashes:
+                                logging.info("[Tester] Command already in cache. Skipping execution.")
+                                continue
+
+                            status, output = runner.run_command(unit, timeout=self.timeout)
+                            if status != 0:
+                                step_failed = True
+                                step["status"] = "FAILED"
+                                step["error"] = f"Command failed with status {status}.\nOutput:\n{output}"
+                                step_errors.append(step["error"])
+                                failed_command_str = unit
+                                break
+
+                            step_outputs.append(output)
+                            executed_hashes.append(unit_hash)
+                            with open(state_file, "a") as f:
+                                f.write(unit_hash + "\n")
+                            runner.run_command(f"export -p > {env_file}")
+
+                        if step_failed:
+                            break
+
+                    elif tier == "compound_pure":
+                        block_hash = get_cmd_hash(sanitized_block)
+                        if block_hash in executed_hashes:
+                            logging.info("[Tester] Command already in cache. Skipping execution.")
+                            continue
+
+                        wrapped_cmd = f"( set -eo pipefail\n{sanitized_block}\n)"
+                        status, output = runner.run_command(wrapped_cmd, timeout=self.timeout)
+                        if status != 0:
+                            step_failed = True
+                            step["status"] = "FAILED"
+                            step["error"] = f"Command failed with status {status}.\nOutput:\n{output}"
+                            step_errors.append(step["error"])
+                            failed_command_str = sanitized_block
+                            break
+
+                        step_outputs.append(output)
+                        executed_hashes.append(block_hash)
+                        with open(state_file, "a") as f:
+                            f.write(block_hash + "\n")
+                        runner.run_command(f"export -p > {env_file}")
+
+                    elif tier == "compound_stateful":
+                        block_hash = get_cmd_hash(sanitized_block)
+                        if block_hash in executed_hashes:
+                            logging.info("[Tester] Command already in cache. Skipping execution.")
+                            continue
+
+                        warning_msg = (
+                            "[WARNING] Intermediate command failures inside this compound stateful block "
+                            "cannot be verified. Consider restructuring into flat commands or using phase markers."
+                        )
+                        logging.warning("[Tester] %s", warning_msg)
+
+                        status, output = runner.run_command(sanitized_block, timeout=self.timeout)
+                        full_output = f"{warning_msg}\n{output}" if output else warning_msg
+
+                        if status != 0:
+                            step_failed = True
+                            step["status"] = "FAILED"
+                            step["error"] = f"Command failed with status {status}.\nOutput:\n{full_output}"
+                            step_errors.append(step["error"])
+                            failed_command_str = sanitized_block
+                            break
+
+                        step_outputs.append(full_output)
+                        executed_hashes.append(block_hash)
+                        with open(state_file, "a") as f:
+                            f.write(block_hash + "\n")
+                        runner.run_command(f"export -p > {env_file}")
 
                 if step_failed:
                     self.save_state(idx, "FAILED")
                     self.write_visual_boards("FAILED")
                     logging.error("[Tester] Step %d failed.", step["num"])
-                    self.file_bug_and_notify_mailbox(step["num"], evaluated_cmd, step["error"])
+                    self.file_bug_and_notify_mailbox(step["num"], failed_command_str, step["error"])
                     return False
                 
                 # Step successfully completed

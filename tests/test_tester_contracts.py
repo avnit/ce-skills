@@ -366,11 +366,9 @@ class TestTesterContracts(unittest.TestCase):
         t = tester.StatefulCodelabTester(str(md_file))
         success = t.run()
 
-        # PIN CURRENT WRONG BEHAVIOR:
-        # Currently returns True and marks DONE because 'echo line3-ok' exited 0.
-        # PR #121 will flip this assertion to self.assertFalse(success) and status FAILED.
-        self.assertTrue(success)
-        self.assertEqual(t.steps[0]["status"], "DONE")
+        # PR #121 fix verification: mid-block failure now properly caught as FAILED
+        self.assertFalse(success)
+        self.assertEqual(t.steps[0]["status"], "FAILED")
 
 
 if __name__ == "__main__":
