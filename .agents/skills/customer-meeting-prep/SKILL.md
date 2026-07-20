@@ -84,10 +84,10 @@ Phase 4: One-Pager Artifact Synthesis & Reference Directory
 
 ## Phase 1: Broad Workspace Context Retrieval (SECOND STEP)
 
-Execute `/google/bin/releases/csa-cli/csa_cli.par` with a **broad, unconstrained customer prompt** to bring back 100% of available Workspace context across Gmail, Drive, Calendar, and Chat:
+Execute `${CSA_CLI:-/google/bin/releases/csa-cli/csa_cli.par}` with a **broad, unconstrained customer prompt** to bring back 100% of available Workspace context across Gmail, Drive, Calendar, and Chat:
 
 ```bash
-/google/bin/releases/csa-cli/csa_cli.par \
+${CSA_CLI:-/google/bin/releases/csa-cli/csa_cli.par} \
   --user_prompt="Find all communications, email discussions, docs, calendar events, and chat messages regarding {Customer Name} in the last 14 days." \
   --allowed_corpora="GMAIL,DRIVE,CALENDAR,CHAT" \
   --latency_budget_seconds=60 \

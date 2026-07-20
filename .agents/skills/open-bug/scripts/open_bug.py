@@ -70,7 +70,7 @@ def main():
     print("==========================================================")
 
     # 2. Attempt direct CLI creation via internal issues tool
-    issues_cli = "/google/bin/releases/issues-cli/issues"
+    issues_cli = os.environ.get("ISSUES", "/google/bin/releases/issues-cli/issues")
     cli_cmd = [
         issues_cli,
         "create",

@@ -7,7 +7,7 @@ import sys
 
 def query_workspace_context(prompt, corpora="GMAIL,DRIVE,CALENDAR,CHAT", latency_budget=45):
   """Executes csa_cli.par via subprocess and returns the parsed semantic search output."""
-  csa_bin = "/google/bin/releases/csa-cli/csa_cli.par"
+  csa_bin = os.environ.get("CSA_CLI", "/google/bin/releases/csa-cli/csa_cli.par")
   
   # Check if binary is available
   if not os.path.exists(csa_bin):

@@ -107,7 +107,7 @@ def install_cluster_tooling() -> bool:
 
 def configure_docs_mcp(mcp_servers: dict, knowledge_project: str = None) -> None:
     """Configure or prune google-developer-documentation-mcp entry in mcp_servers dict."""
-    docs_par_path = "/google/bin/releases/docs-mcp-local/docs_mcp_server.par"
+    docs_par_path = os.environ.get("DOCS_MCP_SERVER", "/google/bin/releases/docs-mcp-local/docs_mcp_server.par")
     if os.path.exists(docs_par_path):
         gdev = mcp_servers.setdefault("google-developer-documentation-mcp", {})
         if not gdev.get("command") and not gdev.get("httpUrl") and not gdev.get("serverUrl"):
@@ -264,7 +264,7 @@ The user environment is operating under the following primary Customer Engineeri
     if "workspace" not in mcp_servers:
         mcp_servers["workspace"] = {
             "$typeName": "exa.cascade_plugins_pb.CascadePluginCommandTemplate",
-            "command": "/google/bin/releases/codemind-mcp-servers/workspace_server.par",
+            "command": os.environ.get("WORKSPACE_MCP_SERVER", "/google/bin/releases/codemind-mcp-servers/workspace_server.par"),
             "args": [],
             "env": {}
         }

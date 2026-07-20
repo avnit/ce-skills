@@ -5,7 +5,7 @@ description: Sends secure, styled emails natively from your Cloudtop session usi
 
 # Skill: Google Message Router (GMR) Native Emailer
 
-This skill is a **generic, reusable system emailer** designed to execute natively on a Google Cloudtop (gLinux) workstation. It interfaces directly with the official corporate **Google Message Router (GMR)** CLI (`/google/bin/releases/gws-sre/files/sendgmr/sendgmr`) using your active local **LOAS** (`gcert`) session.
+This skill is a **generic, reusable system emailer** designed to execute natively on a Google Cloudtop (gLinux) workstation. It interfaces directly with the official corporate **Google Message Router (GMR)** CLI (`${SENDGMR:-/google/bin/releases/gws-sre/files/sendgmr/sendgmr}`) using your active local **LOAS** (`gcert`) session.
 
 ### 🔒 Identity Independence & Zero-Conflict Auth
 
