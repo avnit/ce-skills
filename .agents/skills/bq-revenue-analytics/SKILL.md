@@ -22,17 +22,17 @@ Before writing any SELECT or JOIN clauses, refer to the [Schema & Taxonomy Refer
 - Understand the structure, descriptions, and join parameters of our primary tables.
 - Locate the correct geography, segment, and reseller channel filters.
 
-### 2. Implement Partition Pruning (Mandatory Cost Control)
+### 2. Implement Partition Pruning
 
-- You **must** include a filter on `partition_date` (mapped to `_PARTITIONDATE`) in the main `WHERE` clause.
-- **Trap:** Do not filter solely on `usage_date` or `date` as this results in expensive full-table scans.
+- Include a filter on `partition_date` (mapped to `_PARTITIONDATE`) in the main `WHERE` clause to limit scanned data volume and avoid costly full-table scans.
+- Avoid filtering solely on `usage_date` or `date` as these unpartitioned fields bypass partition pruning.
 - See [Partitioning Examples](references/schema_mapping.md#5-performance--scale-optimizations-bigquery-rules) for the exact syntax.
 
 ### 3. Handle One-to-Many Joins without Metric Inflation
 
 - When joining opportunity tables (`opportunities_streaming`) to repeating components (like sales plays or product lines), opportunity-level fields (like ACV or TCV) will duplicate.
-- Do **not** use a simple `SUM(DISTINCT)` because it collapses different opportunities of matching value size.
-- You **must** use the hash-offset deduplication pattern. Refer to the [Cryptographic Deduplication Math](references/opp_deduplication.md) guide for instructions and formulas.
+- Avoid using a simple `SUM(DISTINCT)` because it collapses different opportunities of matching value size.
+- Use the hash-offset deduplication pattern to calculate exact aggregations without deal duplication. Refer to the [Cryptographic Deduplication Math](references/opp_deduplication.md) guide for instructions and formulas.
 
 ### 4. Apply Compliance Exclusions
 
@@ -42,9 +42,9 @@ Always apply the standard enterprise exclusions to your queries unless explicitl
 - Exclude Security and Workspace SaaS spend from GCP core metrics: `WHERE gtm_product_level_5 NOT IN ('Security', 'Workspace')`
 - Exclude Marketplace pass-through spend from margins: `WHERE gtm_product_level_7 NOT IN ('Marketplace Anthropic', 'Marketplace Oracle', 'Marketplace Other')`
 
-### 5. Deterministic Account Filtering (CRITICAL FOR ACCURACY)
+### 5. Deterministic Account Filtering
 
-- **Discovery vs. Execution:** Wildcard string searches (e.g., `LIKE '%PAYPAL%'`) are allowed during the initial search phase to discover candidate accounts and present them to the user. However, wildcards must **NEVER** be used in the final query executed to run specific revenue or usage reports.
+- **Discovery vs. Execution:** Wildcard string searches (e.g., `LIKE '%PAYPAL%'`) are permitted during the initial search phase to discover candidate accounts and present them to the user. However, wildcards must not be used in final reporting queries, as inexact string matches introduce false positives into financial calculations.
 - **Rule:** The final query must filter deterministically on unique account identifiers (`customer_details.reporting_id` or `sfdc_account_id`).
 - **Resolution Flow:** If the exact ID is unknown:
   1. Query the master lookup view `concord-prod.service_cloudbi.vector_customers` using wildcards to discover matching SFDC IDs.
