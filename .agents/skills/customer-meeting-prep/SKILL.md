@@ -8,6 +8,8 @@ description: >-
   validates architectural solutions & quotas via Moma Search and Google Developer Knowledge MCP, analyzes
   grounded Account Friction Temperature & Sentiment metrics, enforces deterministic Link Authenticity Verification,
   and tags source classification ([Public], [Internal Only], [Pre-GA / NDA]) in a repeatable One-Pager format.
+  Use when: interactively preparing for an upcoming customer/partner meeting, performing Workspace communication audits (Gmail, Drive, Calendar, Chat via csa_cli.par), prompting for persona focus, or conducting multi-source solution validation.
+  Don't use for: simple offline conversion of transcript files into a standard one-pager without Workspace context (use customer-one-pager instead).
 ---
 
 # Skill: Customer Meeting Preparation & Solution Validation

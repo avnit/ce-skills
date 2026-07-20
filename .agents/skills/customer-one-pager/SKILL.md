@@ -1,7 +1,9 @@
 ---
 name: customer-one-pager
-description: >-
+description: |
   Analyzes discovery call transcripts to create a comprehensive One-Pager summarizing the customer context, pain points, and the suggested design/plan.
+  Use when: converting a raw meeting transcript or discovery call notes file directly into a structured One-Pager document without interactive Workspace audits.
+  Don't use for: interactive customer meeting preparation requiring Workspace communication audits (Gmail, Calendar, Chat via CSA CLI) or persona preference modals (use customer-meeting-prep instead).
 ---
 
 # Customer One-Pager Generation
