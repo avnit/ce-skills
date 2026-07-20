@@ -39,6 +39,16 @@ Markdown codelabs use the `.lab.md` extension and are compiled into the DevSite 
 6.  **Staging**: `devsite2 stage --cl {cl_number}` to view on staging servers.
 7.  **CL Description**: Add the staging link to the CL description to help reviewers.
 
+## Staging from `labs/dev`
+
+When staging a codelab created via `codelab-creation` (`labs/dev/[lab-name]/[lab-name].lab.md`) for DevSite submission, follow this ordered checklist:
+
+1. **Verify ID Match**: The target Devsite `{id}` directory name MUST equal the `id:` field in the lab's YAML frontmatter. Verify they match before staging (fix the frontmatter if mismatched).
+2. **Copy and Rename Main File**: Copy `labs/dev/[lab-name]/[lab-name].lab.md` to `.../codelabs/{id}/index.lab.md` (renamed to `index.lab.md`).
+3. **Copy Image Assets**: Copy the entire `labs/dev/[lab-name]/img/` directory alongside `index.lab.md`. Relative `./img/...` references will continue working — verify no absolute or `labs/dev`-prefixed image paths remain.
+4. **Exclude Dev Artifacts**: Do **NOT** copy dev-only artifacts into the DevSite tree: `blueprint.md`, `OWNERS` (DevSite uses its own ownership model), `.tester_state/`, `*.state`, `*.env`, `bugs/`, or `test_status.md`.
+5. **Frontmatter Sanity Check**: Ensure the staged `index.lab.md` passes `codelab-formatting` metadata rules (frontmatter starts on line 1, zero blank lines inside the YAML block).
+
 ## References
 
 - [metadata.md](references/metadata.md) - Required YAML fields
