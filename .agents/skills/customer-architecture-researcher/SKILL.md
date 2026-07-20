@@ -27,9 +27,9 @@ This skill provides the procedural cheatsheet for researching, designing, and va
 - [ ] **Step 3: Audit Pre-GA / Preview Features**
   - Verify launch stages of all proposed features.
   - Explicitly call out any Alpha, Beta, or Preview features in the report's top alert block along with required enablement flags.
-- [ ] **Step 4: Mandatory High-Def Diagram Generation (`creating_gcp_diagrams`)**
+- [ ] **Step 4: Mandatory High-Def Diagram Generation (`creating-gcp-diagrams`)**
   - Build high-fidelity Mermaid drafts for architectural topology and communication sequence charts.
-  - **Mandatory Diagram Execution**: You **MUST** execute the **`creating_gcp_diagrams`** skill to generate a high-definition flat 2D vector PNG architecture diagram anchored by local Google Cloud Category Icons.
+  - **Mandatory Diagram Execution**: You **MUST** execute the **`creating-gcp-diagrams`** skill to generate a high-definition flat 2D vector PNG architecture diagram anchored by local Google Cloud Category Icons.
   - Save the rendered PNG asset directly to `references/<customer_name>/assets/architecture_diagram.png` (or `meeting/<customer_name>/assets/architecture_diagram.png`) and embed it in Section 2 of the report.
 - [ ] **Step 5: Save & Actively Validate Report in Target Reference Folder**
   - Generate the finalized research paper report using the structure in [report_template.md](assets/report_template.md).
@@ -46,7 +46,7 @@ This skill provides the procedural cheatsheet for researching, designing, and va
 Before delivering the report artifact, you **MUST** execute the bundled verification script with the `--online` flag to perform live HTTP requests:
 
 ```bash
-python3 .agents/skills/customer_architecture_researcher/scripts/validate_citations.py <path_to_report.md> --online
+python3 .agents/skills/customer-architecture-researcher/scripts/validate_citations.py <path_to_report.md> --online
 ```
 
 _Rule: If any link fails online validation, immediately query `google-developer-knowledge` via MCP to retrieve a valid replacement link, update the document, and re-verify!_
@@ -59,7 +59,7 @@ Always structure the output folder cleanly:
 references/<customer_name>/
 ├── research_report.md          # Primary research report artifact
 └── assets/                     # All visual assets and supplementary resources
-    ├── architecture_diagram.png # Rendered 2D vector PNG via creating_gcp_diagrams
+    ├── architecture_diagram.png # Rendered 2D vector PNG via creating-gcp-diagrams
     └── sequence_chart.png       # Rendered sequence flow diagram
 ```
 
@@ -67,7 +67,7 @@ references/<customer_name>/
 
 ## 💡 Gotchas & Pitfalls
 
-- **Skipping `creating_gcp_diagrams` Execution**: A research report without a rendered high-definition PNG diagram is incomplete. You must invoke `creating_gcp_diagrams` and call `generate_image`.
+- **Skipping `creating-gcp-diagrams` Execution**: A research report without a rendered high-definition PNG diagram is incomplete. You must invoke `creating-gcp-diagrams` and call `generate_image`.
 - **Jumping to Solutions Without WAF Discovery**: Recommending HA VPN when the customer actually requires sub-10ms 100Gbps Dedicated Interconnect is a major architectural error. Always delegate to the native `agent_waf_system` skill in Step 1.
 - **Hallucinating Documentation URLs**: Never guess or invent `cloud.google.com` link paths from LLM memory. You must actively use MCP search tools to obtain exact URLs and validate them online.
 - **Skipping Online Validation**: Delivering dead or 404 links damages credibility. Always run `validate_citations.py` with `--online`.
@@ -78,5 +78,5 @@ references/<customer_name>/
 
 ## 📁 Reference Assets & Guidelines
 
-- **[MCP Research & Verification Guide](references/mcp_research_guide.md)**: Deep dive on MCP search queries, diagram generation via `creating_gcp_diagrams`, and WAF validation using native `agent_waf_system`.
+- **[MCP Research & Verification Guide](references/mcp_research_guide.md)**: Deep dive on MCP search queries, diagram generation via `creating-gcp-diagrams`, and WAF validation using native `agent_waf_system`.
 - **[Report Template](assets/report_template.md)**: Mandatory Markdown report layout including diagram scaffolds and citation formatting.

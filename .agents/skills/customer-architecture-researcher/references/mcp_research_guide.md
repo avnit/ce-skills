@@ -35,13 +35,13 @@ _Note: If operating inside an active customer meeting context, `meeting/<custome
 
 ---
 
-## 3. High-Definition Diagram Generation via `creating_gcp_diagrams`
+## 3. High-Definition Diagram Generation via `creating-gcp-diagrams`
 
-**CRITICAL MANDATE: Every research report MUST include a high-definition flat 2D vector PNG architecture diagram.** You must execute the **`creating_gcp_diagrams`** skill to generate this asset.
+**CRITICAL MANDATE: Every research report MUST include a high-definition flat 2D vector PNG architecture diagram.** You must execute the **`creating-gcp-diagrams`** skill to generate this asset.
 
 ### Category Icon Anchoring Table:
 
-Select up to 3 local reference category icons from `.agents/skills/creating_gcp_diagrams/assets/category-icons/Category Icons/` to anchor the rendering style:
+Select up to 3 local reference category icons from `.agents/skills/creating-gcp-diagrams/assets/category-icons/Category Icons/` to anchor the rendering style:
 
 | Architectural Component  | Target Local Reference Asset Path                      |
 | :----------------------- | :----------------------------------------------------- |
@@ -61,8 +61,8 @@ Call the `generate_image` tool directly with the selected local reference icon p
   "ImageName": "architecture_diagram",
   "AspectRatio": "16:9",
   "ImagePaths": [
-    ".agents/skills/creating_gcp_diagrams/assets/category-icons/Category Icons/Networking/PNG/Networking-512-color.png",
-    ".agents/skills/creating_gcp_diagrams/assets/category-icons/Category Icons/Security Identity/PNG/SecurityIdentity-512-color.png"
+    ".agents/skills/creating-gcp-diagrams/assets/category-icons/Category Icons/Networking/PNG/Networking-512-color.png",
+    ".agents/skills/creating-gcp-diagrams/assets/category-icons/Category Icons/Security Identity/PNG/SecurityIdentity-512-color.png"
   ]
 }
 ```
@@ -103,7 +103,7 @@ Every documentation citation and resource link included in the report **MUST be 
 Run the bundled verification CLI with the `--online` flag:
 
 ```bash
-python3 .agents/skills/customer_architecture_researcher/scripts/validate_citations.py <path_to_report.md> --online
+python3 .agents/skills/customer-architecture-researcher/scripts/validate_citations.py <path_to_report.md> --online
 ```
 
 ### Automated Remediation Loop:

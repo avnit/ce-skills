@@ -1,0 +1,122 @@
+# proto-file: learning/gemini/agents/evaluation/evalin/proto/eval_suite.proto
+# proto-message: EvalSuite
+# txtpbfmt: wrap_strings_after_newlines
+
+suite_name: "skill_review"
+timeout_seconds: 600
+
+cases {
+  name: "diagnose-audit-checklists-and-capslock-shouting"
+  prompt:
+    "I have drafted an agent skill for managing Spanner databases. Whenever "
+    "the agent forgets to configure point-in-time recovery during eval tests, "
+    "I added a file called `references/spanner-audit-checklist.md` with 12 lines "
+    "shouting in caps-lock: `MANDATORY SPECIFICATION: You MUST ALWAYS enable "
+    "point-in-time recovery! NEVER omit point-in-time backup!`. Can you perform "
+    "a Skill Reviewer and Central Skills review of this skill design and output a scorecard and action matrix?"
+  expectations:
+    "Outputs a formal Skill Reviewer scorecard with findings mapping to criteria in "
+    "`reviewing.md`."
+  expectations:
+    "Flags the caps-lock `MUST/ALWAYS` shouting and redundant reference checklist "
+    "as a P1 High Impact prompt engineering anti-pattern."
+  expectations:
+    "Explains the underlying LLM attention budget dilution (`lost in the middle` "
+    "phenomenon) caused by duplicating caps-lock rules across reference files."
+  expectations:
+    "Recommends deleting the caps-lock checklist (`references/spanner-audit-checklist.md`) "
+    "and baking the mandatory point-in-time recovery block directly inside the static IaC "
+    "`assets/` template (`Code as Single Source of Truth`), paired with clear engineering "
+    "rationale in `SKILL.md` (`Explain the Why`)."
+}
+
+cases {
+  name: "diagnose-missing-build-file-and-owners-hygiene"
+  prompt:
+    "Please conduct an authoritative Skill Reviewer and Central Skills review on a new central skill CL "
+    "that creates `//depot/google3/third_party/skills/skills/cloud/google-cloud-solution-spanner-app/` "
+    "containing only `SKILL.md` and `assets/main.tf`. The CL description has "
+    "`EVALIN_REPORT=https://evalin.corp.google.com/report/12345` but omits `MARKDOWN=true`, "
+    "and no `BUILD` file exists in the directory. Please check all structural and CL rules."
+  expectations:
+    "Identifies that the `BUILD` (or `BUILD.bazel`) file is missing and marks it as a "
+    "`P0 Blocker: FAIL` under Structural Validation because `validate_skill_test(...)` "
+    "cannot execute in CI or Critique."
+  expectations:
+    "Identifies that `MARKDOWN=true` is missing from the CL description footer and marks "
+    "it as `FAIL` under the CL Review Table."
+  expectations:
+    "Identifies that `OWNERS` file presence is mandatory for permanent skills in "
+    "`third_party/skills/...` and flags its absence or checks against boundary rules."
+  expectations:
+    "Outputs the findings within the structured `devrel-review-framework.md` scorecard "
+    "and Prioritized Remediation Action Matrix with `skill_creator` citations."
+}
+
+cases {
+  name: "diagnose-combinatorial-menu-to-golden-path"
+  prompt:
+    "Can you review our workflow skill for deploying GKE clusters (`SKILL.md`)? "
+    "In `Phase 2`, the instructions state: `Present the user with a choice between "
+    "Autopilot mode or Standard mode, VPC-native or route-based networking, regional or zonal "
+    "control planes, and Spot VMs versus regular VMs depending on their budget.` Evaluate this against "
+    "Central Skills best practices and explain why our `evalin` runs have high score variance."
+  expectations:
+    "Identifies the branching choices as a violation of `One Default, One Escape Hatch` "
+    "(`writing-guide.md`)."
+  expectations:
+    "Explains that presenting a menu across 4 dimensions (`Autopilot vs Standard`, `VPC-native vs route-based`, "
+    "`regional vs zonal`, `Spot vs regular`) creates a combinatorial decision space ($2^4 = 16+$ variations), "
+    "causing the agent to take random branches on different runs and inducing high `evalin` non-determinism."
+  expectations:
+    "Prescribes refactoring the skill to lock down an opinionated 80% golden path by default "
+    "(`GKE Autopilot, VPC-native, Regional control plane`) right out of the box, pushing "
+    "alternate choices to conditional escape hatches at the bottom of the skill."
+}
+
+cases {
+  name: "diagnose-interrogation-ux-questionnaire-fatigue"
+  prompt:
+    "I built a skill for deploying Spanner global instances. In `Phase 1 Requirements Discovery`, "
+    "the agent is instructed: `Ask remaining questions concisely one at a time across: 1. Multi-region config, "
+    "2. Processing units, 3. KMS encryption keys, 4. IAM database roles, 5. Split configurations, 6. Backups, "
+    "7. Change streams, 8. Network topology, 9. VPC Service Controls, and 10. Monitoring dashboards.` "
+    "Can you perform a Skill Reviewer audit of this UX workflow and explain what will go wrong?"
+  expectations: "Diagnoses the 10-topic discovery script as an `Interrogation UX Trap` (`Phase 1 Questionnaire Fatigue`)."
+  expectations:
+    "Explains the dual failure mode: trapping the developer in an exhausting 15-turn interrogation loop, "
+    "or causing the model's attention budget to degrade so it shifts into `fast-forward mode` and "
+    "hallucinates answers on the fly."
+  expectations:
+    "Recommends `Colonizing Phase 1`: pruning discovery down to 2 mandatory architectural forks (`e.g., "
+    "region choice and processing scale`) and auto-deploying everything else with secure defaults."
+}
+
+cases {
+  name: "diagnose-output-token-bloat-dual-iac-cli"
+  prompt:
+    "We drafted a skill where `Phase 3` requires the agent to generate: 1. A 6-section comprehensive "
+    "Markdown architecture report, 2. A custom Mermaid flowchart, 3. Complete 800-line Terraform IaC (`main.tf`), "
+    "4. A self-contained bottom-up `gcloud` CLI equivalent script, and 5. A custom Python automated validation script "
+    "in a single response turn. Why is our agent outputting incomplete code stubs during `evalin` testing, "
+    "and what is your recommended remediation?"
+  expectations: "Diagnoses the simultaneous 5-target delivery as `Output Token Bloat` exceeding `max_tokens` limits."
+  expectations:
+    "Explains that demanding 5,000+ tokens in a single generation turn forces internal sampling distributions "
+    "to compress, causing code truncation (`... # rest of code here`) or syntax compression errors."
+  expectations:
+    "Enforces `One Job Well`: prescribes choosing one authoritative infrastructure deliverable (`Terraform IaC`), "
+    "deleting the redundant bottom-up `gcloud` CLI equivalent script, and dropping custom on-the-fly Python validation scripts."
+}
+
+cases {
+  name: "diagnose-broken-links-and-ephemeral-path-violations"
+  prompt:
+    "Can you check our new Spanner skill (`SKILL.md`) for link and path hygiene? "
+    "It contains the link `[spanner-guide.md](/google/src/cloud/username/workspace/google3/learning/gemini/agents/skills/spanner/references/spanner-guide.md)` "
+    "and a pointer to `[helper.py](scripts/helper.py)` even though `helper.py` was moved to `clis/helper.py`. "
+    "Please run verification on this link hygiene and explain what goes wrong at runtime."
+  expectations: "Identifies and flags `/google/src/cloud/username/workspace/google3/...` as an `Ephemeral Cloud Workspace Path Violation` (`writing-guide.md`), explaining that user workspace paths are transient, unresolvable by other developers or CI runners, and must be replaced with canonical `google3/...` links."
+  expectations: "Identifies that `[helper.py](scripts/helper.py)` is a broken link pointing to a non-existent target, explaining that broken links cause tool read failures (`view_file` errors) and force the agent to stall or hallucinate file contents."
+  expectations: "Prescribes executing `check_skill_links.py` (`//learning/gemini/agents/skills/skill_review/scripts:check_skill_links`) to deterministically scan and verify zero broken links across all skill files (`P0 Blocker: FAIL`)."
+}

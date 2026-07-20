@@ -34,7 +34,7 @@ The architecture separates hybrid transit networking from database production wo
 
 ![High-Fidelity Architecture Diagram](assets/architecture_diagram.jpg)
 
-_Note: Rendered into a flat 2D vector PNG via `creating_gcp_diagrams` and saved in `assets/architecture_diagram.jpg`._
+_Note: Rendered into a flat 2D vector PNG via `creating-gcp-diagrams` and saved in `assets/architecture_diagram.jpg`._
 
 #### Architectural Topology Draft (Mermaid)
 

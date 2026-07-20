@@ -28,13 +28,13 @@ gcloud logging read 'logName="projects/{project_id}/logs/cloudaudit.googleapis.c
 You can use the provided script to gather evidence automatically:
 
 ```bash
-./.agents/skills/codelab_audit_logging/scripts/gather_evidence.py {project_id} {output_file}
+./.agents/skills/codelab-audit-logging/scripts/gather_evidence.py {project_id} {output_file}
 ```
 
 Example:
 
 ```bash
-./.agents/skills/codelab_audit_logging/scripts/gather_evidence.py gke-service-ext-1775761721 ./evidence.md
+./.agents/skills/codelab-audit-logging/scripts/gather_evidence.py gke-service-ext-1775761721 ./evidence.md
 ```
 
 This will create an `evidence.md` file with a table of the last 5000 audit log entries.
