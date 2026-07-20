@@ -19,7 +19,7 @@ Instead, it acts as a **Structured Test Harness Manifest** that links directly t
 
 ## Analysis Prompt
 
-Use the unified discovery and solutions architect system prompt defined in [discovery_analyst.md](file:///prompts/discovery_analyst.md) passing the target flag: `--format test_plan`.
+Use the unified discovery and solutions architect system prompt defined in [discovery_analyst.md](../../../prompts/discovery_analyst.md) passing the target flag: `--format test_plan`.
 
 ---
 

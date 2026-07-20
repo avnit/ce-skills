@@ -56,7 +56,7 @@ Instead, author a dedicated live full markdown artifact file (`workspace_audit_r
 
 Invoke the **`ask_question`** tool to solicit explicit multiple-choice consent. Point the question title directly to the live markdown report file using clickable links so the user can read the grid natively in their IDE preview tab:
 
-- `question`: "Please review the live Workspace Audit Report artifact ([workspace_audit_report.md](file:///<appDataDir>/brain/<conversation-id>/workspace_audit_report.md)). How would you like to address these flat repository findings?"
+- `question`: "Please review the live Workspace Audit Report artifact ([workspace_audit_report.md](workspace_audit_report.md)). How would you like to address these flat repository findings?"
 - `options`:
   - "(Recommended) Yes, I approve the complete mitigation plan. Execute the proposed moves and cleanups."
   - "No, let's adjust specific targets (e.g., ignore certain files or move to alternate custom folders)."

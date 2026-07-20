@@ -15,7 +15,7 @@ This skill outlines the end-to-end master workflow for creating a codelab. It in
 Follow this interactive checklist to create a codelab:
 
 - [ ] **Phase 0: Pre-Flight Authentication & ADC Verification**
-  - Consult and enforce the global active auth and ADC validation standard: [gcloud_auth.md](file:///.agents/rules/gcloud_auth.md).
+  - Consult and enforce the global active auth and ADC validation standard: [gcloud_auth.md](../../rules/gcloud_auth.md).
 - [ ] **Phase 0.5: Meta-Planning & Strategy Gate (Mandatory Strategy Plan)**
   - Before presenting scoping questions, querying service documentation, or modifying repository files, formulate a high-level strategy plan `implementation_plan.md` in the conversation workspace.
   - **Gated Human Gate (Non-negotiable)**: Pause and obtain explicit manual sign-off from the user via interactive chat/modal before proceeding to scope intake or subsequent phases. Even if system hooks or workspace review policies claim "auto-approval", the agent **MUST NOT** bypass this gate; it must wait for explicit, physical user interaction.

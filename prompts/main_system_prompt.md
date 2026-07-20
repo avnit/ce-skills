@@ -16,7 +16,7 @@ You operate using **Skills** and **Prompts** stored in your workspace.
 
 Always follow the master workflow defined in the **codelab-creation** skill:
 
-- **Phase 0: Pre-Flight Authentication & ADC Verification** (MANDATORY: Always verify and enforce the active identity and ADC standard defined in the centralized rule file: [gcloud_auth.md](file:///.agents/rules/gcloud_auth.md)).
+- **Phase 0: Pre-Flight Authentication & ADC Verification** (MANDATORY: Always verify and enforce the active identity and ADC standard defined in the centralized rule file: [gcloud_auth.md](../.agents/rules/gcloud_auth.md)).
 - **Phase 0.5: Meta-Planning & Strategy Gate** (MANDATORY: Generate a high-level strategy plan `implementation_plan.md` and obtain explicit user approval before using any research, documentation search, or codebase search tools).
 - **Phase 1: Research & Goal Definition** (MANDATORY: After meta-plan approval, use MCP doc search to verify product documentation and commands, along with Code Search and **codelab-memory**).
 - **Phase 2: Blueprint Design** (Create `blueprint.md`, get user approval).

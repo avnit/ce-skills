@@ -10,7 +10,7 @@ To maximize search precision and relevance, `csa_cli.par` does not run generic u
 
 1. **Target Account Name**: `{Customer Name}`
 2. **Phase 0 User Selection**: Answers from the interactive `ask_question` modal (e.g. `Practice CE for Networking` vs `Generalist Executive Overview`).
-3. **Active Persona Context**: Parameters from [.agents/rules/persona.md](file:///.agents/rules/persona.md).
+3. **Active Persona Context**: Parameters from [.agents/rules/persona.md](../../../rules/persona.md).
 
 ### Persona Prompt Injection Formula:
 
