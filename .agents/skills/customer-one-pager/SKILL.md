@@ -34,7 +34,7 @@ Follow these steps when applying this skill:
 
 ## Analysis Prompt
 
-Use the unified discovery and solutions architect system prompt defined in [discovery_analyst.md](file:///prompts/discovery_analyst.md) passing the target flag: `--format one_pager`.
+Use the unified discovery and solutions architect system prompt defined in [discovery_analyst.md](../../../prompts/discovery_analyst.md) passing the target flag: `--format one_pager`.
 
 ---
 

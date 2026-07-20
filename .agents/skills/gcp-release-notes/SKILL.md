@@ -51,7 +51,7 @@ When outputting release notes, adhere to the following table formatting and cell
 
 ## Reference Report & Examples
 
-For a complete example of a generated GCP Release Notes Report including executive summary, formatted table, and architectural recommendations, see [sample_release_notes_report.md](file:///.agents/skills/gcp-release-notes/examples/sample_release_notes_report.md).
+For a complete example of a generated GCP Release Notes Report including executive summary, formatted table, and architectural recommendations, see [sample_release_notes_report.md](examples/sample_release_notes_report.md).
 
 ### Output Format Examples
 
@@ -101,7 +101,7 @@ Yields:
 
 ## Evaluation & Quality Assurance (Eval Suite)
 
-The `gcp-release-notes` skill includes a dedicated evaluation test plan defined in [TEST.md](file:///.agents/skills/gcp-release-notes/TEST.md).
+The `gcp-release-notes` skill includes a dedicated evaluation test plan defined in [TEST.md](TEST.md).
 
 ### Evaluation Criteria
 

@@ -55,7 +55,7 @@ Phase 4: One-Pager Artifact Synthesis & Reference Directory
 
 ## Phase 0: Pre-Flight Interactive Scoping Modal (FIRST STEP)
 
-**BEFORE running `csa_cli.par` or invoking any search tools**, read [.agents/rules/persona.md](file:///.agents/rules/persona.md) and present an interactive **`ask_question`** modal to prompt the user for their preferred briefing scope and persona focus:
+**BEFORE running `csa_cli.par` or invoking any search tools**, read [.agents/rules/persona.md](../../rules/persona.md) and present an interactive **`ask_question`** modal to prompt the user for their preferred briefing scope and persona focus:
 
 ```json
 {

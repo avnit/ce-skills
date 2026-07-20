@@ -10,7 +10,7 @@ Before executing any workflow run, deploying workloads, provisioning resources, 
 ## Verification Requirements
 
 1. **Interactive Authentication Verification (Pre-Flight Gate)**:
-   - Prior to executing any GCP command, running a deployment script, or initiating a validation workflow, you **MUST** consult and execute the workspace-level skill: [.agents/skills/gcloud-auth-verification/SKILL.md](file:///.agents/skills/gcloud-auth-verification/SKILL.md).
+   - Prior to executing any GCP command, running a deployment script, or initiating a validation workflow, you **MUST** consult and execute the workspace-level skill: [.agents/skills/gcloud-auth-verification/SKILL.md](../skills/gcloud-auth-verification/SKILL.md).
    - Run `python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py` to retrieve the active and credentialed accounts.
 
 2. **Mandatory ask_question Modal**:

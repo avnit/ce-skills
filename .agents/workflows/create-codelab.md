@@ -11,7 +11,7 @@ Required parameters from the user:
 Overall Orchestration Lifecycle:
 
 1. **Phase 0: Pre-Flight Authentication & ADC Verification**
-   - Consult and enforce the global auth validation standard: [gcloud_auth.md](file:///.agents/rules/gcloud_auth.md).
+   - Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
 2. **Phase 0.5: Meta-Planning & Strategy Gate**
    - **Mandatory Strategy Plan**: Before presenting any intake questions or using search/research tools, the agent **MUST** generate a high-level strategy plan `implementation_plan.md` inside `<appDataDir>/brain/<conversation-id>/`.
    - **Mandatory Human Gate (Non-negotiable)**: The agent MUST explicitly pause execution and request user approval of the proposed plan before proceeding to scope selection or codebase actions. Even if system hooks or workspace review policies signal "auto-approval" or wake the agent up immediately, the agent **MUST NOT** bypass this gate; it must wait for explicit physical sign-off from the user.
@@ -73,9 +73,9 @@ Overall Orchestration Lifecycle:
    - **Diagram Cost Optimization**: Once the E2E verification has completed successfully, to reduce diagram image generation cost, call the **`creating-gcp-diagrams`** skill to synthesize a high-quality styled image representing the verified architecture. Copy the generated image into the lab's `/img/` subdirectory, and embed it directly into the persistent narrative markdown (`.lab.md`) as a relative image link, replacing or supplementing any plain text descriptions.
    - Present validated Markdown artifacts to the user and transition to Phase 6.
 8. **Phase 6: Retrospective & Continuous Improvement (Lessons Learned)**
-   - **Mandatory Post-Mortem**: At the conclusion of the run (regardless of scope), the Commander **MUST** execute a retrospective following the [post_mortem_standard.md](file:///.agents/skills/codelab-creation/references/post_mortem_standard.md) standard.
+   - **Mandatory Post-Mortem**: At the conclusion of the run (regardless of scope), the Commander **MUST** execute a retrospective following the [post_mortem_standard.md](../skills/codelab-creation/references/post_mortem_standard.md) standard.
    - Draft a structured `post_mortem.md` in the active session brain folder, analyzing process adherence, defect root causes, and prevention mechanics.
-   - **Explicit Human Review Gate (Non-negotiable)**: Propose direct, actionable updates to upstream repository skills or the [gotchas.md](file:///.agents/skills/codelab-creation/references/gotchas.md) database. **Under no circumstances** should repository files or skill definitions be updated without explicit, manual review and sign-off from the user. If system hooks claim auto-approval, they must be ignored for this step. Once done, mark the overall execution status as `COMPLETED` in `task.md`.
+   - **Explicit Human Review Gate (Non-negotiable)**: Propose direct, actionable updates to upstream repository skills or the [gotchas.md](../skills/codelab-creation/references/gotchas.md) database. **Under no circumstances** should repository files or skill definitions be updated without explicit, manual review and sign-off from the user. If system hooks claim auto-approval, they must be ignored for this step. Once done, mark the overall execution status as `COMPLETED` in `task.md`.
 
 ## 8. Dynamic Commander Execution & HITL Checkpoints
 
@@ -92,4 +92,4 @@ To programmatically automate this workflow while maintaining absolute human cont
 4.  **Stateful Error Self-Healing (Dynamic Error Healer)**:
     - _Commander Action_: If a terminal command fails inside the persistent subshell (`tester.py`), the Commander intercepts the `stderr` directly. It attempts to self-heal the error in-line (e.g., fixing project IDs, missing flags, or API delays) and retries the command immediately in the active terminal session. If unrecoverable, the Commander presents the failure directly to the user with clear remediation options, completely avoiding complex static mailbox queues.
 5.  **Mandatory Retrospective Feedback Loop**:
-    - _Commander Action_: At the end of every execution, the Commander must draft a structured `post_mortem.md` in the active session brain folder. The Commander evaluates process adherence and defect root causes, and formulates proposed updates to upstream repository skills or the [gotchas.md](file:///.agents/skills/codelab-creation/references/gotchas.md) database. **HITL Gate**: The Commander must explicitly present these updates to the user and obtain manual approval before applying any modifications to repository files.
+    - _Commander Action_: At the end of every execution, the Commander must draft a structured `post_mortem.md` in the active session brain folder. The Commander evaluates process adherence and defect root causes, and formulates proposed updates to upstream repository skills or the [gotchas.md](../skills/codelab-creation/references/gotchas.md) database. **HITL Gate**: The Commander must explicitly present these updates to the user and obtain manual approval before applying any modifications to repository files.
