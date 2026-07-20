@@ -6,9 +6,7 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO / ".agents" / "skills"
 
 # Allowlist for directories under .agents/skills/ that do not contain a SKILL.md.
-# Tracked in #131: agent_waf_system is a legacy container directory housing sub-skills.
 MANIFESTLESS_DIRS_ALLOWLIST = {
-    "agent_waf_system",  # Tracked by #131
     "reports",  # Subdirectory housing skill review reports
 }
 

@@ -11,7 +11,7 @@
 
 An enterprise customer is deploying a mission-critical **Google Cloud SQL database architecture** requiring sub-10ms high-throughput access from on-premises data centers and internal Google Kubernetes Engine (GKE) workloads. The core architectural objectives are 99.99% High Availability (HA) across regional zones, zero IP-overlap private networking, and enterprise-grade fault redundancy without exposing database endpoints to public internet routing.
 
-### WAF Discovery & Customer Priorities (`agent_waf_system` Outcomes)
+### WAF Discovery & Customer Priorities (`agent-waf-system` Outcomes)
 
 Before selecting the networking and replication topology, the following trade-off priorities were established via WAF discovery:
 
@@ -111,7 +111,7 @@ sequenceDiagram
 
 ## 4. Well-Architected Framework (WAF) Alignment & Verification
 
-This architecture has been audited against the 5 pillars of the Google Cloud Well-Architected Framework (WAF) using `agent_waf_system`, directly addressing the customer's stated trade-off priorities:
+This architecture has been audited against the 5 pillars of the Google Cloud Well-Architected Framework (WAF) using `agent-waf-system`, directly addressing the customer's stated trade-off priorities:
 
 | WAF Pillar                         | Architectural Design Decision & Mitigation                                                                                                                                                                                                                                    | Verification Evidence / Reference                                                                                                                             |
 | :--------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |

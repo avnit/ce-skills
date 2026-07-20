@@ -12,7 +12,7 @@ def _load(module_path):
     spec.loader.exec_module(module)
     return module
 
-orchestrator = _load(REPO / ".agents" / "skills" / "agent_waf_system" / "orchestrator.py")
+orchestrator = _load(REPO / ".agents" / "skills" / "agent-waf-system" / "orchestrator.py")
 
 def test_unconfigured_cwd_raises_value_error(monkeypatch):
     """Verifies that if waf_mcp_cwd is missing/None and use_mock is False, ValueError is raised."""

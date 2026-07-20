@@ -11,7 +11,7 @@ def _load(module_path):
     spec.loader.exec_module(module)
     return module
 
-orchestrator = _load(REPO / ".agents" / "skills" / "agent_waf_system" / "orchestrator.py")
+orchestrator = _load(REPO / ".agents" / "skills" / "agent-waf-system" / "orchestrator.py")
 
 def test_missing_template_does_not_wipe_cache(tmp_path, monkeypatch):
     temp_cache_file = tmp_path / "test_session_cache.json"
