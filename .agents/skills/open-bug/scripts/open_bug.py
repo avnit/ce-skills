@@ -5,6 +5,7 @@ Attempts direct CLI creation via issues-cli and outputs an instant pre-filled we
 """
 
 import argparse
+import os
 import subprocess
 import urllib.parse
 
