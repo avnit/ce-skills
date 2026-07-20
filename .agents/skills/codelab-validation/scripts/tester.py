@@ -200,7 +200,7 @@ def sanitize_command(cmd: str, project_id: str = "", custom_vars: dict = None) -
 
 class StatefulCodelabTester:
     """Orchestrates Codelab steps, state transitions, and command execution."""
-    def __init__(self, markdown_file: str, artifact_dir: str = None, timeout: int = 600, phase: str = "test"):
+    def __init__(self, markdown_file: str, artifact_dir: str = None, timeout: int = 600, phase: str = "test", project_id: str = None):
         self.md_path = os.path.abspath(markdown_file)
         self.lab_dir = os.path.dirname(self.md_path)
         self.tester_state_dir = os.path.join(self.lab_dir, ".tester_state")
@@ -210,7 +210,7 @@ class StatefulCodelabTester:
         
         # Parse or load step states
         self.steps = []
-        self.project_id = get_active_project()
+        self.project_id = project_id if project_id else get_active_project()
         
         # Determine status files
         self.static_status_file = os.path.join(self.lab_dir, "test_status.md")
@@ -458,6 +458,7 @@ class StatefulCodelabTester:
                     runner.set_env(key, val)
             
             runner.set_env("PROJECT_ID", self.project_id)
+            runner.set_env("CLOUDSDK_CORE_PROJECT", self.project_id)
             
             # Iterate and run step state transitions
             for idx, step in enumerate(self.steps):
@@ -605,8 +606,28 @@ def main():
     parser.add_argument("--phase", choices=["test", "cleanup", "all"], default="test", help="Execution phase (test, cleanup, or all).")
     parser.add_argument("--cleanup", action="store_true", help="Run explicit cleanup phase (equivalent to --phase cleanup).")
     parser.add_argument("--skip-cleanup", action="store_true", help="Deprecated alias for --phase test.")
+    parser.add_argument("--project-id", help="Explicit GCP target project ID to execute against.")
+    parser.add_argument("--allow-active-project", action="store_true", help="Consciously adopt the ambient active gcloud project.")
 
     args = parser.parse_args()
+
+    if not args.project_id and not args.allow_active_project:
+        print("[Tester Error] Target GCP project must be specified explicitly.")
+        print("[Tester Error] Pass --project-id <PROJECT_ID> or --allow-active-project to consciously adopt the active gcloud project.")
+        sys.exit(1)
+
+    if args.project_id:
+        target_project_id = args.project_id
+    else:
+        target_project_id = get_active_project()
+        if not target_project_id or target_project_id == "Unknown":
+            print("[Tester Error] Cannot adopt ambient project: get_active_project() returned empty or Unknown.")
+            sys.exit(1)
+        logging.warning(
+            "[WARNING] --allow-active-project was passed. Adopting ambient gcloud project: %s",
+            target_project_id
+        )
+        print(f"[WARNING] --allow-active-project passed. Adopting ambient project: {target_project_id}")
 
     if args.cleanup:
         phase = "cleanup"
@@ -614,9 +635,16 @@ def main():
         phase = "test"
     else:
         phase = args.phase
-    tester = StatefulCodelabTester(args.markdown_file, args.artifact_dir, args.timeout, phase=phase)
+
+    tester = StatefulCodelabTester(
+        args.markdown_file,
+        artifact_dir=args.artifact_dir,
+        timeout=args.timeout,
+        phase=phase,
+        project_id=target_project_id
+    )
     success = tester.run()
-    
+
     sys.exit(0 if success else 1)
 
 if __name__ == "__main__":
