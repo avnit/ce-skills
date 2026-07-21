@@ -103,6 +103,52 @@ class TestTesterCLIProjectEnforcement(unittest.TestCase):
             self.assertTrue(len(tester_calls) > 0)
             self.assertIn("--project-id my-test-proj", tester_calls[0])
 
+    def test_fresh_flag_purges_state_cache_and_env_files(self):
+        """--fresh purges .tester_state/, <lab>.md.state, and <lab>.md.env before run."""
+        state_dir = self.lab_dir / ".tester_state"
+        state_dir.mkdir(parents=True, exist_ok=True)
+        (state_dir / "old_file.json").write_text("{}", encoding="utf-8")
+
+        state_file = self.lab_dir / f"{self.md_file.name}.state"
+        state_file.write_text("old_hash_123\n", encoding="utf-8")
+
+        env_file = self.lab_dir / f"{self.md_file.name}.env"
+        env_file.write_text("export OLD=1\n", encoding="utf-8")
+
+        with patch.object(sys, "argv", ["tester.py", str(self.md_file), "--project-id", "my-proj", "--fresh"]):
+            with self.assertRaises(SystemExit) as cm:
+                tester.main()
+            self.assertEqual(cm.exception.code, 0)
+
+        # Old file inside .tester_state should be purged
+        self.assertFalse((state_dir / "old_file.json").exists())
+        # Fresh step-001.json created
+        self.assertTrue((state_dir / "step-001.json").exists())
+
+        # Old hash should not be in state_file
+        state_content = state_file.read_text(encoding="utf-8")
+        self.assertNotIn("old_hash_123", state_content)
+
+        # Old env var should not be in env_file
+        env_content = env_file.read_text(encoding="utf-8")
+        self.assertNotIn("OLD=1", env_content)
+
+    def test_fresh_flag_on_clean_lab_is_noop(self):
+        """--fresh on a lab with no existing state files is a no-op, not an error."""
+        state_dir = self.lab_dir / ".tester_state"
+        state_file = self.lab_dir / f"{self.md_file.name}.state"
+        env_file = self.lab_dir / f"{self.md_file.name}.env"
+
+        self.assertFalse(state_dir.exists())
+        self.assertFalse(state_file.exists())
+        self.assertFalse(env_file.exists())
+
+        tester.purge_lab_state(str(self.md_file))
+
+        self.assertFalse(state_dir.exists())
+        self.assertFalse(state_file.exists())
+        self.assertFalse(env_file.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

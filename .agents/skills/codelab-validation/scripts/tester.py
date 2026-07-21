@@ -10,10 +10,12 @@ import os
 import re
 import select
 import shlex
+import shutil
 import subprocess
 import sys
 import time
 import uuid
+from pathlib import Path
 from typing import Any, Tuple
 
 # Resolve repository root dynamically
@@ -603,6 +605,39 @@ class StatefulCodelabTester:
         finally:
             runner.close()
 
+def purge_lab_state(markdown_file: str) -> None:
+    """Purges .tester_state/, <lab>.md.state, and <lab>.md.env for this lab only."""
+    lab_path = Path(markdown_file).resolve()
+    lab_dir = lab_path.parent
+
+    tester_state_dir = lab_dir / ".tester_state"
+    state_file = lab_dir / f"{lab_path.name}.state"
+    env_file = lab_dir / f"{lab_path.name}.env"
+
+    removed = []
+
+    if tester_state_dir.is_dir():
+        shutil.rmtree(tester_state_dir)
+        removed.append(str(tester_state_dir))
+
+    if state_file.is_file():
+        state_file.unlink()
+        removed.append(str(state_file))
+
+    if env_file.is_file():
+        env_file.unlink()
+        removed.append(str(env_file))
+
+    if removed:
+        print(f"[Tester --fresh] Purged state files for {lab_path.name}:")
+        for item in removed:
+            print(f"  - {item}")
+        logging.info("[Tester --fresh] Purged: %s", ", ".join(removed))
+    else:
+        print(f"[Tester --fresh] No state files found for {lab_path.name} (no-op).")
+        logging.info("[Tester --fresh] No state files found for %s (no-op).", lab_path.name)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Unified stateful codelab verification CLI.")
     parser.add_argument("markdown_file", help="Path to the codelab markdown guide file.")
@@ -613,8 +648,12 @@ def main():
     parser.add_argument("--skip-cleanup", action="store_true", help="Deprecated alias for --phase test.")
     parser.add_argument("--project-id", help="Explicit GCP target project ID to execute against.")
     parser.add_argument("--allow-active-project", action="store_true", help="Consciously adopt the ambient active gcloud project.")
+    parser.add_argument("--fresh", action="store_true", help="Purge state and cache files for this lab before running.")
 
     args = parser.parse_args()
+
+    if args.fresh:
+        purge_lab_state(args.markdown_file)
 
     if not args.project_id and not args.allow_active_project:
         print("[Tester Error] Target GCP project must be specified explicitly.")
