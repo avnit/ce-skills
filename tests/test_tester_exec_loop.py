@@ -393,6 +393,26 @@ class TestTesterExecLoop(unittest.TestCase):
         self.assertIn("[DONE] <code>gcloud info</code>", report_content)
         self.assertIn("[FAILED] <code>gcloud fail</code>", report_content)
 
+    def test_units_field_live_flush_per_unit(self):
+        """Live flush: 3-unit step calls write_visual_boards at least once per completed unit."""
+        md_content = (
+            "## Step 1: Live Flush Test\n"
+            "```bash\n"
+            "echo unit1\n"
+            "echo unit2\n"
+            "echo unit3\n"
+            "```\n"
+        )
+        md_file = self.tmp_dir / "lab.md"
+        md_file.write_text(md_content, encoding="utf-8")
+
+        t = tester.StatefulCodelabTester(str(md_file))
+        with patch.object(t, "write_visual_boards", wraps=t.write_visual_boards) as mock_boards:
+            success = t.run()
+            self.assertTrue(success)
+            # Should be called at least 3 times (once per completed unit) in addition to step start/finish calls
+            self.assertGreaterEqual(mock_boards.call_count, 3)
+
 
 if __name__ == "__main__":
     unittest.main()

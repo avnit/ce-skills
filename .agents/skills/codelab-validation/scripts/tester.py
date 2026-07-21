@@ -495,7 +495,7 @@ class StatefulCodelabTester:
                 step_outputs = []
                 step_errors = []
                 failed_command_str = ""
-                step_units = []
+                step["units"] = []
 
                 # Pre-extract all unit tuples for the step
                 all_unit_tuples = []
@@ -510,7 +510,7 @@ class StatefulCodelabTester:
 
                 for u_text, u_tier in all_unit_tuples:
                     if step_failed:
-                        step_units.append({
+                        step["units"].append({
                             "text": u_text,
                             "tier": u_tier,
                             "status": "PENDING",
@@ -521,12 +521,14 @@ class StatefulCodelabTester:
                     u_hash = get_cmd_hash(u_text)
                     if u_hash in executed_hashes:
                         logging.info("[Tester] Command already in cache. Skipping execution.")
-                        step_units.append({
+                        step["units"].append({
                             "text": u_text,
                             "tier": u_tier,
                             "status": "SKIPPED-CACHED",
                             "output_tail": ""
                         })
+                        self.save_state(idx, "IN PROGRESS")
+                        self.write_visual_boards("IN PROGRESS")
                         continue
 
                     if u_tier == "flat":
@@ -551,7 +553,7 @@ class StatefulCodelabTester:
                         step["error"] = f"Command failed with status {status}.\nOutput:\n{output}"
                         step_errors.append(step["error"])
                         failed_command_str = u_text
-                        step_units.append({
+                        step["units"].append({
                             "text": u_text,
                             "tier": u_tier,
                             "status": "FAILED",
@@ -563,14 +565,14 @@ class StatefulCodelabTester:
                         with open(state_file, "a") as f:
                             f.write(u_hash + "\n")
                         runner.run_command(f"export -p > {env_file}")
-                        step_units.append({
+                        step["units"].append({
                             "text": u_text,
                             "tier": u_tier,
                             "status": "DONE",
                             "output_tail": out_tail
                         })
-
-                step["units"] = step_units
+                        self.save_state(idx, "IN PROGRESS")
+                        self.write_visual_boards("IN PROGRESS")
 
                 if step_failed:
                     self.save_state(idx, "FAILED")
