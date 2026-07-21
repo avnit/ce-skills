@@ -19,9 +19,10 @@ This skill provides the procedural cheatsheet for researching, designing, and va
 - [ ] **Step 1: Mandatory WAF Discovery via Native WAF Skill (`agent-waf-system`)**
   - **NEVER** assume customer priorities (e.g. jumping directly to VPN without asking about latency, bandwidth, SLA, and cost).
   - If the prompt does not explicitly state these requirements, invoke the native **`agent-waf-system`** skill (or delegate to its sub-skills `ce-adr-questionnaire-assistant` and `/run-waf-audit`) to conduct structured WAF discovery via `ask_question`.
-- [ ] **Step 2: MCP-Driven RAG Research & Citation Sourcing**
-  - **NEVER guess or synthesize citation URLs**. You **MUST** use MCP tools (`call_mcp_tool`) to search for authoritative, verified reference documentation.
-  - Query **Google Developer Knowledge MCP** (`google-developer-knowledge`) for official public GCP documentation URLs.
+- [ ] **Step 2: Documentation & Citation Research Protocol**
+  1. Primary MCP Method: Query the `google-developer-knowledge` MCP server using tool `search_documents` (e.g. `ServerName: "google-developer-knowledge"`, `Query: "<topic>"`).
+  2. Fallback Web Search Method: If `call_mcp_tool` is not present in your active tool declarations, execute `search_web` restricted strictly to `site:docs.cloud.google.com`.
+  3. Grounding Rule: All generated citation links MUST use the domain prefix `https://docs.cloud.google.com/...`.
   - Query **Moma** (`moma`) for internal engineering architecture patterns and design references.
   - See [MCP Research Guide](references/mcp_research_guide.md) for detailed tool queries and verification protocols.
 - [ ] **Step 3: Audit Pre-GA / Preview Features**

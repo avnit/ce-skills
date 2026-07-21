@@ -39,8 +39,8 @@ You are an autonomous **Solutions Engineering Orchestrator** operating in a 10/1
 
 - **Pre-Flight Constraint**: Output checklist confirming: '[ ] I will save diagrams strictly to meeting/<customer_name>/assets/'.
 - **Proof of Read Constraint**: Use `view_file` to read `prompts/customer_architect.md`. Output `<template_proof>` block containing exact headers and verbatim first 10 words.
-- **Pre-Flight MCP Health Check**: Before researching, verify `google-developer-documentation-mcp` connectivity (e.g., `search_documents`). If the MCP server fails or is unreachable, keep `search_web` allowed as a secondary fallback tool.
-- **Turn 1 (RAG Research)**: Read `artifact_blueprint.md` and `prompts/customer_architect.md`. Use `google-developer-documentation-mcp` (`search_documents` / `get_documentation`) or fallback to `search_web` to research required GCP services. Save findings to `meeting/<customer_name>/mcp_research_notes.md`.
+- **Pre-Flight MCP Health Check**: Before researching, verify `google-developer-knowledge` connectivity (e.g., `search_documents`). If the MCP server fails or is unreachable, keep `search_web` allowed as a secondary fallback tool.
+- **Turn 1 (RAG Research)**: Read `artifact_blueprint.md` and `prompts/customer_architect.md`. Use `google-developer-knowledge` (`search_documents` / `answer_query`) or fallback to `search_web` to research required GCP services. Save findings to `meeting/<customer_name>/mcp_research_notes.md`.
 - **Turn 2 (Grounded Generation)**: Read `meeting/<customer_name>/mcp_research_notes.md` alongside requirements, invoke **customer-design-blueprint** skill to draft **Design Blueprint** (`design_blueprint.md`). Save to `meeting/<customer_name>/design_blueprint.md`.
 - **Pre-Approval Visual Render**: Call `creating-gcp-diagrams` skill using `generate_image` with spatial layout prompting and local GCP category icons. Save as `meeting/<customer_name>/assets/design_diagram.png` and embed directly inside `design_blueprint.md`.
 - **Grounded Critic Audit Loop**: Spawn `arch-critic` subagent via `invoke_subagent`. Critic queries official GCP WAF benchmarks via MCP and writes findings to `critic_response.json`.

@@ -113,11 +113,11 @@ This architecture is designed and verified against the Google Cloud Well-Archite
 
 Every claim, configuration flag, and architectural pattern in this report is grounded in official Google Cloud documentation and verified internal engineering knowledge:
 
-1. **[Private Service Connect (PSC) Overview](https://cloud.google.com/vpc/docs/private-service-connect)** - Grounding for private consumer-producer networking without peering.
-2. **[HA VPN Topology & Routing](https://cloud.google.com/network-connectivity/docs/vpn/concepts/topologies)** - Validated architecture for SLA 99.99% cross-cloud connectivity.
-3. **[Cloud DNS Peering & Forwarding](https://cloud.google.com/dns/docs/zones/forwarding-zones)** - Guidance for hybrid DNS resolution across cloud boundaries.
-4. **[Google Cloud Well-Architected Framework](https://cloud.google.com/architecture/framework)** - Core architectural standards and pillar verification.
-5. **[Google Cloud Interconnect Overview](https://cloud.google.com/network-connectivity/docs/interconnect/concepts/overview)** - Guidance for dedicated and partner hybrid circuits.
+1. **[Private Service Connect (PSC) Overview](https://docs.cloud.google.com/vpc/docs/private-service-connect)** - Grounding for private consumer-producer networking without peering.
+2. **[HA VPN Topology & Routing](https://docs.cloud.google.com/network-connectivity/docs/vpn/concepts/topologies)** - Validated architecture for SLA 99.99% cross-cloud connectivity.
+3. **[Cloud DNS Peering & Forwarding](https://docs.cloud.google.com/dns/docs/zones/forwarding-zones)** - Guidance for hybrid DNS resolution across cloud boundaries.
+4. **[Google Cloud Well-Architected Framework](https://docs.cloud.google.com/architecture/framework)** - Core architectural standards and pillar verification.
+5. **[Google Cloud Interconnect Overview](https://docs.cloud.google.com/network-connectivity/docs/interconnect/concepts/overview)** - Guidance for dedicated and partner hybrid circuits.
 
 ---
 

@@ -71,15 +71,21 @@ _Rule: Save the resulting image to `references/<customer_name>/assets/architectu
 
 ---
 
-## 4. MCP-Driven Citation Sourcing (`google-developer-knowledge`)
+## 4. Documentation & Citation Research Protocol (`google-developer-knowledge`)
 
-**CRITICAL MANDATE: Never synthesize, guess, or construct `cloud.google.com` links from memory.** You must actively use the lazy-loaded `google-developer-knowledge` MCP server to search for and retrieve the BEST authoritative reference URLs.
+**CRITICAL MANDATE: Never synthesize, guess, or construct links from memory.** You must ground all documentation and citation links using the following protocol:
+
+### Protocol:
+
+1. **Primary MCP Method**: Query the `google-developer-knowledge` MCP server using tool `search_documents` (e.g. `ServerName: "google-developer-knowledge"`, `Query: "<topic>"`).
+2. **Fallback Web Search Method**: If `call_mcp_tool` is not present in your active tool declarations, execute `search_web` restricted strictly to `site:docs.cloud.google.com`.
+3. **Grounding Rule**: All generated citation links MUST use the domain prefix `https://docs.cloud.google.com/...`.
 
 ### Key Tools:
 
 - **`call_mcp_tool` (Server: `google-developer-knowledge`, Tool: `search_documents`)**: Search for public whitepapers, architectural guides, and API documentation (e.g., query `"Cross-cloud network interconnect AWS Azure GCP"` or `"Private Service Connect hybrid DNS"`).
-- **`call_mcp_tool` (Server: `google-developer-knowledge`, Tool: `get_documents`)**: Retrieve full text of documentation pages to extract precise CLI flags, IAM roles, and configuration limits.
-- **Sourcing Rule**: Copy exact URLs returned by `search_documents` into your report's citation section.
+- **`call_mcp_tool` (Server: `google-developer-knowledge`, Tool: `answer_query`)**: Retrieve targeted answers to architectural questions.
+- **Sourcing Rule**: Copy exact URLs with `https://docs.cloud.google.com/...` prefix into your report's citation section.
 
 ---
 

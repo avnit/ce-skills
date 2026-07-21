@@ -79,7 +79,7 @@ When `tester.py` returns `FAILED`:
 #### 1. Category A: Command Syntax & API Errors
 
 - **Indicators**: `gcloud` unknown flag, invalid syntax, missing argument, or YAML parse error.
-- **Remediation**: Investigate root cause before retrying. Search developer documentation (the developer-documentation MCP server — canonical name tracked in #128 — or `search_web`), edit the command block in `.lab.md` or apply a per-lab transform via `overlay.json` (see [overlay_schema.md](references/overlay_schema.md)), and re-run `tester.py`.
+- **Remediation**: Investigate root cause before retrying. Search developer documentation (the `google-developer-knowledge` MCP server or `search_web`), edit the command block in `.lab.md` or apply a per-lab transform via `overlay.json` (see [overlay_schema.md](references/overlay_schema.md)), and re-run `tester.py`.
 
 #### 2. Category B: Transient Infrastructure Delays
 
