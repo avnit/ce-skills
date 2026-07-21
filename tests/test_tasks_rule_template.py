@@ -29,6 +29,20 @@ class TestTasksRuleTemplate(unittest.TestCase):
             + "\n".join(indented_html_lines),
         )
 
+    def test_tasks_template_contains_project_id_and_test_status_header_fields(self):
+        """Assert template header block contains GCP Project ID and Test Status fields (#112)."""
+        content = TASKS_RULE_PATH.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "GCP Project ID:",
+            content,
+            "tasks.md template header is missing 'GCP Project ID:' field (#112)",
+        )
+        self.assertIn(
+            "Test Status:",
+            content,
+            "tasks.md template header is missing 'Test Status:' field (#112)",
+        )
 
 if __name__ == "__main__":
     unittest.main()

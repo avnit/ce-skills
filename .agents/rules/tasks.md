@@ -30,6 +30,8 @@ Use the following standardized inline-CSS table template. Ensure all placeholder
 </div>
 <div><strong>Started:</strong> [YYYY-MM-DD HH:MM:SS]</div>
 <div><strong>Last Updated:</strong> [YYYY-MM-DD HH:MM:SS]</div>
+<div><strong>GCP Project ID:</strong> [PROJECT_ID / NONE]</div>
+<div><strong>Test Status:</strong> <a href="file:///<appDataDir>/brain/<conversation-id>/test_status.md">[test_status.md]</a></div>
 </div>
 </div>
 <div style="padding: 20px 24px; border-bottom: 1px solid #e8eaed;">
