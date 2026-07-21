@@ -34,6 +34,10 @@ Follow this interactive checklist to create a codelab:
   - **Mandatory Placement**: The generated step-by-step narrative `.lab.md` file MUST be created directly inside the lab's dedicated subdirectory as: `labs/dev/[lab-name]/[lab-name].lab.md`. Do NOT save it in the parent root `labs/dev/`.
   - **Assets & Subdirectories**: Create a `./img/` subdirectory under `labs/dev/[lab-name]/img/` to house all static PNG diagram assets, and reference them inside the `.lab.md` narrative using relative link syntax (e.g., `![](./img/diagram.png)`).
   - **Metadata Files**: Author a standard `OWNERS` file in the lab directory `labs/dev/[lab-name]/OWNERS`.
+- [ ] **Phase 3.5: Pre-Flight Code Audit Gate**
+  - Execute pre-flight code audit on the generated `.lab.md` tutorial before provisioning any GCP resources:
+    `python3 .agents/skills/codelab-validation/scripts/preflight_audit.py labs/dev/[lab-name]/[lab-name].lab.md --check-gcloud-surface --report <appDataDir>/brain/<conversation-id>/preflight_audit_report.md`
+  - **Pre-Flight Audit Gate**: On `FAIL` (due to syntax errors, unresolved `<...>` placeholders, or invalid `gcloud` command groups), auto-remediate `.lab.md` — consulting `google-developer-documentation-mcp` or `search_web` for correct syntax — and re-run until `preflight_audit.py` exits `0` with `PASS`. Only then may Phase 4 GCP provisioning begin.
 - [ ] **Phase 4: Validation & Authoritative Debugging**
   - Execute step-by-step verification using the unified stateful **codelab-validation** skill and the `tester.py` script.
   - **Authoritative Debugging Gate**: If a gcloud or environment error is encountered during validation, you **MUST** query the `google-developer-documentation-mcp` server with the exact error message/command to pull the correct syntax, parameter definitions, and deprecation warnings instead of guessing.
