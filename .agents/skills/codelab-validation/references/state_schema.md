@@ -23,6 +23,18 @@
 | error         | string?  | Detailed error message if status is `FAILED`                              |
 | has_gui       | bool     | Indicates if step requires browser or manual UI interaction               |
 | is_cleanup    | bool     | Indicates if step is marked as a cleanup step (`<!-- phase: cleanup -->`) |
+| units         | object[] | List of per-command unit execution objects                                |
+
+### `units[]` Object Schema
+
+Each entry in `units[]` represents a single executable command unit or compound block:
+
+| Field       | Type   | Description                                                                        |
+| ----------- | ------ | ---------------------------------------------------------------------------------- |
+| text        | string | Executable command unit text or compound block                                     |
+| tier        | string | Classification tier (`flat`, `compound_pure`, `compound_stateful`)                 |
+| status      | string | Unit execution status (`DONE`, `FAILED`, `SKIPPED-CACHED`, `PENDING`)              |
+| output_tail | string | Last ~500 characters of command stdout/stderr output (empty if skipped or pending) |
 
 ## `.tester_state/user_inputs.json`
 

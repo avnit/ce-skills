@@ -226,6 +226,193 @@ class TestTesterExecLoop(unittest.TestCase):
         # Command 2 (echo cmd2-edited) should be re-executed
         self.assertIn("echo cmd2-edited", executed_cmds)
 
+    def test_units_field_flat_three_line_unit_failure(self):
+        """Flat 3-unit block: unit 2 fails => units = [DONE, FAILED, PENDING] in step-001.json."""
+        md_content = (
+            "## Step 1: Flat Units Test\n"
+            "```bash\n"
+            "echo line1\n"
+            "non_existent_command_fails_9999\n"
+            "echo line3\n"
+            "```\n"
+        )
+        md_file = self.tmp_dir / "lab.md"
+        md_file.write_text(md_content, encoding="utf-8")
+
+        t = tester.StatefulCodelabTester(str(md_file))
+        success = t.run()
+
+        self.assertFalse(success)
+        step_1_file = self.tmp_dir / ".tester_state" / "step-001.json"
+        with open(step_1_file, "r") as f:
+            step_json = json.load(f)
+
+        units = step_json.get("units", [])
+        self.assertEqual(len(units), 3)
+
+        self.assertEqual(units[0]["status"], "DONE")
+        self.assertEqual(units[0]["text"], "echo line1")
+        self.assertEqual(units[0]["tier"], "flat")
+
+        self.assertEqual(units[1]["status"], "FAILED")
+        self.assertEqual(units[1]["text"], "non_existent_command_fails_9999")
+        self.assertEqual(units[1]["tier"], "flat")
+        self.assertIn("non_existent_command_fails_9999", units[1]["output_tail"])
+
+        self.assertEqual(units[2]["status"], "PENDING")
+        self.assertEqual(units[2]["text"], "echo line3")
+        self.assertEqual(units[2]["tier"], "flat")
+
+    def test_units_field_skipped_cached_on_resume(self):
+        """Resuming with a cached unit records status SKIPPED-CACHED in step units."""
+        md_content_1 = (
+            "## Step 1: Cache Units\n"
+            "```bash\n"
+            "echo cached_unit_1\n"
+            "echo cached_unit_2\n"
+            "```\n"
+        )
+        md_file = self.tmp_dir / "lab.md"
+        md_file.write_text(md_content_1, encoding="utf-8")
+
+        t1 = tester.StatefulCodelabTester(str(md_file))
+        self.assertTrue(t1.run())
+
+        md_content_2 = (
+            "## Step 1: Cache Units\n"
+            "```bash\n"
+            "echo cached_unit_1\n"
+            "echo new_unit_2\n"
+            "```\n"
+        )
+        md_file.write_text(md_content_2, encoding="utf-8")
+
+        step_1_file = self.tmp_dir / ".tester_state" / "step-001.json"
+        with open(step_1_file, "r") as sf:
+            step_data = json.load(sf)
+        step_data["status"] = "PENDING"
+        with open(step_1_file, "w") as sf:
+            json.dump(step_data, sf)
+
+        t2 = tester.StatefulCodelabTester(str(md_file))
+        self.assertTrue(t2.run())
+
+        with open(step_1_file, "r") as f:
+            step_json = json.load(f)
+
+        units = step_json.get("units", [])
+        self.assertEqual(len(units), 2)
+        self.assertEqual(units[0]["status"], "SKIPPED-CACHED")
+        self.assertEqual(units[0]["text"], "echo cached_unit_1")
+        self.assertEqual(units[1]["status"], "DONE")
+        self.assertEqual(units[1]["text"], "echo new_unit_2")
+
+    def test_units_field_compound_blocks(self):
+        """Compound blocks produce 1 unit entry with tier compound_pure / compound_stateful."""
+        md_content = (
+            "## Step 1: Compound Test\n"
+            "```bash\n"
+            "if [ 1 -eq 1 ]; then\n"
+            "    echo pure\n"
+            "fi\n"
+            "```\n"
+            "```bash\n"
+            "if [ 1 -eq 1 ]; then\n"
+            "    export VAR=stateful\n"
+            "fi\n"
+            "```\n"
+        )
+        md_file = self.tmp_dir / "lab.md"
+        md_file.write_text(md_content, encoding="utf-8")
+
+        t = tester.StatefulCodelabTester(str(md_file))
+        self.assertTrue(t.run())
+
+        step_1_file = self.tmp_dir / ".tester_state" / "step-001.json"
+        with open(step_1_file, "r") as f:
+            step_json = json.load(f)
+
+        units = step_json.get("units", [])
+        self.assertEqual(len(units), 2)
+        self.assertEqual(units[0]["tier"], "compound_pure")
+        self.assertEqual(units[0]["status"], "DONE")
+        self.assertEqual(units[1]["tier"], "compound_stateful")
+        self.assertEqual(units[1]["status"], "DONE")
+
+    def test_html_reporter_subrows_rendering(self):
+        """html_reporter renders per-unit sub-rows with correct chips under step row."""
+        steps = [{
+            "num": 1,
+            "title": "Reporter Units Step",
+            "status": "FAILED",
+            "instructions": "Run commands",
+            "commands": ["echo line1\necho line2"],
+            "units": [
+                {"text": "echo line1", "tier": "flat", "status": "DONE", "output_tail": "line1\n"},
+                {"text": "echo line2", "tier": "flat", "status": "FAILED", "output_tail": "error line2\n"},
+                {"text": "echo line3", "tier": "flat", "status": "PENDING", "output_tail": ""}
+            ]
+        }]
+        html_out = tester.HTMLReporter.generate_board("test-proj", steps)
+        self.assertIn("Step 1: Reporter Units Step", html_out)
+        self.assertIn(">DONE</span>", html_out)
+        self.assertIn(">FAILED</span>", html_out)
+        self.assertIn(">PENDING</span>", html_out)
+        self.assertIn("echo line1</code>", html_out)
+
+    def test_validator_compile_report_units_details(self):
+        """validator.compile_report details include per-unit statuses from step units."""
+        val_path = REPO / ".agents" / "skills" / "codelab-validation" / "scripts" / "validator.py"
+        spec = importlib.util.spec_from_file_location("validator", val_path)
+        val_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(val_mod)
+
+        tester_state_dir = self.tmp_dir / ".tester_state"
+        tester_state_dir.mkdir(parents=True, exist_ok=True)
+
+        progress = {"total_steps": 1, "current_step": 1, "status": "FAILED"}
+        with open(tester_state_dir / "progress.json", "w") as f:
+            json.dump(progress, f)
+
+        step_data = {
+            "num": 1,
+            "title": "Report Step",
+            "status": "FAILED",
+            "units": [
+                {"text": "gcloud info", "tier": "flat", "status": "DONE", "output_tail": ""},
+                {"text": "gcloud fail", "tier": "flat", "status": "FAILED", "output_tail": ""}
+            ]
+        }
+        with open(tester_state_dir / "step-001.json", "w") as f:
+            json.dump(step_data, f)
+
+        report_file = self.tmp_dir / "validation-report.md"
+        val_mod.compile_report(str(tester_state_dir), str(self.tmp_dir), str(report_file), "test-proj", False)
+
+        report_content = report_file.read_text(encoding="utf-8")
+        self.assertIn("[DONE] <code>gcloud info</code>", report_content)
+        self.assertIn("[FAILED] <code>gcloud fail</code>", report_content)
+
+    def test_units_field_live_flush_per_unit(self):
+        """Live flush: 3-unit step calls write_visual_boards at least once per completed unit."""
+        md_content = (
+            "## Step 1: Live Flush Test\n"
+            "```bash\n"
+            "echo unit1\n"
+            "echo unit2\n"
+            "echo unit3\n"
+            "```\n"
+        )
+        md_file = self.tmp_dir / "lab.md"
+        md_file.write_text(md_content, encoding="utf-8")
+
+        t = tester.StatefulCodelabTester(str(md_file))
+        with patch.object(t, "write_visual_boards", wraps=t.write_visual_boards) as mock_boards:
+            success = t.run()
+            self.assertTrue(success)
+            # Should be called at least 3 times (once per completed unit) in addition to step start/finish calls
+            self.assertGreaterEqual(mock_boards.call_count, 3)
+
 
 if __name__ == "__main__":
     unittest.main()
