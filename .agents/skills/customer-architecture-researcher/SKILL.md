@@ -16,9 +16,9 @@ This skill provides the procedural cheatsheet for researching, designing, and va
 
 ## 📋 Execution Workflow
 
-- [ ] **Step 1: Mandatory WAF Discovery via Native WAF Skill (`agent_waf_system`)**
+- [ ] **Step 1: Mandatory WAF Discovery via Native WAF Skill (`agent-waf-system`)**
   - **NEVER** assume customer priorities (e.g. jumping directly to VPN without asking about latency, bandwidth, SLA, and cost).
-  - If the prompt does not explicitly state these requirements, invoke the native **`agent_waf_system`** skill (or delegate to its sub-skills `ce-adr-questionnaire-assistant` and `/run-waf-audit`) to conduct structured WAF discovery via `ask_question`.
+  - If the prompt does not explicitly state these requirements, invoke the native **`agent-waf-system`** skill (or delegate to its sub-skills `ce-adr-questionnaire-assistant` and `/run-waf-audit`) to conduct structured WAF discovery via `ask_question`.
 - [ ] **Step 2: MCP-Driven RAG Research & Citation Sourcing**
   - **NEVER guess or synthesize citation URLs**. You **MUST** use MCP tools (`call_mcp_tool`) to search for authoritative, verified reference documentation.
   - Query **Google Developer Knowledge MCP** (`google-developer-knowledge`) for official public GCP documentation URLs.
@@ -68,7 +68,7 @@ references/<customer_name>/
 ## 💡 Gotchas & Pitfalls
 
 - **Skipping `creating-gcp-diagrams` Execution**: A research report without a rendered high-definition PNG diagram is incomplete. You must invoke `creating-gcp-diagrams` and call `generate_image`.
-- **Jumping to Solutions Without WAF Discovery**: Recommending HA VPN when the customer actually requires sub-10ms 100Gbps Dedicated Interconnect is a major architectural error. Always delegate to the native `agent_waf_system` skill in Step 1.
+- **Jumping to Solutions Without WAF Discovery**: Recommending HA VPN when the customer actually requires sub-10ms 100Gbps Dedicated Interconnect is a major architectural error. Always delegate to the native `agent-waf-system` skill in Step 1.
 - **Hallucinating Documentation URLs**: Never guess or invent `cloud.google.com` link paths from LLM memory. You must actively use MCP search tools to obtain exact URLs and validate them online.
 - **Skipping Online Validation**: Delivering dead or 404 links damages credibility. Always run `validate_citations.py` with `--online`.
 - **Ignoring Preview/Pre-GA Status**: Enterprise customers require stability. Suggesting a Pre-GA feature without a prominent warning in the Executive Summary alert box is a critical failure.
@@ -78,5 +78,5 @@ references/<customer_name>/
 
 ## 📁 Reference Assets & Guidelines
 
-- **[MCP Research & Verification Guide](references/mcp_research_guide.md)**: Deep dive on MCP search queries, diagram generation via `creating-gcp-diagrams`, and WAF validation using native `agent_waf_system`.
+- **[MCP Research & Verification Guide](references/mcp_research_guide.md)**: Deep dive on MCP search queries, diagram generation via `creating-gcp-diagrams`, and WAF validation using native `agent-waf-system`.
 - **[Report Template](assets/report_template.md)**: Mandatory Markdown report layout including diagram scaffolds and citation formatting.

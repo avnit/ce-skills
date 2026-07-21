@@ -11,9 +11,9 @@
 
 [Provide a high-level executive summary of the customer's business drivers, technical objectives, and current pain points. Summarize the proposed architecture and expected business outcomes.]
 
-### WAF Discovery & Customer Priorities (`agent_waf_system` Outcomes)
+### WAF Discovery & Customer Priorities (`agent-waf-system` Outcomes)
 
-Before selecting the hybrid interconnect topology, the following priorities were established via WAF discovery using the native `agent_waf_system` skill:
+Before selecting the hybrid interconnect topology, the following priorities were established via WAF discovery using the native `agent-waf-system` skill:
 
 - **Bandwidth & Throughput**: [e.g., Moderate (< 3 Gbps) | High Throughput (10-100 Gbps)]
 - **Latency Sensitivity & SLA**: [e.g., Mission-Critical 99.99% sub-10ms | Standard 99.99% over internet]
@@ -97,7 +97,7 @@ sequenceDiagram
 
 ## 4. Well-Architected Framework (WAF) Alignment & Verification
 
-This architecture is designed and verified against the Google Cloud Well-Architected Framework pillars using `agent_waf_system`, directly mapping to the priorities gathered during discovery:
+This architecture is designed and verified against the Google Cloud Well-Architected Framework pillars using `agent-waf-system`, directly mapping to the priorities gathered during discovery:
 
 | WAF Pillar                         | Architectural Design Decision & Mitigation                                                             | Verification Evidence / Reference |
 | :--------------------------------- | :----------------------------------------------------------------------------------------------------- | :-------------------------------- |

@@ -6,9 +6,7 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO / ".agents" / "skills"
 
 # Allowlist for directories under .agents/skills/ that do not contain a SKILL.md.
-# Tracked in #131: agent_waf_system is a legacy container directory housing sub-skills.
 MANIFESTLESS_DIRS_ALLOWLIST = {
-    "agent_waf_system",  # Tracked by #131
     "reports",  # Subdirectory housing skill review reports
 }
 
@@ -20,6 +18,7 @@ OLD_UNDERSCORE_SKILL_NAMES = [
     "customer_meeting_prep",
     "creating_gcp_diagrams",
     "extracting_requirements_from_meetings",
+    "agent_waf_system",
 ]
 
 
@@ -91,8 +90,11 @@ class TestSkillNameDirParity(unittest.TestCase):
         except Exception:
             return
 
+        # Ignore backend blaze build-target identifier //agent_waf_system:mcp_server in orchestrator.py
+        content_to_check = content.replace("//agent_waf_system:mcp_server", "")
+
         for old_name in OLD_UNDERSCORE_SKILL_NAMES:
-            if old_name in content:
+            if old_name in content_to_check:
                 rel_path = file_path.relative_to(REPO)
                 hits.append(f"{rel_path}: contains deprecated name '{old_name}'")
 

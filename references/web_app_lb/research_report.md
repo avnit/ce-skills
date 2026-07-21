@@ -11,7 +11,7 @@
 
 An enterprise customer is architecting a secure, highly available **Web Application Ingress architecture** in Google Cloud Platform (GCP) to serve public internet clients. The core architectural objectives are global multi-region traffic distribution, automated DDoS and Web Application Firewall (WAF) perimeter defense, zero-bottleneck container-native load balancing to Google Kubernetes Engine (GKE), and streamlined lifecycle management of TLS/SSL certificates.
 
-### WAF Discovery & Customer Priorities (`agent_waf_system` Outcomes)
+### WAF Discovery & Customer Priorities (`agent-waf-system` Outcomes)
 
 Before selecting the load balancing and ingress topology, the following trade-off priorities were established via WAF discovery:
 
@@ -105,7 +105,7 @@ sequenceDiagram
 
 ## 4. Well-Architected Framework (WAF) Alignment & Verification
 
-This architecture has been audited against the 5 pillars of the Google Cloud Well-Architected Framework (WAF) using `agent_waf_system`, directly addressing the customer's stated trade-off priorities:
+This architecture has been audited against the 5 pillars of the Google Cloud Well-Architected Framework (WAF) using `agent-waf-system`, directly addressing the customer's stated trade-off priorities:
 
 | WAF Pillar                         | Architectural Design Decision & Mitigation                                                                                                                                                                                                                                                | Verification Evidence / Reference                                                                          |
 | :--------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------- |

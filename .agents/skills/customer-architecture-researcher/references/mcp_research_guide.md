@@ -4,13 +4,13 @@ This guide outlines the multi-source RAG research, authoritative citation sourci
 
 ---
 
-## 1. Native WAF Discovery via `agent_waf_system` (`ask_question`)
+## 1. Native WAF Discovery via `agent-waf-system` (`ask_question`)
 
 When a Customer Engineering (CE) prompt or question lacks critical context (e.g., bandwidth requirements, existing cloud providers, security constraints, IP overlap constraints, or hybrid connectivity preference), you **MUST NOT** hallucinate or assume arbitrary requirements.
 
 ### Protocol:
 
-1. Do not replicate custom WAF questionnaires. Instead, delegate directly to the native **`agent_waf_system`** skill (and its sub-skills `ce-adr-questionnaire-assistant` or the `/run-waf-audit` workflow).
+1. Do not replicate custom WAF questionnaires. Instead, delegate directly to the native **`agent-waf-system`** skill (and its sub-skills `ce-adr-questionnaire-assistant` or the `/run-waf-audit` workflow).
 2. Use `ask_question` as instructed by the native WAF skill to gather customer trade-off preferences (bandwidth, latency, SLA, cost vs. redundancy).
 3. Document the customer's selected priorities directly in Section 1 (Executive Summary) and Section 4 (WAF Alignment) of the research report.
 
@@ -120,7 +120,7 @@ python3 .agents/skills/customer-architecture-researcher/scripts/validate_citatio
 
 ## 7. Well-Architected Framework (WAF) Verification
 
-To ensure enterprise-grade quality, audit the proposed design against the 5 pillars of the Google Cloud Well-Architected Framework (WAF) using the native `agent_waf_system` skill:
+To ensure enterprise-grade quality, audit the proposed design against the 5 pillars of the Google Cloud Well-Architected Framework (WAF) using the native `agent-waf-system` skill:
 
 1. **Operational Excellence**: IaC deployment, telemetry, CI/CD, and audit logging.
 2. **Security, Privacy & Compliance**: Least-privilege IAM, VPC Service Controls, encryption in transit/at rest.
