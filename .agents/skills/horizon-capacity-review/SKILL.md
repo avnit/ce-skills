@@ -79,9 +79,15 @@ Before calling `CreateCapacityDemand`, `UpdateCapacityDemand`, or `SubmitCapacit
 - When constructing `CreateCapacityDemand` or `UpdateCapacityDemand` mutation payloads, always encode enums as **integer** values (e.g., `"state": 1` for `DRAFT`). See [api_guide.md](references/api_guide.md) for full enum-to-integer mapping tables.
 - You may only invoke `UpdateCapacityDemand` on existing demands that are currently in `CAPACITY_DEMAND_STATE_DRAFT` (`int: 1`). Never attempt to update requests that are `SUBMITTED` (`int: 4`) or `ACKNOWLEDGED` (`int: 3`).
 
-### Provide Actionable UI Confirmation
+### Provide Actionable UI Confirmation & Canonical URL Construction
 
-Upon successful creation or submission, output a clear confirmation card along with the canonical Horizon review URL so the CE can inspect the request right in the web portal:
+Upon successful creation or submission, use `scripts/url_builder.py` to construct the canonical Horizon review URL:
+
+```bash
+python3 .agents/skills/horizon-capacity-review/scripts/url_builder.py --request_id {request_id} --customer_id {customer_id} --env prod
+```
+
+Output a clear confirmation card along with the canonical Horizon review URL so the CE can inspect the request in the web portal:
 
 ```markdown
 ✅ **Capacity Demand Submitted Successfully**
@@ -91,10 +97,10 @@ Upon successful creation or submission, output a clear confirmation card along w
 - **Primary SKU / Shape**: `{sku_or_shape}`
 - **Total Cores / RAM**: `{cores} vCPUs / {ram} GB`
 - **Target Location**: `{location}`
-- **Review in Horizon Portal**: [Inspect Demand #{request_id}](https://horizon-staging.corp.google.com/customers/external/{customer_id}/projects/{project_number}/review?requestId={request_id})
+- **Review in Horizon Portal**: [Inspect Demand #{request_id}](https://horizon.corp.google.com/customers/external/{customer_id}/review?requestId={request_id}) | [Direct Link](https://horizon.corp.google.com/demands/{request_id})
 ```
 
-_(Note: If `project_number` is internal or invalid, omit the URL and show only `request_id` and summary)._
+_(Note: For staging environment, pass `--env staging` which formats `https://horizon-staging.corp.google.com/...`)._
 
 ---
 
