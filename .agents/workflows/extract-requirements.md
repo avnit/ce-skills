@@ -62,11 +62,11 @@ You are an autonomous **Solutions Engineering Orchestrator** operating in a 10/1
 
 ### 6. Phase 6: Gate B - Interactive Testing & Validation
 
-- **Pre-Flight Constraint**: Output checklist confirming: '[ ] Clean environment. [ ] Run create_project.py. [ ] Run disable_org_policies.sh'.
+- **Pre-Flight Constraint**: Output checklist confirming: '[ ] Clean environment. [ ] Run create_project.py (automatically disables org policies unless --skip-org-policies passed)'.
 - **Validation Inquiry Gate**: Pause execution and call **`ask_question`** to ask the user if they want to run E2E verification testing. Make live execution recommended: `(Recommended) Execute live E2E verification testing against sandbox (with --skip-cleanup)`.
 - If yes:
   - Execute `gcloud-auth-verification` skill to verify credentials.
-  - **MANDATORY CLEAN PROVISIONING**: Execute `python3 .agents/skills/gcp-provisioning/scripts/create_project.py <customer_name>-poc` to spin up a fresh sandbox project and run `disable_org_policies.sh`. NEVER reuse developer project IDs.
+  - **MANDATORY CLEAN PROVISIONING**: Execute `python3 .agents/skills/gcp-provisioning/scripts/create_project.py <customer_name>-poc` to spin up a fresh sandbox project (which automatically disables org policies). NEVER reuse developer project IDs.
   - **ARCHITECTURAL-VALIDATION PARITY**: Steps in `test_plan.md` MUST strictly match `design_blueprint.md` topology. Include commands to verify or provision specific resources.
   - **Pre-Execution Interaction**: Parse `test_plan.md` and ask user to confirm missing runtime environment variables before execution.
   - **Self-Healing Execution Loop**: Execute validation engine: `python3 .agents/skills/codelab-validation/scripts/tester.py meeting/<customer_name>/test_plan.md --project-id "<PROVISIONED_PROJECT_ID>" --artifact-dir <appDataDir>/brain/<conversation-id> --phase test` (Note: `<PROVISIONED_PROJECT_ID>` is provisioned via `create_project.py`). Autonomously patch or poll up to 3 times on transient errors. Whenever you autonomously solve a validation or script error, strictly update the bug JSON status to `FIXED`, log what failed, what worked, and how it resolved the bug into `remediation`, and run `python3 .agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py --scan-dir meeting/<customer_name>/bugs` before proceeding.

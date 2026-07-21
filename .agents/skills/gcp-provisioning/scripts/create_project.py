@@ -54,6 +54,62 @@ def run_command(command, dry_run=False, capture_output=False, check_return=True)
         return (False, "", "") if capture_output else False
 
 
+TARGET_ORG_POLICIES = [
+    "compute.requireShieldedVm",
+    "iam.disableServiceAccountKeyCreation",
+    "iam.disableServiceAccountKeyUpload",
+    "compute.requireOsLogin",
+    "compute.vmExternalIpAccess",
+    "compute.restrictVpcPeering",
+    "compute.restrictProtocolForwardingCreationForTypes",
+    "compute.vmCanIpForward",
+    "compute.restrictVpnPeerIPs"
+]
+
+def disable_org_policies(project_id, dry_run=False):
+    """Invokes disable_org_policies.sh script for project_id with streamed output.
+
+    If execution returns a non-zero exit code, prints a loud warning listing
+    the enforced policies while allowing project creation to exit 0.
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    disabler_script = os.path.join(script_dir, "disable_org_policies.sh")
+
+    cmd = f"bash {disabler_script} {project_id}"
+    print(f"\nRunning org-policy disabler: {cmd}")
+
+    if dry_run:
+        print(f"[DRY RUN] Executing: {cmd}")
+        return True
+
+    try:
+        process = subprocess.Popen(
+            ["bash", disabler_script, project_id],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        if process.stdout:
+            for line in process.stdout:
+                sys.stdout.write(line)
+                sys.stdout.flush()
+        process.wait()
+        return_code = process.returncode
+    except Exception as e:
+        print(f"Error executing org-policy disabler script: {e}")
+        return_code = 1
+
+    if return_code != 0:
+        print("\n" + "=" * 60)
+        print(f"WARNING: Org-policy disabler failed (exit code {return_code}).")
+        print(f"Project {project_id} is usable, but the following org policies remain enforced:")
+        for policy in TARGET_ORG_POLICIES:
+            print(f"  - {policy}")
+        print("=" * 60 + "\n")
+
+    return True
+
 def is_billing_enabled(project_id, dry_run=False):
     """Checks if billing is enabled for the given project."""
     if dry_run:
@@ -72,6 +128,7 @@ def main():
     parser.add_argument("lab_name", help="The name of the lab (e.g., ncc-vpc).")
     parser.add_argument("round_number", nargs="?", help="A unique round number (e.g., 101). If omitted, a random one is generated.")
     parser.add_argument("--dry-run", action="store_true", help="Print commands without executing them.")
+    parser.add_argument("--skip-org-policies", action="store_true", help="Skip automatic org-policy disabling after project creation.")
     
     args = parser.parse_args()
     
@@ -179,7 +236,13 @@ def main():
     if not api_success:
         print(f"Failed to enable APIs for project {project_id} after 3 attempts.")
         sys.exit(1)
-        
+
+    # 6. Disable Org Policies automatically
+    if args.skip_org_policies:
+        print(f"Skipping org-policy disabler for {project_id} (--skip-org-policies specified).")
+    else:
+        disable_org_policies(project_id, dry_run=args.dry_run)
+
     print(f"\nSUCCESS: Project {project_id} setup complete.")
 
     print(f"\nProject {project_id} is ready for use.")
