@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from typing import Any, Dict, List, Tuple
@@ -92,11 +93,15 @@ def check_interactive_traps(unit: str) -> List[str]:
     if (
         "gcloud compute instances create" in unit_lower
         or "gcloud compute instance-templates create" in unit_lower
-    ) and not ("--image-family" in unit_lower or "--image-project" in unit_lower):
-        warnings.append(
-            "VM/Template creation missing explicit `--image-family` or `--image-project` flags. "
-            "Default image families may drift or require interactive prompts (Gotcha #2)."
-        )
+    ):
+        has_family = "--image-family" in unit_lower
+        has_project = "--image-project" in unit_lower
+        has_image = "--image" in unit_lower or "--image=" in unit_lower
+        if not ((has_family and has_project) or has_image):
+            warnings.append(
+                "VM/Template creation missing explicit `--image-family` and `--image-project` (or `--image`) flags. "
+                "Default image families may drift or require interactive prompts (Gotcha #2)."
+            )
 
     # Trap 4: sudo usage
     if re.search(r"\bsudo\b", unit):
@@ -165,6 +170,11 @@ def audit_codelab(
     """Audits codelab markdown file execution units."""
     if not os.path.exists(markdown_path):
         raise FileNotFoundError(f"Codelab file not found: {markdown_path}")
+
+    if check_gcloud and not shutil.which("gcloud"):
+        raise RuntimeError(
+            "Surface check requested (--check-gcloud-surface), but 'gcloud' binary was not found on PATH."
+        )
 
     variables = None
     if variables_path:

@@ -37,7 +37,7 @@ Follow this interactive checklist to create a codelab:
 - [ ] **Phase 3.5: Pre-Flight Code Audit Gate**
   - Execute pre-flight code audit on the generated `.lab.md` tutorial before provisioning any GCP resources:
     `python3 .agents/skills/codelab-validation/scripts/preflight_audit.py labs/dev/[lab-name]/[lab-name].lab.md --check-gcloud-surface --report <appDataDir>/brain/<conversation-id>/preflight_audit_report.md`
-  - **Pre-Flight Audit Gate**: On `FAIL` (due to syntax errors, unresolved `<...>` placeholders, or invalid `gcloud` command groups), auto-remediate `.lab.md` — consulting `google-developer-documentation-mcp` or `search_web` for correct syntax — and re-run until `preflight_audit.py` exits `0` with `PASS`. Only then may Phase 4 GCP provisioning begin.
+  - **Pre-Flight Audit Gate**: On `FAIL` (due to syntax errors, unresolved `<...>` placeholders, or invalid `gcloud` command groups), auto-remediate `.lab.md` — consulting the developer-documentation MCP server (canonical name tracked in #128) or `search_web` for correct syntax — and re-run until `preflight_audit.py` exits `0` with `PASS`. Only then may Phase 4 GCP provisioning begin.
 - [ ] **Phase 4: Validation & Authoritative Debugging**
   - Execute step-by-step verification using the unified stateful **codelab-validation** skill and the `tester.py` script.
   - **Authoritative Debugging Gate**: If a gcloud or environment error is encountered during validation, you **MUST** query the `google-developer-documentation-mcp` server with the exact error message/command to pull the correct syntax, parameter definitions, and deprecation warnings instead of guessing.

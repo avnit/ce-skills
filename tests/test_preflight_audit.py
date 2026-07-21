@@ -166,6 +166,23 @@ echo "testing report generation"
         self.assertIn("# Phase 3.5 Pre-Flight Code Audit Report", saved_content)
         self.assertIn("**`PASS`**", saved_content)
 
+    @patch("shutil.which")
+    def test_check_gcloud_surface_without_gcloud_on_path_raises_clear_error(
+        self, mock_which
+    ):
+        """Surface check requested when gcloud is missing from PATH raises RuntimeError."""
+        mock_which.return_value = None
+        content = """# Test Lab
+```bash
+gcloud compute instances create my-vm
+```
+"""
+        lab_path = self._create_temp_lab(content)
+        with self.assertRaises(RuntimeError) as cm:
+            audit_codelab(lab_path, check_gcloud=True)
+
+        self.assertIn("'gcloud' binary was not found on PATH", str(cm.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
