@@ -76,11 +76,13 @@ _Rule: Save the resulting image to `references/<customer_name>/assets/architectu
 **CRITICAL MANDATE: Never synthesize, guess, or construct links from memory.** You must ground all documentation and citation links using the following protocol:
 
 ### Protocol:
+
 1. **Primary MCP Method**: Query the `google-developer-knowledge` MCP server using tool `search_documents` (e.g. `ServerName: "google-developer-knowledge"`, `Query: "<topic>"`).
 2. **Fallback Web Search Method**: If `call_mcp_tool` is not present in your active tool declarations, execute `search_web` restricted strictly to `site:docs.cloud.google.com`.
 3. **Grounding Rule**: All generated citation links MUST use the domain prefix `https://docs.cloud.google.com/...`.
 
 ### Key Tools:
+
 - **`call_mcp_tool` (Server: `google-developer-knowledge`, Tool: `search_documents`)**: Search for public whitepapers, architectural guides, and API documentation (e.g., query `"Cross-cloud network interconnect AWS Azure GCP"` or `"Private Service Connect hybrid DNS"`).
 - **`call_mcp_tool` (Server: `google-developer-knowledge`, Tool: `answer_query`)**: Retrieve targeted answers to architectural questions.
 - **Sourcing Rule**: Copy exact URLs with `https://docs.cloud.google.com/...` prefix into your report's citation section.
