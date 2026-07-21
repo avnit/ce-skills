@@ -456,16 +456,27 @@ def compile_report(tester_state_dir, report_dir, report_path, project_id, overal
         else:
             badge = "⚪ PENDING"
             
-        details = s.get("output", "").strip()
-        if not details:
-            details = s.get("error", "").strip()
-        if not details:
-            details = s.get("instructions", "")
-            
-        # Clean details for table display
-        details = details.replace("\n", "<br>").replace("|", "\\|")
-        if len(details) > 300:
-            details = details[:297] + "..."
+        units_data = s.get("units", [])
+        if units_data:
+            unit_lines = []
+            for u in units_data:
+                u_st = u.get("status", "PENDING")
+                u_tx = u.get("text", "").strip()
+                if len(u_tx) > 60:
+                    u_tx = u_tx[:57] + "..."
+                u_tx = u_tx.replace("|", "\\|").replace("\n", " ")
+                unit_lines.append(f"[{u_st}] <code>{u_tx}</code>")
+            details = "<br>".join(unit_lines)
+        else:
+            details = s.get("output", "").strip()
+            if not details:
+                details = s.get("error", "").strip()
+            if not details:
+                details = s.get("instructions", "")
+            # Clean details for table display
+            details = details.replace("\n", "<br>").replace("|", "\\|")
+            if len(details) > 300:
+                details = details[:297] + "..."
             
         report.append(f"| Step {num} | {title} | {badge} | {details} |")
         

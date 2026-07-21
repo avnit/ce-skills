@@ -278,6 +278,7 @@ class StatefulCodelabTester:
                 "error": "",
                 "has_gui": has_gui,
                 "is_cleanup": is_cleanup,
+                "units": [],
             })
             step_num += 1
             
@@ -302,14 +303,16 @@ class StatefulCodelabTester:
                         with open(step_file, "r") as sf:
                             cached_step = json.load(sf)
                         
-                        # If the step was already successfully completed, preserve its DONE status and outputs
+                        # If the step was already successfully completed, preserve its DONE status and outputs/units
                         if cached_step.get("status") == "DONE":
                             fresh_step["status"] = "DONE"
                             fresh_step["output"] = cached_step.get("output", "")
                             fresh_step["error"] = cached_step.get("error", "")
+                            fresh_step["units"] = cached_step.get("units", [])
                         # If it was failed or pending, we keep the fresh step's new commands and set status to FAILED/PENDING
                         else:
                             fresh_step["status"] = cached_step.get("status", "FAILED")
+                            fresh_step["units"] = []
                     except Exception:
                         pass
                 
@@ -471,6 +474,7 @@ class StatefulCodelabTester:
                     logging.info("[Tester] Skipping cleanup step %d: %s (deferred to explicit cleanup phase)", step["num"], step["title"])
                     step["status"] = "DEFERRED"
                     step["output"] = "Deferred to explicit cleanup phase."
+                    step["units"] = []
                     continue
                 elif self.phase == "cleanup" and not is_cleanup_step:
                     logging.info("[Tester] Skipping non-cleanup step %d: %s during cleanup phase", step["num"], step["title"])
@@ -484,92 +488,89 @@ class StatefulCodelabTester:
                 if not step["commands"]:
                     logging.info("[Tester] Step has no commands. Marked as SKIPPED/NO-OP.")
                     step["status"] = "SKIPPED/NO-OP"
+                    step["units"] = []
                     continue
 
                 step_failed = False
                 step_outputs = []
                 step_errors = []
                 failed_command_str = ""
+                step_units = []
 
+                # Pre-extract all unit tuples for the step
+                all_unit_tuples = []
                 for block in step["commands"]:
                     sanitized_block = sanitize_command(block, project_id=self.project_id, custom_vars=custom_vars)
                     tier, units = classify_block(sanitized_block)
-
                     if tier == "flat":
-                        for unit in units:
-                            unit_hash = get_cmd_hash(unit)
-                            if unit_hash in executed_hashes:
-                                logging.info("[Tester] Command already in cache. Skipping execution.")
-                                continue
+                        for u in units:
+                            all_unit_tuples.append((u, "flat"))
+                    else:
+                        all_unit_tuples.append((sanitized_block, tier))
 
-                            status, output = runner.run_command(unit, timeout=self.timeout)
-                            if status != 0:
-                                step_failed = True
-                                step["status"] = "FAILED"
-                                step["error"] = f"Command failed with status {status}.\nOutput:\n{output}"
-                                step_errors.append(step["error"])
-                                failed_command_str = unit
-                                break
+                for u_text, u_tier in all_unit_tuples:
+                    if step_failed:
+                        step_units.append({
+                            "text": u_text,
+                            "tier": u_tier,
+                            "status": "PENDING",
+                            "output_tail": ""
+                        })
+                        continue
 
-                            step_outputs.append(output)
-                            executed_hashes.append(unit_hash)
-                            with open(state_file, "a") as f:
-                                f.write(unit_hash + "\n")
-                            runner.run_command(f"export -p > {env_file}")
+                    u_hash = get_cmd_hash(u_text)
+                    if u_hash in executed_hashes:
+                        logging.info("[Tester] Command already in cache. Skipping execution.")
+                        step_units.append({
+                            "text": u_text,
+                            "tier": u_tier,
+                            "status": "SKIPPED-CACHED",
+                            "output_tail": ""
+                        })
+                        continue
 
-                        if step_failed:
-                            break
-
-                    elif tier == "compound_pure":
-                        block_hash = get_cmd_hash(sanitized_block)
-                        if block_hash in executed_hashes:
-                            logging.info("[Tester] Command already in cache. Skipping execution.")
-                            continue
-
-                        wrapped_cmd = f"( set -eo pipefail\n{sanitized_block}\n)"
+                    if u_tier == "flat":
+                        status, output = runner.run_command(u_text, timeout=self.timeout)
+                    elif u_tier == "compound_pure":
+                        wrapped_cmd = f"( set -eo pipefail\n{u_text}\n)"
                         status, output = runner.run_command(wrapped_cmd, timeout=self.timeout)
-                        if status != 0:
-                            step_failed = True
-                            step["status"] = "FAILED"
-                            step["error"] = f"Command failed with status {status}.\nOutput:\n{output}"
-                            step_errors.append(step["error"])
-                            failed_command_str = sanitized_block
-                            break
-
-                        step_outputs.append(output)
-                        executed_hashes.append(block_hash)
-                        with open(state_file, "a") as f:
-                            f.write(block_hash + "\n")
-                        runner.run_command(f"export -p > {env_file}")
-
-                    elif tier == "compound_stateful":
-                        block_hash = get_cmd_hash(sanitized_block)
-                        if block_hash in executed_hashes:
-                            logging.info("[Tester] Command already in cache. Skipping execution.")
-                            continue
-
+                    elif u_tier == "compound_stateful":
                         warning_msg = (
                             "[WARNING] Intermediate command failures inside this compound stateful block "
                             "cannot be verified. Consider restructuring into flat commands or using phase markers."
                         )
                         logging.warning("[Tester] %s", warning_msg)
+                        status, raw_output = runner.run_command(u_text, timeout=self.timeout)
+                        output = f"{warning_msg}\n{raw_output}" if raw_output else warning_msg
 
-                        status, output = runner.run_command(sanitized_block, timeout=self.timeout)
-                        full_output = f"{warning_msg}\n{output}" if output else warning_msg
+                    out_tail = output[-500:] if output else ""
 
-                        if status != 0:
-                            step_failed = True
-                            step["status"] = "FAILED"
-                            step["error"] = f"Command failed with status {status}.\nOutput:\n{full_output}"
-                            step_errors.append(step["error"])
-                            failed_command_str = sanitized_block
-                            break
-
-                        step_outputs.append(full_output)
-                        executed_hashes.append(block_hash)
+                    if status != 0:
+                        step_failed = True
+                        step["status"] = "FAILED"
+                        step["error"] = f"Command failed with status {status}.\nOutput:\n{output}"
+                        step_errors.append(step["error"])
+                        failed_command_str = u_text
+                        step_units.append({
+                            "text": u_text,
+                            "tier": u_tier,
+                            "status": "FAILED",
+                            "output_tail": out_tail
+                        })
+                    else:
+                        step_outputs.append(output)
+                        executed_hashes.append(u_hash)
                         with open(state_file, "a") as f:
-                            f.write(block_hash + "\n")
+                            f.write(u_hash + "\n")
                         runner.run_command(f"export -p > {env_file}")
+                        step_units.append({
+                            "text": u_text,
+                            "tier": u_tier,
+                            "status": "DONE",
+                            "output_tail": out_tail
+                        })
+
+                step["units"] = step_units
 
                 if step_failed:
                     self.save_state(idx, "FAILED")
@@ -581,6 +582,8 @@ class StatefulCodelabTester:
                 # Step successfully completed
                 step["status"] = "DONE"
                 step["output"] = "\n".join(step_outputs)
+                self.save_state(idx, "IN PROGRESS")
+                self.write_visual_boards("IN PROGRESS")
                 
             # All steps done!
             self.save_state(len(self.steps) - 1, "COMPLETED")
