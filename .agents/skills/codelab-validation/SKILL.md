@@ -80,6 +80,7 @@ When `tester.py` returns `FAILED`:
 
 - **Indicators**: `gcloud` unknown flag, invalid syntax, missing argument, or YAML parse error.
 - **Remediation**: Investigate root cause before retrying. Search developer documentation (the `google-developer-knowledge` MCP server or `search_web`), edit the command block in `.lab.md` or apply a per-lab transform via `overlay.json` (see [overlay_schema.md](references/overlay_schema.md)), and re-run `tester.py`.
+- **Sandbox vs Narrative Doctrine**: **SYNTAX errors** are fixed directly in the `.lab.md` narrative. **ENVIRONMENT-specific remediations** (org-policy flags, sandbox quota/zone workarounds, `--no-address`, `--shielded-secure-boot`) go ONLY into the lab's `overlay.json`, NEVER into the published narrative (readers' org environments differ; baking sandbox-specific workaround flags into tutorials is forbidden).
 
 #### 2. Category B: Transient Infrastructure Delays
 
