@@ -45,6 +45,6 @@ The script executes the following deterministic operations:
 1. **Persona Rule Binding**: Creates `.agents/rules/persona.md` configured with the exact architectural depth and tooling mappings for the chosen role.
 2. **Credential Configuration**: Writes `gcp_config.txt` containing clean `key=value` pairs.
 3. **MCP Configuration Injection**: Updates `.gemini/mcp_config.json` to inject `X-goog-user-project` headers for `google-developer-documentation-mcp` and ensures the `workspace` MCP server binary is registered.
-4. **Piper CompanyDoc Readiness Check**: Verifies if an active CitC/Fig workspace under `/google/src/cloud/$USER/*` includes the `/company` view.
+4. **Piper CompanyDoc Readiness Check**: Verifies if an active CitC/Fig workspace under `${CITC_WORKSPACE_ROOT:-/google/src/cloud/$USER/<your-client>}` includes the `/company` view.
 5. **Sidecar & Cache Sync**: Pre-warms Mermaid CLI caching and triggers `sync_sidecars.sh`.
 6. **Community Group Membership**: Prompts and verifies membership in `ce-skills-users@google.com` via self-service web link or CLI `membership_tool` using tickets under Buganizer Component ID `2150801`.

@@ -21,7 +21,7 @@ This script performs six key categories of checks:
 
 1. **GCP Config Check**: Validates that `./gcp_config.txt` exists in the repository root and contains non-empty parameters for required keys (`folder_id`, `billing_account`, `billing_project`), as well as tracking for `billing_table`, `piper_workspace`, and `cloudtop_host`.
 2. **Systems Engineering Persona Check**: Validates that `./.agents/rules/persona.md` exists and binds an active Customer Engineering role (`Practice CE`, `Platform CE`, or `Outcome CE`).
-3. **CitC CompanyDoc Readiness Check**: Verifies that `/google/src/cloud/$USER/$piper_workspace/company` is initialized and accessible for internal g3doc/CompanyDoc publishing.
+3. **CitC CompanyDoc Readiness Check**: Verifies that `${CITC_WORKSPACE_ROOT:-/google/src/cloud/$USER/$piper_workspace}/company` is initialized and accessible for internal g3doc/CompanyDoc publishing.
 4. **Background Sidecar Daemons Check**: Scans `./.agents/sidecars` to ensure background automated cost and sweep daemons (e.g., `codelab-cleanup`) are valid JSON and synced.
 5. **Python Dependencies Check**: Verifies essential authentication and API libraries (`googleapiclient`, `google.auth`) are installed in the host python environment.
 6. **MCP Servers Connectivity Check**: Parses `./.gemini/mcp_config.json` and verifies local command-based servers (like `workspace`) and tests HTTP JSON-RPC POST connectivity for documentation servers.

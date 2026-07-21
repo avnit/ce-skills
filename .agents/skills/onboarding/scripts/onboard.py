@@ -289,13 +289,14 @@ The user environment is operating under the following primary Customer Engineeri
 
     # 4. Check & Initialize Piper CompanyDoc Workspace
     username = os.environ.get("USER") or os.environ.get("LOGNAME") or getpass.getuser()
-    target_client_dir = f"/google/src/cloud/{username}/{args.piper_workspace}"
+    citc_base_dir = os.environ.get("CITC_BASE_DIR") or f"/google/src/cloud/{username}"
+    target_client_dir = os.environ.get("CITC_WORKSPACE_ROOT") or os.path.join(citc_base_dir, args.piper_workspace)
     target_company_dir = os.path.join(target_client_dir, "company")
     
     if os.path.exists(target_company_dir):
         print(f"✅ Verified preferred Piper CompanyDoc workspace: {target_company_dir}")
-    elif os.path.exists("/google/src/cloud"):
-        print(f"ℹ️ Preferred Piper workspace '{args.piper_workspace}' not found under /google/src/cloud/{username}/.")
+    elif os.path.exists(citc_base_dir) or os.path.exists("/google/src/cloud"):
+        print(f"ℹ️ Preferred Piper workspace '{args.piper_workspace}' not found under {citc_base_dir}.")
         print(f"🔨 Attempting to initialize CitC client '{args.piper_workspace}'...")
         res = subprocess.run(["g4", "client", "-c", args.piper_workspace], capture_output=True, text=True)
         if res.returncode == 0 or os.path.exists(target_company_dir):

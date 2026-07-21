@@ -83,7 +83,8 @@ def check_persona_binding():
         return False, f"Failed to read persona.md: {e}"
 
 def check_citc_companydoc():
-    if not os.path.exists("/google/src/cloud"):
+    citc_base = os.environ.get("CITC_BASE_DIR") or "/google/src/cloud"
+    if not os.path.exists(citc_base) and not os.path.exists("/google/src/cloud"):
         return True, "Offline/External environment detected. Skipping CitC CompanyDoc check."
     user = os.environ.get("USER") or os.environ.get("LOGNAME")
     if not user:
@@ -91,7 +92,8 @@ def check_citc_companydoc():
     
     ws_name = ce_config.get("piper_workspace", "ce-skills")
     
-    company_dir = f"/google/src/cloud/{user}/{ws_name}/company"
+    citc_ws = os.environ.get("CITC_WORKSPACE_ROOT") or f"/google/src/cloud/{user}/{ws_name}"
+    company_dir = os.path.join(citc_ws, "company")
     if os.path.exists(company_dir):
         return True, f"Verified CitC CompanyDoc publishing workspace at <code>{company_dir}</code>."
     return False, f"CitC CompanyDoc view not found at <code>{company_dir}</code>.<br>Please run <code>g4 client -c {ws_name}</code>."
