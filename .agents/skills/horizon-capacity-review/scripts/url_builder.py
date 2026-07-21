@@ -6,8 +6,6 @@ SFDC Account IDs, and Project Numbers according to the official Horizon Angular 
 
 import argparse
 import json
-import re
-import sys
 from typing import Dict, Optional
 
 

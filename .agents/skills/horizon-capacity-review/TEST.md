@@ -8,7 +8,7 @@ Ensure the developer / CE workspace has access to the skill rules and local vali
 
 ```bash
 # Build the local validation script binary with inline payload_json support
-blaze build //experimental/users/shacharb/skills/horizon-capacity-review/scripts:demand_validator
+blaze build //experimental/users/<username>/skills/horizon-capacity-review/scripts:demand_validator
 ```
 
 ## Scenario 1: Shapeless Demand Intake & HITL Submission

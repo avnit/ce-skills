@@ -10,7 +10,7 @@ import argparse
 import json
 import os
 import sys
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List, Tuple
 
 # Known enum string vs integer mappings for CapacityDemandState
 VALID_STATE_INTEGERS = {1, 2, 3, 4, 5, 6}  # e.g., 1=DRAFT, 2=UNDER_ASSESSMENT

@@ -48,7 +48,7 @@ Do not override any fields explicitly specified by the CE or customer (e.g., reg
 Before preparing the request for human confirmation, run the offline Python validator on your JSON payload string (`--payload_json`) using `run_command` in Cider:
 
 ```bash
-blaze run //experimental/users/shacharb/skills/horizon-capacity-review/scripts:demand_validator -- --payload_json='{"customer_id": "external/12345", "location": "us-central1", "state": 1, "resources": [{"cpu_cores": 480, "ram_gb": 1920, "ramp_schedule": [{"start_date": "2026-Q3"}]}]}'
+blaze run //experimental/users/<username>/skills/horizon-capacity-review/scripts:demand_validator -- --payload_json='{"customer_id": "external/12345", "location": "us-central1", "state": 1, "resources": [{"cpu_cores": 480, "ram_gb": 1920, "ramp_schedule": [{"start_date": "2026-Q3"}]}]}'
 ```
 
 _(Alternatively, write the JSON to `scratch/proposal.json` and pass `--demand_json_path=scratch/proposal.json`)._

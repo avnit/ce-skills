@@ -3,7 +3,7 @@
 **Document Version**: 1.0  
 **Date**: 2026-07-13  
 **Target System**: Horizon `DemandManagerService` (`go/horizon-api-user-guide` / `go/cloud-ca`)  
-**Evaluated Skill**: `horizon-capacity-review` (`//depot/google3/experimental/users/shacharb/skills/horizon-capacity-review/SKILL.md`)  
+**Evaluated Skill**: `horizon-capacity-review` (`//depot/google3/experimental/users/<username>/skills/horizon-capacity-review/SKILL.md`)  
 **Task Prompt**: _"Give me a list of the most recent 10 Horizon Capacity requests for NorthAm"_
 
 ---
