@@ -30,7 +30,7 @@ python3 .agents/skills/codelab-validation/scripts/tester.py \
 - `--phase {test|cleanup|all}` _(Default: `test`)_: Execution phase scope. (`--skip-cleanup` is a deprecated alias for `--phase test`).
 - `--artifact-dir <DIR>` _(Optional)_: Conversation context directory for HTML preview status boards.
 - `--timeout <SECONDS>` _(Default: 600)_: Step execution timeout in seconds.
-- `--fresh` _(Optional)_: Purges `.tester_state/`, `<lab>.md.state`, and `<lab>.md.env` for this lab only before execution.
+- `--fresh` _(Optional)_: Purges `.tester_state/`, `<lab>.md.state`, and `<lab>.md.env` for this lab before execution. **Restricted**: Reserved strictly for catastrophic state corruption (unparseable `.tester_state` JSON, unrecoverable state/infra divergence). Never use as a retry mechanism.
 
 ### Command Execution Tiers
 
@@ -63,7 +63,7 @@ All step statuses are uppercase:
 
 ### Resumption Protocol
 
-Re-running `tester.py` automatically resumes from saved state. Completed step hashes stored in `<lab>.md.state` are skipped, and variables from `<lab>.md.env` are re-sourced into the subshell.
+Re-running `tester.py` automatically resumes from saved state. On a step failure, edit the broken command in `.lab.md` and re-run `tester.py` WITHOUT `--fresh` against the SAME `--project-id`. The engine preserves completed `DONE` steps (e.g. 15-minute cluster builds), re-reads the edited commands, and re-executes only the failed step. Completed step hashes stored in `<lab>.md.state` are skipped, and variables from `<lab>.md.env` are re-sourced into the subshell. `--fresh` is reserved for catastrophic state corruption and implies the old project's resources must be handled (cleanup pass or new project).
 
 ## Agent Role & Protocol
 

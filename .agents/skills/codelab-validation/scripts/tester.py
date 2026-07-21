@@ -613,8 +613,32 @@ def purge_lab_state(markdown_file: str) -> None:
         return
 
     lab_dir = lab_path.parent
-
     tester_state_dir = lab_dir / ".tester_state"
+
+    progress_file = tester_state_dir / "progress.json"
+    done_count = 0
+    if progress_file.is_file():
+        try:
+            for step_file in tester_state_dir.glob("step-*.json"):
+                try:
+                    with open(step_file, "r") as sf:
+                        step_data = json.load(sf)
+                        if step_data.get("status") == "DONE":
+                            done_count += 1
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    if done_count > 0:
+        warning_msg = (
+            f"[Tester Warning] Purging state with {done_count} DONE step(s); "
+            f"resources created by those steps may still exist in the target project — "
+            f"prefer resumption (re-run without --fresh) unless state is corrupted."
+        )
+        print(warning_msg)
+        logging.warning(warning_msg)
+
     state_file = lab_dir / f"{lab_path.name}.state"
     env_file = lab_dir / f"{lab_path.name}.env"
 
