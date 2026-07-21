@@ -138,4 +138,3 @@ When `tester.py --fresh` restarts execution from Step 1, preceding resource crea
 ### The Fix
 
 Always default to **stateful resumption** during step debugging. On a step failure, edit the broken command in `.lab.md` and re-run `tester.py` **without** `--fresh` against the same `--project-id`. `tester.py` preserves completed `DONE` steps (such as 15-minute GKE cluster builds), re-reads the edited commands, and re-executes only the failed step. Reserve `--fresh` strictly for catastrophic state corruption (unparseable `.tester_state` JSON or unrecoverable state/infra divergence).
-
