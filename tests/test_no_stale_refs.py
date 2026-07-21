@@ -9,7 +9,11 @@ AGENTS_DIR = REPO / ".agents"
 class TestNoStaleReferences(unittest.TestCase):
     def test_no_deprecated_script_or_skill_references(self):
         """Assert zero occurrences of deprecated scripts or root-pointing file:/// URIs in .agents/, prompts/, or README.md."""
-        forbidden_terms = ["deterministic_runner", "smith-monitoring"]
+        forbidden_terms = [
+            "deterministic_runner",
+            "smith-monitoring",
+            "google-developer-documentation-mcp",
+        ]
         # Root-pointing file:/// URIs (e.g. file:///.agents/..., file:///prompts/...) fail to resolve workspace-relative paths.
         # Placeholder templates intended for runtime expansion (e.g. file:///<appDataDir>..., file:///{workspace_dir}...) are allowed.
         root_file_uri_pattern = re.compile(r"file:///(\.agents|prompts|references|labs|doc)/")

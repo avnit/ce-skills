@@ -28,7 +28,7 @@ Before presenting any design blueprint (`blueprint.md`) to the user:
 
 1. Spawns `cloud-architect` to draft the initial configuration.
 2. Spawns `arch-critic` to audit the draft against GCP security, reliability, and performance pillars.
-3. The critic **must** use `google-developer-documentation-mcp` (`search_documents` or `answer_query` tools) to ground all findings.
+3. The critic **must** use `google-developer-knowledge` (`search_documents` or `answer_query` tools) to ground all findings.
 4. All objections and citation links are exchanged asynchronously via the POSIX mailbox broker.
 5. The loop terminates only when the critic issues an `APPROVED` envelope.
 

@@ -140,23 +140,23 @@ class TestOnboardingPreflight(unittest.TestCase):
     def test_docs_mcp_pruned_when_par_absent(self, mock_exists):
         mock_exists.side_effect = lambda path: False if "docs_mcp_server.par" in path else True
 
-        mcp_servers = {"google-developer-documentation-mcp": {}}
+        mcp_servers = {"google-developer-knowledge": {}}
         onboard.configure_docs_mcp(mcp_servers)
-        self.assertNotIn("google-developer-documentation-mcp", mcp_servers)
+        self.assertNotIn("google-developer-knowledge", mcp_servers)
 
     @patch("os.path.exists")
     def test_docs_mcp_url_header_injected_when_par_absent(self, mock_exists):
         mock_exists.side_effect = lambda path: False if "docs_mcp_server.par" in path else True
 
         mcp_servers = {
-            "google-developer-documentation-mcp": {
+            "google-developer-knowledge": {
                 "httpUrl": "http://localhost:8080/mcp"
             }
         }
         onboard.configure_docs_mcp(mcp_servers, knowledge_project="my-custom-proj")
-        self.assertIn("google-developer-documentation-mcp", mcp_servers)
+        self.assertIn("google-developer-knowledge", mcp_servers)
         self.assertEqual(
-            mcp_servers["google-developer-documentation-mcp"]["headers"]["X-goog-user-project"],
+            mcp_servers["google-developer-knowledge"]["headers"]["X-goog-user-project"],
             "my-custom-proj",
         )
 
@@ -167,7 +167,7 @@ class TestOnboardingPreflight(unittest.TestCase):
         with patch.dict(os.environ, {"DOCS_MCP_SERVER": "/custom/path/docs_mcp.par"}, clear=False):
             onboard.configure_docs_mcp(mcp_servers)
             self.assertEqual(
-                mcp_servers["google-developer-documentation-mcp"]["command"],
+                mcp_servers["google-developer-knowledge"]["command"],
                 "/custom/path/docs_mcp.par",
             )
 
@@ -175,9 +175,30 @@ class TestOnboardingPreflight(unittest.TestCase):
         with patch.dict(os.environ, {}, clear=True):
             onboard.configure_docs_mcp(mcp_servers)
             self.assertEqual(
-                mcp_servers["google-developer-documentation-mcp"]["command"],
+                mcp_servers["google-developer-knowledge"]["command"],
                 "/google/bin/releases/docs-mcp-local/docs_mcp_server.par",
             )
+
+    @patch("os.path.exists")
+    def test_docs_mcp_legacy_key_migrated(self, mock_exists):
+        mock_exists.return_value = True
+        mcp_servers = {
+            "google-developer-documentation-mcp": {
+                "command": "/custom/path/docs_mcp.par",
+                "headers": {"X-goog-user-project": "old-proj"},
+            }
+        }
+        onboard.configure_docs_mcp(mcp_servers)
+        self.assertNotIn("google-developer-documentation-mcp", mcp_servers)
+        self.assertIn("google-developer-knowledge", mcp_servers)
+        self.assertEqual(
+            mcp_servers["google-developer-knowledge"]["command"],
+            "/custom/path/docs_mcp.par",
+        )
+        self.assertEqual(
+            mcp_servers["google-developer-knowledge"]["headers"]["X-goog-user-project"],
+            "old-proj",
+        )
 
     def test_workspace_mcp_env_override(self):
         mcp_servers = {}

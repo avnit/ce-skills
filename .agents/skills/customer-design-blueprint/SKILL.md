@@ -11,7 +11,7 @@ This skill defines the methodology for architecting and writing the **Design Blu
 ## Workflow
 
 - [ ] Step 1: Analyze the extracted requirements (`artifact_blueprint.md`) and knowledge gaps (`gap_analysis.md`).
-- [ ] Step 2: Query the **google-developer-documentation-mcp** server (`search_documents` or `answer_query`) targeting the **Google Cloud Architecture Framework** to validate chosen services.
+- [ ] Step 2: Query the **google-developer-knowledge** server (`search_documents` or `answer_query`) targeting the **Google Cloud Architecture Framework** to validate chosen services.
 - [ ] Step 3: Draft the four core pillars of the Design Blueprint using the standard CE template.
 - [ ] Step 4: Describe the visual layout of the Reference Architecture and Data Value Pattern so the downstream image generation skill can accurately render them into PNGs.
 - [ ] Step 5: Save the blueprint directly to `meeting/<customer_name>/design_blueprint.md`.

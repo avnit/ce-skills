@@ -50,4 +50,4 @@ You MUST execute the explicit tests defined in the Design Blueprint (e.g., actua
 
 - Ensure all file paths, GKE cluster names, and GCS buckets match your customer's variables exactly.
 - **Zero Placeholders**: Never leave a `<INSERT_HERE>` placeholder in the executable code. All variables must be hydrated from standard env vars like `$PROJECT_ID`.
-- **Mandatory MCP Verification**: Before generating any `gcloud` flags or Terraform blocks, you MUST use the `google-developer-documentation-mcp` tool to verify the syntax and current supported parameters. DO NOT hallucinate flags from intrinsic memory.
+- **Mandatory MCP Verification**: Before generating any `gcloud` flags or Terraform blocks, you MUST use the `google-developer-knowledge` tool to verify the syntax and current supported parameters. DO NOT hallucinate flags from intrinsic memory.
