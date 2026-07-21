@@ -89,3 +89,39 @@ Modern `kubectl` (≥1.26) has no in-tree GCP authentication providers. Without 
 ### The Fix
 
 Ensure `gke-gcloud-auth-plugin` is installed and `USE_GKE_GCLOUD_AUTH_PLUGIN=True` is set in the environment, then run `gcloud container clusters get-credentials` before any `kubectl` call. Do **not** inject raw tokens into the codelab — the plugin handles headless auth via the active gcloud identity.
+
+---
+
+## 6. Org-Policy Blocks (vmExternalIpAccess, requireShieldedVm)
+
+### The Gotcha
+
+Target test sandboxes often enforce strict organizational policies (such as `constraints/compute.vmExternalIpAccess` or `constraints/compute.requireShieldedVm`). Adding policy-bypass flags (e.g. `--no-address` or `--shielded-secure-boot`) directly into tutorial command blocks pollutes the published narrative and breaks execution for readers in different organizations.
+
+### The Fix
+
+Remediate the SANDBOX by running `disable_org_policies.sh` (which executes automatically during project provisioning via `create_project.py`). If a specific test environment requires command overrides during validation, place them exclusively in the lab's `overlay.json`. **Never** bake policy-bypass flags into published tutorial narratives.
+
+---
+
+## 7. Zonal Stockouts (ZONE_RESOURCE_POOL_EXHAUSTED)
+
+### The Gotcha
+
+Omitting an explicit `--machine-type` parameter during VM or cluster creation causes Google Cloud to default to standard machine families (such as `n1-standard-1`), which frequently encounter zonal capacity stockouts (`ZONE_RESOURCE_POOL_EXHAUSTED`) in busy sandbox regions.
+
+### The Fix
+
+Always specify an explicit, lightweight machine type (e.g. `--machine-type=e2-micro` or `--machine-type=e2-medium` for general workloads and demo clusters). This complements Gotcha #2's explicit image flags and minimizes resource contention across test zones.
+
+---
+
+## 8. Mermaid Diagram Rendering Errors
+
+### The Gotcha
+
+Complex Mermaid diagrams using nested subgraphs with quoted titles or unescaped HTML characters fail to render in GitHub Flavored Markdown (GFM) and DevSite previewers, displaying broken code blocks instead of visual architecture diagrams.
+
+### The Fix
+
+Use single-tier `flowchart TD` or `flowchart LR` structures. Use `<br/>` tags for multi-line node labels, avoid nested subgraphs with quoted titles, and quote node labels containing parentheses or special characters.

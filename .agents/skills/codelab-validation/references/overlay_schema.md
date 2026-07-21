@@ -8,6 +8,12 @@ When validating a lab, `validator.py` checks for `overlay.json` inside the lab's
 
 `overlay.json` is preserved across validation runs during run-directory state cleanup.
 
+## When to Use Overlays (Sandbox vs Narrative Doctrine)
+
+Use `overlay.json` ONLY for environment-specific remediations required to execute a lab within a specific validation sandbox environment (such as temporary org-policy overrides, sandbox quota/zone workarounds, or test-environment version constraints).
+
+**Rule**: **SYNTAX errors** belong directly in the published `.lab.md` narrative. **ENVIRONMENT-specific remediations** (e.g., `--no-address`, `--shielded-secure-boot`, or org-policy bypass flags) MUST go into `overlay.json` and MUST NEVER be baked into the published `.lab.md` narrative, as readers' target environments and org policies differ.
+
 ## JSON Schema Structure
 
 ```json
