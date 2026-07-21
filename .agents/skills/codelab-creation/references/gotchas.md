@@ -125,3 +125,17 @@ Complex Mermaid diagrams using nested subgraphs with quoted titles or unescaped 
 ### The Fix
 
 Use single-tier `flowchart TD` or `flowchart LR` structures. Use `<br/>` tags for multi-line node labels, avoid nested subgraphs with quoted titles, and quote node labels containing parentheses or special characters.
+
+---
+
+## 9. Avoid Unnecessary --fresh Purges During Step Debugging
+
+### The Gotcha
+
+Passing `--fresh` to `tester.py` after a minor step failure (e.g. fixing a syntax error or flag in Step 5) purges local `.tester_state/` progress files while previously deployed GCP resources (VPCs, GKE clusters, subnets) remain active in the sandbox project.
+When `tester.py --fresh` restarts execution from Step 1, preceding resource creation commands collide with pre-existing infrastructure (e.g. `ERROR: The resource 'projects/.../networks/demo-vpc' already exists`), failing validation and wasting massive re-provisioning time.
+
+### The Fix
+
+Always default to **stateful resumption** during step debugging. On a step failure, edit the broken command in `.lab.md` and re-run `tester.py` **without** `--fresh` against the same `--project-id`. `tester.py` preserves completed `DONE` steps (such as 15-minute GKE cluster builds), re-reads the edited commands, and re-executes only the failed step. Reserve `--fresh` strictly for catastrophic state corruption (unparseable `.tester_state` JSON or unrecoverable state/infra divergence).
+

@@ -188,6 +188,42 @@ class TestTesterCLIProjectEnforcement(unittest.TestCase):
         self.assertTrue(state_dir.exists())
         self.assertTrue(sibling_file.exists())
 
+    def test_fresh_warning_printed_when_done_steps_exist(self):
+        """purge_lab_state prints warning banner when .tester_state has DONE steps."""
+        state_dir = self.lab_dir / ".tester_state"
+        state_dir.mkdir(parents=True, exist_ok=True)
+        (state_dir / "progress.json").write_text(json.dumps({"current_step": 2}), encoding="utf-8")
+        (state_dir / "step-001.json").write_text(json.dumps({"num": 1, "status": "DONE"}), encoding="utf-8")
+
+        import io
+        from contextlib import redirect_stdout
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            tester.purge_lab_state(str(self.md_file))
+
+        output_str = out.getvalue()
+        self.assertIn("[Tester Warning] Purging state with 1 DONE step(s)", output_str)
+        self.assertIn("prefer resumption (re-run without --fresh) unless state is corrupted", output_str)
+
+    def test_fresh_warning_not_printed_when_no_done_steps_exist(self):
+        """purge_lab_state does not print warning banner when no DONE steps exist."""
+        state_dir = self.lab_dir / ".tester_state"
+        state_dir.mkdir(parents=True, exist_ok=True)
+        (state_dir / "progress.json").write_text(json.dumps({"current_step": 1}), encoding="utf-8")
+        (state_dir / "step-001.json").write_text(json.dumps({"num": 1, "status": "FAILED"}), encoding="utf-8")
+
+        import io
+        from contextlib import redirect_stdout
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            tester.purge_lab_state(str(self.md_file))
+
+        output_str = out.getvalue()
+        self.assertNotIn("[Tester Warning]", output_str)
+
 
 if __name__ == "__main__":
     unittest.main()
+
