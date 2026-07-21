@@ -225,7 +225,7 @@ class ParsingEngine:
         for line in markdown_content.splitlines():
             line_stripped = line.strip()
             
-            if not in_block and (line_stripped.startswith("```bash") or line_stripped.startswith("```console")):
+            if not in_block and line_stripped.startswith("```bash"):
                 in_block = True
                 current_block_lines = []
                 continue
