@@ -30,7 +30,7 @@ The workstation is configured with two distinct authenticated Google Cloud ident
 
 ## 3. Authentication & Execution Guidelines
 
-- **Strict Context Separation**: Before launching a workflow or deploying resources, verify which credential is active using the `gcloud-auth-verification` skill.
+- **Strict Context Separation**: Before launching a workflow or deploying resources, verify which credential is active using the `gcloud-auth-verification` skill. If active identity matches the target environment, log the active identity and proceed automatically; prompt via `ask_question` modal only when an account switch or user decision is required (see [gcloud_auth.md](gcloud_auth.md)).
 - **GCP API & CLI Execution**: Default to using the Sandbox/Admin account (`admin@<user-domain>.altostrat.com`) for resource provisioning, building, or automated QA testing.
 - **Corporate Bridging**: Use `<ldap>@google.com` exclusively for operations that securely interact with corp systems (e.g., emailing via the `send-email` skill, or bridging files to Google Drive/Docs).
 - **ADC Quota Alignment**: When running libraries (Python, Terraform) that rely on Application Default Credentials, ensure the ADC quota project is aligned with the active sandbox project.
