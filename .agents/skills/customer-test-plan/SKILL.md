@@ -14,8 +14,9 @@ Instead, it acts as a **Structured Test Harness Manifest** that links directly t
 
 - [ ] Step 1: Extract the target DevSite Codelab file pathway generated in Phase 6 (e.g. `labs/dev/customer-a-storage/customer-a-storage.lab.md`).
 - [ ] Step 2: Define the exact E2E verification parameters, success assertions, and prerequisite states inside `test_plan.md`.
-- [ ] Step 3: Document the unified validation execution command referencing `tester.py` to allow the Consulting Engineer or test-runner to run the entire E2E lifecycle dynamically.
-- [ ] Step 4: Save the finalized Test Plan directly to `meeting/<customer_name>/test_plan.md`.
+- [ ] Step 3: Run the pre-flight code audit gate (`preflight_audit.py --variables meeting/<customer_name>/variables.json --check-gcloud-surface`) to validate syntax, placeholders, and gcloud surfaces before sandbox project provisioning.
+- [ ] Step 4: Document the unified validation execution command referencing `tester.py` to allow the Consulting Engineer or test-runner to run the entire E2E lifecycle dynamically.
+- [ ] Step 5: Save the finalized Test Plan directly to `meeting/<customer_name>/test_plan.md`.
 
 ## Analysis Prompt
 
