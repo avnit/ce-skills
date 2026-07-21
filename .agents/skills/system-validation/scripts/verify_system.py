@@ -160,6 +160,13 @@ def check_python_dependencies():
             return False, f"Missing required Python packages on Cloudtop: {', '.join(missing)}.<br>Please install them via APT:<br><code>sudo apt-get update && sudo apt-get install -y {' '.join(apt_packages)}</code>"
     return True, "All required Python packages are installed."
 
+def check_rag_transport_deps():
+    try:
+        import mcp.client.streamable_http  # noqa: F401
+        return True, "Closed-loop RAG transport dependencies verified (<code>mcp.client.streamable_http</code> importable)."
+    except (ImportError, ModuleNotFoundError) as e:
+        return False, f"Missing required Closed-loop RAG transport package: <code>{e}</code>.<br>Please install dependencies via <code>pip3 install -r requirements.txt</code>"
+
 def get_gcloud_token():
     try:
         token = subprocess.check_output(["gcloud", "auth", "print-access-token"], text=True).strip()
@@ -272,9 +279,9 @@ def check_cdp_socket_conflicts():
         
     return True, "CDP / Chrome DevTools singleton socket is clear and ready."
 
-def generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=None):
+def generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=None, rag_ok=True, rag_msg=""):
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    all_pass = gcloud_ok and gcp_ok and persona_ok and citc_ok and sc_ok and dep_ok and cdp_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
+    all_pass = gcloud_ok and gcp_ok and persona_ok and citc_ok and sc_ok and dep_ok and rag_ok and cdp_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
     
     overall_status_color = "#137333" if all_pass else "#c5221f"
     overall_status_bg = "#e6f4ea" if all_pass else "#fce8e6"
@@ -383,6 +390,17 @@ def generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok,
     html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">Python Dependency Check</td>')
     html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{dep_msg}</td>')
     html.append('</tr>')
+
+    rag_bg = "#e6f4ea" if rag_ok else "#fce8e6"
+    rag_color = "#137333" if rag_ok else "#c5221f"
+    rag_status = "PASS" if rag_ok else "FAIL"
+    html.append('<tr style="border-bottom: 1px solid #e8eaed;">')
+    html.append('<td style="padding: 14px 24px; vertical-align: top;">')
+    html.append(f'<span style="background: {rag_bg}; color: {rag_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">{rag_status}</span>')
+    html.append('</td>')
+    html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">Closed-loop RAG Transport Dependencies</td>')
+    html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{rag_msg}</td>')
+    html.append('</tr>')
     
     cdp_bg = "#e6f4ea" if cdp_ok else "#fce8e6"
     cdp_color = "#137333" if cdp_ok else "#c5221f"
@@ -467,6 +485,10 @@ def main():
     dep_ok, dep_msg = check_python_dependencies()
     print(f"[*] Python Dependency Check: {'PASS' if dep_ok else 'FAIL'}")
     print(f"    {dep_msg}\n")
+
+    rag_ok, rag_msg = check_rag_transport_deps()
+    print(f"[*] Closed-loop RAG Transport Dependencies Check: {'PASS' if rag_ok else 'FAIL'}")
+    print(f"    {rag_msg}\n")
     
     if skip_cdp:
         cdp_ok, cdp_msg = True, "CDP socket conflict check skipped via --skip-cdp."
@@ -479,7 +501,7 @@ def main():
     print("[*] MCP Servers Connectivity Check:")
     if not mcp_ok:
         print(f"    FAIL: {mcp_results}\n")
-        generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path)
+        generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path, rag_ok=rag_ok, rag_msg=rag_msg)
         sys.exit(1)
         
     all_mcp_pass = True
@@ -492,9 +514,9 @@ def main():
             all_mcp_pass = False
     print()
     
-    generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=report_path)
+    generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=report_path, rag_ok=rag_ok, rag_msg=rag_msg)
     
-    if not gcloud_ok or not gcp_ok or not persona_ok or not citc_ok or not sc_ok or not dep_ok or not cdp_ok or not all_mcp_pass:
+    if not gcloud_ok or not gcp_ok or not persona_ok or not citc_ok or not sc_ok or not dep_ok or not rag_ok or not cdp_ok or not all_mcp_pass:
         print("[-] SYSTEM VALIDATION: FAILED")
         print("-" * 60)
         sys.exit(1)

@@ -105,6 +105,33 @@ def install_cluster_tooling() -> bool:
         return False
 
 
+def install_rag_dependencies(workspace_root: str = "") -> bool:
+    """Install and verify repository Python requirements for RAG MCP transport."""
+    print("📦 Installing repository Python requirements for RAG MCP transport...")
+    req_path = os.path.join(workspace_root, "requirements.txt") if workspace_root else "requirements.txt"
+    if not os.path.exists(req_path):
+        req_path = "requirements.txt"
+
+    res = subprocess.run(
+        ["pip3", "install", "-r", req_path],
+        capture_output=True,
+        text=True,
+    )
+
+    try:
+        import mcp.client.streamable_http  # noqa: F401
+        has_mcp = True
+    except (ImportError, ModuleNotFoundError):
+        has_mcp = False
+
+    if res.returncode == 0 and has_mcp:
+        print("✅ Closed-loop RAG transport dependencies verified (mcp.client.streamable_http import successful).")
+        return True
+    else:
+        print("⚠️ could not install/verify RAG transport dependencies — run 'pip3 install -r requirements.txt' manually")
+        return False
+
+
 def configure_docs_mcp(mcp_servers: dict, knowledge_project: str = None) -> None:
     """Configure or prune google-developer-knowledge entry in mcp_servers dict."""
     # Split-string is deliberate so test_no_stale_refs scanner does not flag the legacy migration key string.
@@ -203,6 +230,9 @@ def main():
 
     # Install kubectl + gke-gcloud-auth-plugin for GKE headless execution
     install_cluster_tooling()
+
+    # Install RAG transport dependencies (pip3 install -r requirements.txt)
+    install_rag_dependencies(workspace_root)
 
     # 1. Generate gcp_config.txt
     gcp_config_path = os.path.join(workspace_root, "gcp_config.txt")
