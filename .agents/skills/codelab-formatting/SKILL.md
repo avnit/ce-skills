@@ -61,7 +61,9 @@ Use the following syntax for tips and warnings. Use sparingly (max 2-3 per step)
 
 - Inline: Use backticks (`` `code` ``).
 - Blocks: Use triple backticks with language specifier.
-- Command-line snippets: Use triple backticks and the `console` directive or just `bash`/`shell`.
+- Executable Commands: Commands the reader runs MUST use `bash` (or `sh`/`shell`). The validation engine executes `bash` blocks automatically.
+- Expected/Sample Output: Expected command output or terminal results MUST use `text` or `output`.
+- Non-Executable Console Output: `console` is non-executable and must NEVER be used for runnable commands.
 
 ## Terminal-First File Creation
 

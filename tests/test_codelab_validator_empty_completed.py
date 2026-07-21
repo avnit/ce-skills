@@ -54,7 +54,7 @@ def test_different_fence_languages_extraction(tmp_path):
     assert len(steps) == 4
     assert steps[0]["commands"] == ["echo sh-cmd"]
     assert steps[1]["commands"] == ["echo shell-cmd"]
-    assert steps[2]["commands"] == ["echo console-cmd"]
+    assert steps[2]["commands"] == []  # console is non-executable
     assert steps[3]["commands"] == ["echo bare-cmd"]
 
 def test_zero_commands_lab_fails(tmp_path, monkeypatch):

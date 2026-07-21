@@ -5,10 +5,10 @@ import hashlib
 import re
 
 # Fenced-block languages whose content is executed as shell commands. Output/data
-# languages (text, output, yaml, json, hcl, log, ...) and narrative between blocks
-# are never collected. NOTE: 'console' is kept executable to preserve prior behavior;
-# whether terminal-session blocks should run is a separate decision (see #77).
-_EXECUTABLE_FENCE_LANGS = {"", "bash", "sh", "shell", "console"}
+# languages (text, output, yaml, json, hcl, log, console, ...) and narrative between blocks
+# are never collected. NOTE: The #77 open question was decided by #189 F6: 'console' blocks
+# represent sample terminal output and are never executable as runnable commands.
+_EXECUTABLE_FENCE_LANGS = {"", "bash", "sh", "shell"}
 _FENCE_LINE_RE = re.compile(r"^[ \t]*```[ \t]*([^\s`]*)")
 
 _CONTROL_FLOW_KEYWORDS = {

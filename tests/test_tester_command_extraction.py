@@ -51,3 +51,4 @@ def test_non_executable_and_prose_yield_no_commands():
     assert tester._extract_command_blocks("Just prose, no fences at all.\n") == []
     assert tester._extract_command_blocks("```yaml\nkey: value\n```\n") == []
     assert tester._extract_command_blocks("```text\nsome output (paren)\n```\n") == []
+    assert tester._extract_command_blocks("```console\nNAME STATE\nfoo ACTIVE\n```\n") == []
