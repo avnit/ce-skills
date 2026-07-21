@@ -24,7 +24,7 @@ def scan_unresolved_placeholders(
     unit: str, variables: Dict[str, Any] | None = None
 ) -> List[str]:
     """Scans execution unit for bracketed <...> placeholders not satisfied by variables."""
-    placeholder_pattern = re.compile(r"<([^>]+)>")
+    placeholder_pattern = re.compile(r"(?<!<)<([A-Za-z0-9_][A-Za-z0-9_ -]*)>")
     matches = placeholder_pattern.findall(unit)
 
     var_keys = set()

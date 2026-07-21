@@ -183,6 +183,54 @@ gcloud compute instances create my-vm
 
         self.assertIn("'gcloud' binary was not found on PATH", str(cm.exception))
 
+    def test_heredocs_and_redirects_do_not_fail_preflight(self):
+        """Heredocs (<< 'EOF' ... > startup.sh) and input redirects (< input.txt > out.txt) do NOT fail audit."""
+        content = """# Test Lab
+```bash
+cat << 'EOF' > startup.sh
+#!/bin/bash
+echo "Hello from startup script"
+EOF
+wc -l < input.txt > out.txt
+```
+"""
+        lab_path = self._create_temp_lab(content)
+        summary, reports = audit_codelab(lab_path)
+
+        self.assertEqual(summary["verdict"], "PASS")
+        self.assertEqual(summary["fail_count"], 0)
+
+    def test_placeholder_variations(self):
+        """<PROJECT_ID>, <your-project-id>, and <your looker instance name> fail unresolved and resolve via variables.json."""
+        content = """# Test Lab
+```bash
+echo <PROJECT_ID>
+echo <your-project-id>
+echo <your looker instance name>
+```
+"""
+        lab_path = self._create_temp_lab(content)
+
+        # Unresolved => FAIL
+        summary_no_vars, reports_no_vars = audit_codelab(lab_path)
+        self.assertEqual(summary_no_vars["verdict"], "FAIL")
+        details_text = " ".join([str(r["details"]) for r in reports_no_vars])
+        self.assertIn("<PROJECT_ID>", details_text)
+        self.assertIn("<your-project-id>", details_text)
+        self.assertIn("<your looker instance name>", details_text)
+
+        # Resolved via variables.json => PASS
+        vars_path = os.path.join(self.temp_dir.name, "variables.json")
+        with open(vars_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "PROJECT_ID": "proj-1",
+                "your-project-id": "proj-2",
+                "your looker instance name": "looker-instance"
+            }, f)
+
+        summary_with_vars, _ = audit_codelab(lab_path, variables_path=vars_path)
+        self.assertEqual(summary_with_vars["verdict"], "PASS")
+
 
 if __name__ == "__main__":
     unittest.main()
