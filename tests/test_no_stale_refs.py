@@ -16,6 +16,8 @@ class TestNoStaleReferences(unittest.TestCase):
         # Hardcoded binary paths under /google/bin/releases/ must use bash inline-default form (e.g. ${CSA_CLI:-/google/bin/releases/...})
         # to ensure tools work seamlessly with or without an environment alias configured.
         unaliased_bin_release_pattern = re.compile(r"(?<!:-)/google/bin/releases")
+        # Hardcoded CitC workspace paths under /google/src/cloud/ must use bash inline-default form (e.g. ${CITC_WORKSPACE_ROOT:-/google/src/cloud/...})
+        unaliased_citc_pattern = re.compile(r"(?<!:-)/google/src/cloud/")
 
         targets = [REPO / ".agents", REPO / "prompts", REPO / "README.md"]
 
@@ -51,6 +53,11 @@ class TestNoStaleReferences(unittest.TestCase):
                     if bin_match:
                         hits.append(
                             f"{file_path.relative_to(REPO)}: contains un-aliased binary path '/google/bin/releases' without inline default ':-'"
+                        )
+                    citc_match = unaliased_citc_pattern.search(content)
+                    if citc_match:
+                        hits.append(
+                            f"{file_path.relative_to(REPO)}: contains un-aliased CitC path '/google/src/cloud/' without inline default ':-'"
                         )
 
         self.assertEqual(hits, [], "Found stale/forbidden references:\n" + "\n".join(hits))

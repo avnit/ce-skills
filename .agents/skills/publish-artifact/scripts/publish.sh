@@ -86,15 +86,16 @@ else
 fi
 
 # Locate or initialize CitC workspace containing /company mount
-CITC_WORKSPACE="/google/src/cloud/${USERNAME}/${WORKSPACE_NAME}"
-if [[ "$DRY_RUN" == "false" && -d "/google/src/cloud" ]]; then
+CITC_BASE_DIR="${CITC_BASE_DIR:-/google/src/cloud/${USERNAME}}"
+CITC_WORKSPACE="${CITC_WORKSPACE_ROOT:-${CITC_BASE_DIR}/${WORKSPACE_NAME}}"
+if [[ "$DRY_RUN" == "false" && ( -d "$CITC_BASE_DIR" || -d "/google/src/cloud" ) ]]; then
     if [[ ! -d "$CITC_WORKSPACE/company" ]]; then
         echo "ℹ️ Workspace '$WORKSPACE_NAME' not found or missing company mount. Forcing creation..."
         g4 client -c "$WORKSPACE_NAME" 2>/dev/null || true
     fi
     if [[ ! -d "$CITC_WORKSPACE/company" ]]; then
         # Fallback to scanning for any existing workspace
-        for client_dir in /google/src/cloud/"$USERNAME"/*; do
+        for client_dir in "${CITC_BASE_DIR}"/*; do
             if [[ -d "$client_dir/company" ]]; then CITC_WORKSPACE="$client_dir"; break; fi
         done
     fi

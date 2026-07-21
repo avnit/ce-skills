@@ -21,9 +21,9 @@ This workflow guides you through publishing, structuring, and syncing local arti
 
 ### Phase 2: Pre-flight Dependencies Check
 
-1. Verify that the user has an active CitC (Clients-in-the-Cloud) workspace accessible under `/google/src/cloud/$USER/`:
+1. Verify that the user has an active CitC (Clients-in-the-Cloud) workspace accessible under `${CITC_WORKSPACE_ROOT:-/google/src/cloud/$USER/<your-client>/google3}`:
    ```bash
-   ls -d /google/src/cloud/$USER/*/company 2>/dev/null | head -n 1
+   ls -d ${CITC_WORKSPACE_ROOT:-/google/src/cloud/$USER/*}/company 2>/dev/null | head -n 1
    ```
    If no CitC workspace with a `company` mount is found, instruct the user to create one using `g4 client`.
 
