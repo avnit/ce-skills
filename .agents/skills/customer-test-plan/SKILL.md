@@ -16,6 +16,7 @@ Instead, it acts as a **Structured Test Harness Manifest** that links directly t
 - [ ] Step 2: Define the exact E2E verification parameters, success assertions, and prerequisite states inside `test_plan.md`.
 - [ ] Step 3: Document the unified validation execution command referencing `tester.py` to allow the Consulting Engineer or test-runner to run the entire E2E lifecycle dynamically.
 - [ ] Step 4: Save the finalized Test Plan directly to `meeting/<customer_name>/test_plan.md`.
+- [ ] Step 5: Validate the saved `test_plan.md` via the Phase 6 Pre-Flight Code Audit Gate (`preflight_audit.py --variables meeting/<customer_name>/variables.json --check-gcloud-surface`) before sandbox project provisioning.
 
 ## Analysis Prompt
 
