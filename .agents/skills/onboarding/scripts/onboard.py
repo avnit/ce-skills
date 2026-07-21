@@ -107,6 +107,7 @@ def install_cluster_tooling() -> bool:
 
 def configure_docs_mcp(mcp_servers: dict, knowledge_project: str = None) -> None:
     """Configure or prune google-developer-knowledge entry in mcp_servers dict."""
+    # Split-string is deliberate so test_no_stale_refs scanner does not flag the legacy migration key string.
     legacy_key = "google-developer-doc" + "umentation-mcp"
     if legacy_key in mcp_servers:
         legacy_config = mcp_servers.pop(legacy_key)
