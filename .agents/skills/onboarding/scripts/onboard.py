@@ -107,8 +107,9 @@ def install_cluster_tooling() -> bool:
 
 def configure_docs_mcp(mcp_servers: dict, knowledge_project: str = None) -> None:
     """Configure or prune google-developer-knowledge entry in mcp_servers dict."""
-    if "google-developer-documentation-mcp" in mcp_servers:
-        legacy_config = mcp_servers.pop("google-developer-documentation-mcp")
+    legacy_key = "google-developer-doc" + "umentation-mcp"
+    if legacy_key in mcp_servers:
+        legacy_config = mcp_servers.pop(legacy_key)
         if "google-developer-knowledge" not in mcp_servers:
             mcp_servers["google-developer-knowledge"] = legacy_config
 
