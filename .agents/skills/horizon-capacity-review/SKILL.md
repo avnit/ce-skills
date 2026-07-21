@@ -81,10 +81,18 @@ Before calling `CreateCapacityDemand`, `UpdateCapacityDemand`, or `SubmitCapacit
 
 ### Provide Actionable UI Confirmation & Canonical URL Construction
 
-Upon successful creation or submission, use `scripts/url_builder.py` to construct the canonical Horizon review URL:
+Upon successful creation or submission, use `scripts/url_builder.py` to construct canonical Horizon review links adhering to the official 3-tier route hierarchy:
+
+1. **Full Scoped Review URL (Primary)**: `https://horizon.corp.google.com/customers/external/{customer_id}/projects/{project_number}/review?requestId={request_id}`
+2. **Customer Scoped Review URL**: `https://horizon.corp.google.com/customers/external/{customer_id}/review?requestId={request_id}`
+3. **Direct Demand Fallback URL**: `https://horizon.corp.google.com/demands/{request_id}`
 
 ```bash
-python3 .agents/skills/horizon-capacity-review/scripts/url_builder.py --request_id {request_id} --customer_id {customer_id} --env prod
+python3 .agents/skills/horizon-capacity-review/scripts/url_builder.py \
+  --request_id {request_id} \
+  --customer_id {customer_id} \
+  --project_number {project_number} \
+  --env prod
 ```
 
 Output a clear confirmation card along with the canonical Horizon review URL so the CE can inspect the request in the web portal:
@@ -97,10 +105,10 @@ Output a clear confirmation card along with the canonical Horizon review URL so 
 - **Primary SKU / Shape**: `{sku_or_shape}`
 - **Total Cores / RAM**: `{cores} vCPUs / {ram} GB`
 - **Target Location**: `{location}`
-- **Review in Horizon Portal**: [Inspect Demand #{request_id}](https://horizon.corp.google.com/customers/external/{customer_id}/review?requestId={request_id}) | [Direct Link](https://horizon.corp.google.com/demands/{request_id})
+- **Review in Horizon Portal**: [Inspect Demand #{request_id}](https://horizon.corp.google.com/customers/external/{customer_id}/projects/{project_number}/review?requestId={request_id}) | [Direct Link](https://horizon.corp.google.com/demands/{request_id})
 ```
 
-_(Note: For staging environment, pass `--env staging` which formats `https://horizon-staging.corp.google.com/...`)._
+_(Note: Pass `--env staging` if working in the staging environment to target `https://horizon-staging.corp.google.com/...`)._
 
 ---
 
