@@ -149,6 +149,45 @@ class TestTesterCLIProjectEnforcement(unittest.TestCase):
         self.assertFalse(state_file.exists())
         self.assertFalse(env_file.exists())
 
+    def test_fresh_flag_without_project_id_fails_before_purging_state(self):
+        """main() --fresh without --project-id exits 1 and leaves seeded state files intact."""
+        state_dir = self.lab_dir / ".tester_state"
+        state_dir.mkdir(parents=True, exist_ok=True)
+        old_file = state_dir / "old_file.json"
+        old_file.write_text("{}", encoding="utf-8")
+
+        state_file = self.lab_dir / f"{self.md_file.name}.state"
+        state_file.write_text("old_hash_123\n", encoding="utf-8")
+
+        with patch.object(sys, "argv", ["tester.py", str(self.md_file), "--fresh"]):
+            with self.assertRaises(SystemExit) as cm:
+                tester.main()
+            self.assertEqual(cm.exception.code, 1)
+
+        # State files MUST survive
+        self.assertTrue(old_file.exists())
+        self.assertTrue(state_file.exists())
+
+    def test_fresh_flag_nonexistent_lab_path_fails_without_purging_sibling(self):
+        """main() --fresh on nonexistent lab path exits 1 and leaves sibling state untouched."""
+        state_dir = self.lab_dir / ".tester_state"
+        state_dir.mkdir(parents=True, exist_ok=True)
+        sibling_file = state_dir / "sibling_step.json"
+        sibling_file.write_text("{}", encoding="utf-8")
+
+        nonexistent_lab = self.lab_dir / "nonexistent.lab.md"
+
+        with patch.object(
+            sys, "argv", ["tester.py", str(nonexistent_lab), "--project-id", "my-proj", "--fresh"]
+        ):
+            with self.assertRaises(SystemExit) as cm:
+                tester.main()
+            self.assertEqual(cm.exception.code, 1)
+
+        # Sibling state directory and files MUST survive
+        self.assertTrue(state_dir.exists())
+        self.assertTrue(sibling_file.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

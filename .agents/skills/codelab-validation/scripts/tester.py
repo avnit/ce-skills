@@ -608,6 +608,10 @@ class StatefulCodelabTester:
 def purge_lab_state(markdown_file: str) -> None:
     """Purges .tester_state/, <lab>.md.state, and <lab>.md.env for this lab only."""
     lab_path = Path(markdown_file).resolve()
+    if not lab_path.is_file():
+        print(f"[Tester Error] Markdown file does not exist: {markdown_file}")
+        return
+
     lab_dir = lab_path.parent
 
     tester_state_dir = lab_dir / ".tester_state"
@@ -652,13 +656,17 @@ def main():
 
     args = parser.parse_args()
 
-    if args.fresh:
-        purge_lab_state(args.markdown_file)
+    if not Path(args.markdown_file).is_file():
+        print(f"[Tester Error] Markdown file does not exist: {args.markdown_file}")
+        sys.exit(1)
 
     if not args.project_id and not args.allow_active_project:
         print("[Tester Error] Target GCP project must be specified explicitly.")
         print("[Tester Error] Pass --project-id <PROJECT_ID> or --allow-active-project to consciously adopt the active gcloud project.")
         sys.exit(1)
+
+    if args.fresh:
+        purge_lab_state(args.markdown_file)
 
     if args.project_id:
         target_project_id = args.project_id
