@@ -30,6 +30,7 @@ python3 .agents/skills/codelab-validation/scripts/tester.py \
 - `--phase {test|cleanup|all}` _(Default: `test`)_: Execution phase scope. (`--skip-cleanup` is a deprecated alias for `--phase test`).
 - `--artifact-dir <DIR>` _(Optional)_: Conversation context directory for HTML preview status boards.
 - `--timeout <SECONDS>` _(Default: 600)_: Step execution timeout in seconds.
+- `--fresh` _(Optional)_: Purges `.tester_state/`, `<lab>.md.state`, and `<lab>.md.env` for this lab only before execution.
 
 ### Command Execution Tiers
 
