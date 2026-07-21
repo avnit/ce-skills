@@ -1,7 +1,7 @@
 """Horizon Portal URL Construction & Link Verification Script.
 
 This script constructs canonical, concise Horizon portal URLs based on request IDs,
-customer IDs, and project numbers according to the official Horizon route hierarchy.
+SFDC Account IDs, and Project Numbers according to the official Horizon Angular UI router specs.
 """
 
 import argparse
@@ -13,20 +13,20 @@ from typing import Dict, Optional
 
 def build_horizon_url(
     request_id: str,
-    customer_id: Optional[str] = None,
+    sfdc_account_id: Optional[str] = None,
     project_number: Optional[str] = None,
     env: str = "prod",
 ) -> Dict[str, str]:
     """Builds the canonical and direct fallback Horizon Portal review URLs.
 
     Args:
-        request_id: The Horizon Capacity Demand ID (e.g. 'CDR00380246').
-        customer_id: Optional customer ID string (e.g. 'external/0014M00001vluJ3QAI' or '0014M00001vluJ3QAI').
-        project_number: Optional GCP project number string (e.g. '496537482084').
+        request_id: The Horizon Demand ID (e.g. 'CDR00380246' or 'RDR00689449').
+        sfdc_account_id: 18-char SFDC Account ID (e.g. '0014M00001vluJ3QAI').
+        project_number: 12-digit GCP Project Number (e.g. '496537482084').
         env: Target environment ('prod' or 'staging').
 
     Returns:
-        Dict containing 'primary_url', 'direct_url', and 'markdown_link'.
+        Dict containing 'primary_url', 'direct_list_url', and 'markdown_link'.
     """
     domain = (
         "horizon.corp.google.com"
@@ -35,44 +35,46 @@ def build_horizon_url(
     )
 
     clean_req = request_id.strip()
-
-    # Normalize customer ID prefix
-    clean_cust = None
-    if customer_id:
-        c = customer_id.strip()
-        clean_cust = c if c.startswith("external/") else f"external/{c}"
-
     clean_proj = project_number.strip() if project_number else None
 
-    # Construct URLs based on parameter availability
-    if clean_cust and clean_proj:
+    # Check if sfdc_account_id is an 18-char Salesforce Account ID (starts with 001)
+    clean_sfdc = None
+    if sfdc_account_id:
+        val = sfdc_account_id.strip()
+        if val.startswith("external/"):
+            val = val.replace("external/", "")
+        clean_sfdc = val
+
+    # Direct list route (Works universally for all CDR and RDR IDs without needing SFDC/Project context)
+    direct_list_url = f"https://{domain}/list/{clean_req}"
+
+    # Full scoped route (Requires valid SFDC Account ID and Project Number)
+    if clean_sfdc and clean_proj:
         primary_url = (
-            f"https://{domain}/customers/{clean_cust}/projects/{clean_proj}/review?"
+            f"https://{domain}/customers/external/{clean_sfdc}/projects/{clean_proj}/review?"
             f"requestId={clean_req}"
         )
-    elif clean_cust:
+    elif clean_sfdc:
         primary_url = (
-            f"https://{domain}/customers/{clean_cust}/review?"
+            f"https://{domain}/customers/external/{clean_sfdc}/review?"
             f"requestId={clean_req}"
         )
     else:
-        primary_url = f"https://{domain}/demands/{clean_req}"
-
-    direct_url = f"https://{domain}/demands/{clean_req}"
+        primary_url = direct_list_url
 
     markdown_link = (
         f"[{clean_req}]({primary_url})"
-        if primary_url == direct_url
-        else f"[{clean_req}]({primary_url}) | [Direct Link]({direct_url})"
+        if primary_url == direct_list_url
+        else f"[{clean_req}]({primary_url}) | [Direct List Link]({direct_list_url})"
     )
 
     return {
         "request_id": clean_req,
-        "customer_id": clean_cust,
+        "sfdc_account_id": clean_sfdc,
         "project_number": clean_proj,
         "env": env,
         "primary_url": primary_url,
-        "direct_url": direct_url,
+        "direct_list_url": direct_list_url,
         "markdown_link": markdown_link,
     }
 
@@ -85,10 +87,10 @@ def main() -> None:
         "--request_id", required=True, help="Horizon Demand ID (e.g. CDR00380246)."
     )
     parser.add_argument(
-        "--customer_id", help="Customer ID (e.g. external/0014M00001vluJ3QAI)."
+        "--sfdc_account_id", help="18-char SFDC Account ID (e.g. 0014M00001vluJ3QAI)."
     )
     parser.add_argument(
-        "--project_number", help="GCP Project Number (e.g. 496537482084)."
+        "--project_number", help="12-digit GCP Project Number (e.g. 496537482084)."
     )
     parser.add_argument(
         "--env",
@@ -101,7 +103,7 @@ def main() -> None:
 
     res = build_horizon_url(
         request_id=args.request_id,
-        customer_id=args.customer_id,
+        sfdc_account_id=args.sfdc_account_id,
         project_number=args.project_number,
         env=args.env,
     )

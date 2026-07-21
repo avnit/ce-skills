@@ -81,21 +81,22 @@ Before calling `CreateCapacityDemand`, `UpdateCapacityDemand`, or `SubmitCapacit
 
 ### Provide Actionable UI Confirmation & Canonical URL Construction
 
-Upon successful creation or submission, use `scripts/url_builder.py` to construct canonical Horizon review links adhering to the official 3-tier route hierarchy:
+Upon successful creation or submission, use `scripts/url_builder.py` to construct Horizon review links adhering to official Angular UI router specs:
 
-1. **Full Scoped Review URL (Primary)**: `https://horizon.corp.google.com/customers/external/{customer_id}/projects/{project_number}/review?requestId={request_id}`
-2. **Customer Scoped Review URL**: `https://horizon.corp.google.com/customers/external/{customer_id}/review?requestId={request_id}`
-3. **Direct Demand Fallback URL**: `https://horizon.corp.google.com/demands/{request_id}`
+1. **Universal Direct List Route (Default / Concise)**: `https://horizon.corp.google.com/list/{request_id}`
+   - _Works universally for any CDR or RDR ID without requiring SFDC Account ID or Project Number._
+2. **Full Scoped Review URL**: `https://horizon.corp.google.com/customers/external/{sfdc_account_id}/projects/{project_number}/review?requestId={request_id}`
+   - _Requires a valid 18-character Salesforce Account ID (e.g. `0014M00001vluJ3QAI`) and 12-digit GCP Project Number (e.g. `496537482084`). Do not pass numeric internal customer IDs into this route._
 
 ```bash
 python3 .agents/skills/horizon-capacity-review/scripts/url_builder.py \
   --request_id {request_id} \
-  --customer_id {customer_id} \
+  --sfdc_account_id {sfdc_account_id} \
   --project_number {project_number} \
   --env prod
 ```
 
-Output a clear confirmation card along with the canonical Horizon review URL so the CE can inspect the request in the web portal:
+Output a clear confirmation card along with the concise Horizon review URL:
 
 ```markdown
 ✅ **Capacity Demand Submitted Successfully**
@@ -105,7 +106,7 @@ Output a clear confirmation card along with the canonical Horizon review URL so 
 - **Primary SKU / Shape**: `{sku_or_shape}`
 - **Total Cores / RAM**: `{cores} vCPUs / {ram} GB`
 - **Target Location**: `{location}`
-- **Review in Horizon Portal**: [Inspect Demand #{request_id}](https://horizon.corp.google.com/customers/external/{customer_id}/projects/{project_number}/review?requestId={request_id}) | [Direct Link](https://horizon.corp.google.com/demands/{request_id})
+- **Review in Horizon Portal**: [Inspect Demand #{request_id}](https://horizon.corp.google.com/list/{request_id})
 ```
 
 _(Note: Pass `--env staging` if working in the staging environment to target `https://horizon-staging.corp.google.com/...`)._
