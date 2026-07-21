@@ -214,6 +214,35 @@ class TestOnboardingPreflight(unittest.TestCase):
                 "/google/bin/releases/codemind-mcp-servers/workspace_server.par",
             )
 
+    @patch("subprocess.run")
+    def test_install_rag_dependencies_success(self, mock_run):
+        mock_res = MagicMock()
+        mock_res.returncode = 0
+        mock_run.return_value = mock_res
+
+        res = onboard.install_rag_dependencies()
+        self.assertTrue(res)
+
+    @patch("subprocess.run")
+    def test_install_rag_dependencies_unverified_warning(self, mock_run):
+        mock_res = MagicMock()
+        mock_res.returncode = 1
+        mock_run.return_value = mock_res
+
+        res = onboard.install_rag_dependencies()
+        self.assertFalse(res)
+
+    def test_verify_system_check_rag_transport_deps_pass(self):
+        ok, msg = verify_system.check_rag_transport_deps()
+        self.assertTrue(ok)
+        self.assertIn("mcp.client.streamable_http", msg)
+
+    def test_verify_system_check_rag_transport_deps_fail(self):
+        with patch.dict(sys.modules, {"mcp.client.streamable_http": None}):
+            ok, msg = verify_system.check_rag_transport_deps()
+            self.assertFalse(ok)
+            self.assertIn("pip3 install -r requirements.txt", msg)
+
 
 if __name__ == "__main__":
     unittest.main()

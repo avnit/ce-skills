@@ -43,7 +43,7 @@ Overall Orchestration Lifecycle:
    - **Dynamic Task List Initialization**: Based on the selected scope option, immediately initialize the mandatory unindented HTML table tracking file (`task.md`) mapping out the targeted steps:
      - **Artifacts Only Checklist**: Steps for Upfront Alignment, Blueprint Authoring, and Narrative Markdown Generation.
      - **Full E2E Checklist**: Steps for Upfront Alignment, Blueprint Authoring, Narrative Generation, Sandboxed GCP Project Provisioning, Hermetic Testing Validation, and Quality Review.
-   - Query centralized RAG lessons learned via the **codelab-memory** skill.
+   - Query centralized RAG lessons learned via the **codelab-memory** skill. On a `query_rag` dependency error (missing `mcp.client.streamable_http`), surface the error and execute the remedy (`pip3 install -r requirements.txt`). Falling back to `search_web` is allowed ONLY after explicitly reporting the degradation to the user.
 4. **Phase 2: Technical Blueprint Design**
 
 - **CRITICAL RULE - PREVIEW-FIRST BLUEPRINTING**: Do not author plain markdown files directly into the target repo folder initially. Instead, instruct the Architect persona to generate an **ephemeral preview blueprint** inside the conversation tracking folder (`<appDataDir>/brain/<conversation-id>/blueprint.md`).
