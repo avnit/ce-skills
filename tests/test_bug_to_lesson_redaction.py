@@ -23,16 +23,18 @@ def test_redact_account_identifier():
 
 
 def test_logging_calls_use_redacted_account():
-    """Verify all logging format strings in GcloudUserCredentials.refresh use _redact(self.account)."""
+    """Verify logging calls contain no account expressions and RuntimeError retains _redact(self.account)."""
     source = inspect.getsource(GcloudUserCredentials.refresh)
 
-    # Grep-style assertions: check _redact is called for logged account references
-    assert "_redact(self.account)" in source
-    assert "logging.info(f\"Refreshing gcloud access token for account {_redact(self.account)}...\")" in source
-    assert "logging.info(f\"Successfully refreshed token for {_redact(self.account)} (cached for 55 minutes).\")" in source
-    assert "logging.error(f\"Failed to fetch access token via gcloud for {_redact(self.account)}: {e}\")" in source
+    # Constant log message assertions
+    assert 'logging.info("Refreshing gcloud access token for the configured closed-loop account...")' in source
+    assert 'logging.info("Successfully refreshed access token (cached for 55 minutes).")' in source
+    assert 'logging.error(f"Failed to fetch access token via gcloud: {e}")' in source
 
-    # Ensure unredacted self.account is not logged clear-text
-    assert "logging.info(f\"Refreshing gcloud access token for account {self.account}...\")" not in source
-    assert "logging.info(f\"Successfully refreshed token for {self.account}" not in source
-    assert "logging.error(f\"Failed to fetch access token via gcloud for {self.account}" not in source
+    # Assert no logging line in refresh contains self.account (directly or via _redact)
+    for line in source.splitlines():
+        if "logging." in line:
+            assert "self.account" not in line
+
+    # Assert RuntimeError line retains _redact(self.account)
+    assert 'raise RuntimeError(f"Authentication failed for {_redact(self.account)}: {e}") from e' in source

@@ -109,7 +109,7 @@ class GcloudUserCredentials(BaseCredentials):
         if self.valid:
             return
         try:
-            logging.info(f"Refreshing gcloud access token for account {_redact(self.account)}...")
+            logging.info("Refreshing gcloud access token for the configured closed-loop account...")
             cmd = ["gcloud", "auth", "print-access-token", f"--account={self.account}"]
             res = subprocess.run(cmd, capture_output=True, text=True, check=True)
             output = res.stdout.strip()
@@ -117,9 +117,9 @@ class GcloudUserCredentials(BaseCredentials):
                 raise ValueError("Received empty access token from gcloud command.")
             self.token = output
             self.expiry = now + datetime.timedelta(seconds=self._cache_duration_sec)
-            logging.info(f"Successfully refreshed token for {_redact(self.account)} (cached for 55 minutes).")
+            logging.info("Successfully refreshed access token (cached for 55 minutes).")
         except Exception as e:
-            logging.error(f"Failed to fetch access token via gcloud for {_redact(self.account)}: {e}")
+            logging.error(f"Failed to fetch access token via gcloud: {e}")
             raise RuntimeError(f"Authentication failed for {_redact(self.account)}: {e}") from e
 
 
