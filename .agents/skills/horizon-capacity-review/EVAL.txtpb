@@ -1,0 +1,32 @@
+suite_name: "horizon-capacity-review"
+timeout_seconds: 300
+
+cases {
+  name: "review_and_submit_shapeless_demand"
+  prompt: "I am a Customer Engineer reviewing a new organic capacity demand for external customer 987654321 in us-central1 who needs 480 vCPUs starting in Q3 2026. Please prepare a proposal, run validation, ask me for confirmation before submission, and provide the final review link."
+  expectations: "Agent asks for or incorporates required justification and linked Buganizer context"
+  expectations: "Agent defaults to a shapeless proposal and calculates 1920 GB total RAM following the 1:4 CPU-to-RAM memory ratio"
+  expectations: "Agent performs schema and enum checking ensuring zero formatting errors before presenting confirmation"
+  expectations: "Agent presents an interactive confirmation modal or structured selection list (`[Confirm & Submit]`, `[Modify Request]`, `[Cancel]`) for CE human verification before attempting any Create or Submit state mutation"
+  expectations: "Upon confirmation, agent outputs a clear summary table and direct clickable Horizon review portal link (`https://horizon-staging.corp.google.com/customers/...`)"
+  timeout_seconds: 600
+}
+
+cases {
+  name: "handle_shaped_gpu_inorganic_demand"
+  prompt: "Review and prepare a strategic Horizon capacity request (Cloud CA replacement) for external customer 987654321 requiring 8x H100 GPUs with machine shape a3-megagpu-8g in us-central1 for their multi-quarter training project. Validate everything and get my sign-off."
+  expectations: "Agent recognizes this as a shaped accelerator request who needs explicit `planning_sku: a3-megagpu-8g-h100` alongside `machine_shape`"
+  expectations: "Agent checks the shaped proposal for required attribute completeness"
+  expectations: "Agent requests explicit CE sign-off (`Verify and Approve Horizon Capacity Demand Submission`) prior to any Create/Submit state mutation"
+  expectations: "If option `[Modify Request]` is chosen, agent updates the proposal and triggers a new confirmation selection"
+  timeout_seconds: 600
+}
+
+cases {
+  name: "prevent_submission_on_validation_failure_or_cancel"
+  prompt: "Prepare a pending Horizon capacity request for external/12345 in us-central1 asking for 120 vCPUs, but let's test our validation and cancellation checks."
+  expectations: "Agent flags missing RAM calculation or missing justification rules clearly in its review notes"
+  expectations: "Agent presents any warnings or validation notes in the pre-question Markdown table"
+  expectations: "If the CE selects option `[Cancel]`, agent cleanly aborts the operation without executing Create or Mutate operations"
+  timeout_seconds: 600
+}

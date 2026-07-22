@@ -23,6 +23,7 @@ doc/
 
 # Python Caches & Virtual Environments
 __pycache__/
+.pytest_cache/
 *.py[cod]
 *$py.class
 .ipynb_checkpoints/
@@ -61,4 +62,6 @@ startup.sh
 # Exclude active agent runtime states and mailboxes
 .agents/state/
 .agents/mailboxes/
+.agents/skills/skills_audit.json
+.agents/skills/reports/
 demo/

@@ -1,15 +1,15 @@
 {
   "storage": {
     "backend_type": "firebase",
-    "firebase_account_email": "shacharb@google.com",
-    "account": "shacharb@google.com",
-    "firebase_project_id": "hyperstack-dev",
+    "firebase_account_email": "",
+    "account": "",
+    "firebase_project_id": "",
     "firebase_database_id": "closed-loop-learning",
     "firebase_incoming_collection": "incoming_lessons",
     "local_mock_directory": "~/.gemini/jetski/knowledge/closed_loop_learning/lessons"
   },
   "vertex_ai": {
-    "project_id": "hyperstack-dev",
+    "project_id": "",
     "location": "us-central1",
     "extraction_model": "gemini-1.5-pro-preview-0409"
   }

@@ -45,4 +45,4 @@ Design an **ephemeral preview blueprint** (`<appDataDir>/brain/<conversation-id>
 - **No Fluff**: Be concise and technical.
 - **Accuracy First**: If an approach is risky, flag it.
 - **Networking**: NEVER use the default VPC. Always design for a custom VPC or Shared VPC structure.
-- **Tool-Only Authority**: You MUST validate your design assertions using the `google-developer-documentation-mcp` server. Hallucinated architectures will be rejected.
+- **Tool-Only Authority**: You MUST validate your design assertions using the `google-developer-knowledge` server. Hallucinated architectures will be rejected.

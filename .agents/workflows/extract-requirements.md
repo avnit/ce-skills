@@ -39,8 +39,8 @@ You are an autonomous **Solutions Engineering Orchestrator** operating in a 10/1
 
 - **Pre-Flight Constraint**: Output checklist confirming: '[ ] I will save diagrams strictly to meeting/<customer_name>/assets/'.
 - **Proof of Read Constraint**: Use `view_file` to read `prompts/customer_architect.md`. Output `<template_proof>` block containing exact headers and verbatim first 10 words.
-- **Pre-Flight MCP Health Check**: Before researching, verify `google-developer-documentation-mcp` connectivity (e.g., `search_documents`). If the MCP server fails or is unreachable, keep `search_web` allowed as a secondary fallback tool.
-- **Turn 1 (RAG Research)**: Read `artifact_blueprint.md` and `prompts/customer_architect.md`. Use `google-developer-documentation-mcp` (`search_documents` / `get_documentation`) or fallback to `search_web` to research required GCP services. Save findings to `meeting/<customer_name>/mcp_research_notes.md`.
+- **Pre-Flight MCP Health Check**: Before researching, verify `google-developer-knowledge` connectivity (e.g., `search_documents`). If the MCP server fails or is unreachable, keep `search_web` allowed as a secondary fallback tool.
+- **Turn 1 (RAG Research)**: Read `artifact_blueprint.md` and `prompts/customer_architect.md`. Use `google-developer-knowledge` (`search_documents` / `answer_query`) or fallback to `search_web` to research required GCP services. Save findings to `meeting/<customer_name>/mcp_research_notes.md`.
 - **Turn 2 (Grounded Generation)**: Read `meeting/<customer_name>/mcp_research_notes.md` alongside requirements, invoke **customer-design-blueprint** skill to draft **Design Blueprint** (`design_blueprint.md`). Save to `meeting/<customer_name>/design_blueprint.md`.
 - **Pre-Approval Visual Render**: Call `creating-gcp-diagrams` skill using `generate_image` with spatial layout prompting and local GCP category icons. Save as `meeting/<customer_name>/assets/design_diagram.png` and embed directly inside `design_blueprint.md`.
 - **Grounded Critic Audit Loop**: Spawn `arch-critic` subagent via `invoke_subagent`. Critic queries official GCP WAF benchmarks via MCP and writes findings to `critic_response.json`.
@@ -62,21 +62,30 @@ You are an autonomous **Solutions Engineering Orchestrator** operating in a 10/1
 
 ### 6. Phase 6: Gate B - Interactive Testing & Validation
 
-- **Pre-Flight Constraint**: Output checklist confirming: '[ ] Clean environment. [ ] Run create_project.py. [ ] Run disable_org_policies.sh'.
+- **Pre-Flight Constraint**: Output checklist confirming: '[ ] Clean environment. [ ] Run create_project.py (automatically disables org policies unless --skip-org-policies passed)'.
 - **Validation Inquiry Gate**: Pause execution and call **`ask_question`** to ask the user if they want to run E2E verification testing. Make live execution recommended: `(Recommended) Execute live E2E verification testing against sandbox (with --skip-cleanup)`.
 - If yes:
   - Execute `gcloud-auth-verification` skill to verify credentials.
-  - **MANDATORY CLEAN PROVISIONING**: Execute `python3 .agents/skills/gcp-provisioning/scripts/create_project.py <customer_name>-poc` to spin up a fresh sandbox project and run `disable_org_policies.sh`. NEVER reuse developer project IDs.
   - **ARCHITECTURAL-VALIDATION PARITY**: Steps in `test_plan.md` MUST strictly match `design_blueprint.md` topology. Include commands to verify or provision specific resources.
-  - **Pre-Execution Interaction**: Parse `test_plan.md` and ask user to confirm missing runtime environment variables before execution.
-  - **Self-Healing Execution Loop**: Execute validation engine: `python3 .agents/skills/codelab-validation/scripts/tester.py meeting/<customer_name>/test_plan.md --artifact-dir <appDataDir>/brain/<conversation-id> --skip-cleanup`. Autonomously patch or poll up to 3 times on transient errors. Whenever you autonomously solve a validation or script error, strictly update the bug JSON status to `FIXED`, log what failed, what worked, and how it resolved the bug into `remediation`, and run `python3 .agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py --scan-dir meeting/<customer_name>/bugs` before proceeding.
-  - **CRITICAL SAFETY RULE**: Append `--skip-cleanup` to `tester.py` to prevent teardown.
+  - **Pre-Execution Interaction**: Parse `test_plan.md`, confirm missing runtime variables with the user, and write them to `meeting/<customer_name>/variables.json` (the file `tester.py` consumes from the lab directory).
+  - **Pre-Flight Code Audit Gate**: Execute the pre-flight code audit gate to validate syntax, unresolved placeholders, and gcloud CLI surface validity before any cloud spend:
+    ```bash
+    python3 .agents/skills/codelab-validation/scripts/preflight_audit.py \
+      meeting/<customer_name>/test_plan.md \
+      --variables meeting/<customer_name>/variables.json \
+      --check-gcloud-surface \
+      --report <appDataDir>/brain/<conversation-id>/preflight_audit_report.md
+    ```
+    On FAIL (syntax errors, unresolved placeholders, or invalid gcloud command groups): remediate `test_plan.md`—consulting the `google-developer-knowledge` MCP server or `search_web`—and re-run until exit 0 with verdict PASS. **Provisioning MUST NOT begin until the audit passes.**
+  - **MANDATORY CLEAN PROVISIONING**: Execute `python3 .agents/skills/gcp-provisioning/scripts/create_project.py <customer_name>-poc` to spin up a fresh sandbox project (which automatically disables org policies). NEVER reuse developer project IDs.
+  - **Self-Healing Execution Loop**: Execute validation engine: `python3 .agents/skills/codelab-validation/scripts/tester.py meeting/<customer_name>/test_plan.md --project-id "<PROVISIONED_PROJECT_ID>" --artifact-dir <appDataDir>/brain/<conversation-id> --phase test` (Note: `<PROVISIONED_PROJECT_ID>` is provisioned via `create_project.py`). Autonomously patch or poll up to 3 times on transient errors. Whenever you autonomously solve a validation or script error, strictly update the bug JSON status to `FIXED`, log what failed, what worked, and how it resolved the bug into `remediation`, and run `python3 .agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py --scan-dir meeting/<customer_name>/bugs` before proceeding.
+  - **CRITICAL SAFETY RULE**: Pass `--phase test` (or deprecated `--skip-cleanup` alias) to `tester.py` to prevent teardown.
 
 ### 7. Phase 7: Gate C - Downstream Strategic Deliverables
 
 - Once validated, pause and call **`ask_question`** to present checkboxes allowing the user to request downstream deliverables. You **MUST** encourage full deliverable generation by prefixing the standalone codelab and pricing estimation options with `(Recommended)`.
   - Hourly pricing estimation (invokes `codelab-pricing-estimator` skill)
-  - Sandbox audit logs / validation report (invokes `codelab_audit_logging` skill)
+  - Sandbox audit logs / validation report (invokes `codelab-audit-logging` skill)
   - Standalone official codelab generation of the solution (invokes the `/create-codelab` workflow).
     - **CRITICAL REUSABILITY STANDARD**: The generated codelab **MUST** be completely generic. Use a generic solution name (e.g., `gke-filestore-hyperdisk-ingress`) for the folder and files under `labs/dev/`.
     - **ZERO CUSTOMER-SPECIFIC INFORMATION**: Ensure that **no customer-specific names, project IDs, or VPC identifiers** (such as "Customer_A", "customer-a-vpc") leak into the published codelab. All customer-specific files and identifiers must remain strictly isolated inside the `meeting/<customer_name>/` folder.
@@ -87,7 +96,7 @@ You are an autonomous **Solutions Engineering Orchestrator** operating in a 10/1
 - Pause and call **`ask_question`** to ask the user whether to persistent-keep or delete/teardown the provisioned sandbox environment.
 - If delete:
   - **Mandatory Pre-Deletion Sweeping**: To prevent orphaned resource hangs or API blocks during project deletion, you MUST force-empty all active Google Cloud Storage buckets (`gcloud storage rm --recursive gs://<bucket_name>`) and sever active VPC peering connections or liens BEFORE deleting the project.
-  - Run the Cleanup section of the codelab without the `--skip-cleanup` restriction, or programmatically call `codelab-cleanup` to delete the GCP project and all associated resources (VPC, GKE, subnets, and storage buckets).
+  - Run the Cleanup section of the test plan via explicit `--phase cleanup` (`python3 .agents/skills/codelab-validation/scripts/tester.py meeting/<customer_name>/test_plan.md --project-id "<PROVISIONED_PROJECT_ID>" --phase cleanup`), or programmatically call `codelab-cleanup` to delete the GCP project and all associated resources (VPC, GKE, subnets, and storage buckets).
 - Update `task.md` steps to `DONE` and output a completion report.
 
 ---

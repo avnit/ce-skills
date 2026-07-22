@@ -16,6 +16,8 @@ import shutil
 import subprocess
 import sys
 import urllib.request
+import html
+from html.parser import HTMLParser
 
 # Resolve repository root dynamically
 _script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -26,6 +28,76 @@ repo_root = os.path.abspath(os.path.join(_script_dir, "..", "..", "..", ".."))
 def clean_filename(name):
     """Sanitizes a string for use in filenames."""
     return re.sub(r'[^a-z0-9-]', '', name.lower().strip().replace(' ', '-'))
+
+
+class CodelabHTMLParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.in_script = False
+        self.in_style = False
+        self.in_title = False
+        self.current_header_level = None
+        self.in_pre = False
+        self.title_text = ""
+        self.current_header_text = []
+        self.current_pre_text = []
+        self.current_pre_attrs = ""
+        self.elements = []
+        self.full_text = []
+
+    def handle_starttag(self, tag, attrs):
+        tag_lower = tag.lower()
+        if tag_lower == 'script':
+            self.in_script = True
+        elif tag_lower == 'style':
+            self.in_style = True
+        elif tag_lower == 'title':
+            self.in_title = True
+        elif tag_lower in ['h1', 'h2', 'h3', 'h4']:
+            self.current_header_level = int(tag_lower[1])
+            self.current_header_text = []
+        elif tag_lower == 'pre':
+            self.in_pre = True
+            self.current_pre_text = []
+            attr_pairs = []
+            for name, val in attrs:
+                attr_pairs.append(f'{name}="{val}"' if val is not None else name)
+            self.current_pre_attrs = " ".join(attr_pairs)
+
+    def handle_endtag(self, tag):
+        tag_lower = tag.lower()
+        if tag_lower == 'script':
+            self.in_script = False
+        elif tag_lower == 'style':
+            self.in_style = False
+        elif tag_lower == 'title':
+            self.in_title = False
+            if self.title_text:
+                self.elements.append(('title', self.title_text.strip()))
+        elif tag_lower in ['h1', 'h2', 'h3', 'h4']:
+            level = int(tag_lower[1])
+            if self.current_header_level == level:
+                header_str = "".join(self.current_header_text).strip()
+                self.elements.append(('header', level, header_str))
+            self.current_header_level = None
+        elif tag_lower == 'pre':
+            self.in_pre = False
+            pre_str = "".join(self.current_pre_text).strip()
+            self.elements.append(('pre', pre_str, self.current_pre_attrs))
+            self.current_pre_attrs = ""
+
+    def handle_data(self, data):
+        if self.in_script or self.in_style:
+            return
+        
+        self.full_text.append(data)
+        
+        if self.in_title:
+            self.title_text += data
+        elif self.current_header_level is not None:
+            self.current_header_text.append(data)
+        elif self.in_pre:
+            self.current_pre_text.append(data)
 
 
 def download_url(url):
@@ -40,42 +112,38 @@ def download_url(url):
         # If it looks like HTML, extract pre/code elements or clean it up
         if "<html" in html_or_text.lower():
             print("[Validator] HTML detected, extracting text blocks and commands...")
-            # Extract headers (h2, h3) and pre/code blocks
+            parser = CodelabHTMLParser()
+            parser.feed(html_or_text)
+            
             extracted_lines = []
-            # Remove script and style tags
-            html_or_text = re.sub(r'<style.*?>.*?</style>', '', html_or_text, flags=re.DOTALL | re.IGNORECASE)
-            html_or_text = re.sub(r'<script.*?>.*?</script>', '', html_or_text, flags=re.DOTALL | re.IGNORECASE)
-            
-            # Extract title
-            title_match = re.search(r'<title>(.*?)</title>', html_or_text, re.IGNORECASE)
-            if title_match:
-                extracted_lines.append(f"# {title_match.group(1)}")
-                extracted_lines.append("")
-            
-            # Parse pre blocks and headers sequentially using a robust matching pattern
-            pattern = re.compile(r'<h([1-4]).*?>(.*?)</h\1>|<pre\b(.*?)</pre>', re.DOTALL | re.IGNORECASE)
-            
-            for match in pattern.finditer(html_or_text):
-                groups = match.groups()
-                if groups[0]: # H1-H4 header
-                    level = int(groups[0])
-                    prefix = "#" * level
-                    clean_h = re.sub(r'<.*?>', '', groups[1]).strip()
-                    extracted_lines.append(f"{prefix} {clean_h}")
+            for item in parser.elements:
+                if item[0] == 'title':
+                    extracted_lines.append(f"# {item[1]}")
                     extracted_lines.append("")
-                elif groups[2]: # pre block attributes and content
-                    pre_content = groups[2]
-                    # Only treat as bash commands if class or syntax specifies language-bash
-                    if "language-bash" in pre_content or "lang-bash" in pre_content:
-                        code_match = re.search(r'<code.*?>(.*?)</code>', pre_content, re.DOTALL | re.IGNORECASE)
-                        if code_match:
-                            code = code_match.group(1)
-                        else:
-                            code = pre_content.split('>', 1)[-1]
+                elif item[0] == 'header':
+                    level = item[1]
+                    prefix = "#" * level
+                    extracted_lines.append(f"{prefix} {item[2]}")
+                    extracted_lines.append("")
+                elif item[0] == 'pre':
+                    pre_content = item[1]
+                    pre_attrs = item[2]
+                    
+                    # Unescape standard HTML entities
+                    clean_code = html.unescape(pre_content).strip()
+                    
+                    is_bash = False
+                    if "language-bash" in pre_attrs or "lang-bash" in pre_attrs or "bash" in pre_attrs:
+                        is_bash = True
+                    elif "prettyprint" in pre_attrs:
+                        shell_indicators = [
+                            r'\bgcloud\b', r'\bbq\b', r'\bgsutil\b', r'\bkubectl\b',
+                            r'\bcurl\b', r'\bapt-get\b', r'\becho\b', r'\bcat\b'
+                        ]
+                        if any(re.search(ind, clean_code) for ind in shell_indicators):
+                            is_bash = True
                             
-                        clean_code = re.sub(r'<.*?>', '', code).strip()
-                        # Decode HTML entities
-                        clean_code = clean_code.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&').replace('&quot;', '"')
+                    if is_bash:
                         extracted_lines.append("```bash")
                         extracted_lines.append(clean_code)
                         extracted_lines.append("```")
@@ -83,8 +151,8 @@ def download_url(url):
             
             markdown_content = "\n".join(extracted_lines)
             if not markdown_content.strip():
-                # Fallback: strip HTML completely
-                markdown_content = re.sub(r'<.*?>', '', html_or_text)
+                # Fallback: strip HTML completely and unescape entities
+                markdown_content = html.unescape("".join(parser.full_text))
         else:
             # Already text/markdown
             markdown_content = html_or_text
@@ -112,6 +180,107 @@ def scan_placeholders(markdown_path):
     return sorted(list(placeholders))
 
 
+def apply_overlay(content, overlay_path):
+    """Loads and applies per-lab overlay rules from overlay.json if present.
+
+    Returns (updated_content, applied_rules_summary_list).
+    """
+    if not os.path.exists(overlay_path):
+        return content, []
+
+    print(f"[Validator] Loading overlay file: {overlay_path}")
+    try:
+        with open(overlay_path, "r", encoding="utf-8") as f:
+            overlay_data = json.load(f)
+    except Exception as e:
+        print(f"[Validator] ERROR: Malformed or unreadable overlay.json at {overlay_path}: {e}")
+        sys.exit(1)
+
+    if not isinstance(overlay_data, dict):
+        print(f"[Validator] ERROR: Invalid overlay schema at {overlay_path}. Top-level JSON must be an object.")
+        sys.exit(1)
+
+    applied_rules = []
+
+    # 1. Apply replacements
+    replacements = overlay_data.get("replacements", [])
+    if not isinstance(replacements, list):
+        print("[Validator] ERROR: 'replacements' in overlay.json must be a list.")
+        sys.exit(1)
+
+    for idx, rule in enumerate(replacements):
+        if not isinstance(rule, dict) or "find" not in rule or "replace" not in rule:
+            print(f"[Validator] ERROR: Invalid replacement rule #{idx+1} in overlay.json. Must contain 'find' and 'replace'.")
+            sys.exit(1)
+
+        find_str = rule["find"]
+        replace_str = rule["replace"]
+        is_regex = rule.get("regex", False)
+
+        if is_regex:
+            try:
+                new_content = re.sub(find_str, replace_str, content)
+            except Exception as re_err:
+                print(f"[Validator] ERROR: Invalid regex pattern in overlay.json rule #{idx+1}: {re_err}")
+                sys.exit(1)
+            if new_content != content:
+                content = new_content
+                rule_desc = f"Regex replacement: r'{find_str}' -> '{replace_str}'"
+                print(f"[Validator] Applied overlay: {rule_desc}")
+                applied_rules.append(rule_desc)
+            else:
+                print(f"[Validator] Overlay rule did not match: Regex r'{find_str}'")
+        else:
+            if find_str in content:
+                content = content.replace(find_str, replace_str)
+                rule_desc = f"Literal replacement: '{find_str}' -> '{replace_str}'"
+                print(f"[Validator] Applied overlay: {rule_desc}")
+                applied_rules.append(rule_desc)
+            else:
+                print(f"[Validator] Overlay rule did not match: Literal '{find_str}'")
+
+    # 2. Apply append_after_match
+    append_rules = overlay_data.get("append_after_match", [])
+    if not isinstance(append_rules, list):
+        print("[Validator] ERROR: 'append_after_match' in overlay.json must be a list.")
+        sys.exit(1)
+
+    for idx, rule in enumerate(append_rules):
+        if not isinstance(rule, dict) or "match" not in rule or "append_lines" not in rule:
+            print(f"[Validator] ERROR: Invalid append_after_match rule #{idx+1} in overlay.json.")
+            sys.exit(1)
+
+        match_str = rule["match"]
+        append_lines = rule["append_lines"]
+        if not isinstance(append_lines, list):
+            print(f"[Validator] ERROR: 'append_lines' in rule #{idx+1} must be a list of strings.")
+            sys.exit(1)
+
+        joined_lines = "\n".join(append_lines)
+        lines_to_append = "\n" + joined_lines
+
+        def transform_bash_block(block_match):
+            block_code = block_match.group(1)
+            if match_str in block_code:
+                if joined_lines in block_code:
+                    return block_match.group(0)
+                updated_code = block_code.rstrip() + lines_to_append + "\n"
+                return f"```bash\n{updated_code}```"
+            return block_match.group(0)
+
+        pattern = re.compile(r'```bash\r?\n(.*?)\r?\n```', re.DOTALL)
+        new_content = pattern.sub(transform_bash_block, content)
+        if new_content != content:
+            content = new_content
+            rule_desc = f"Append after match '{match_str}': Appended {len(append_lines)} lines"
+            print(f"[Validator] Applied overlay: {rule_desc}")
+            applied_rules.append(rule_desc)
+        else:
+            print(f"[Validator] Overlay rule did not match or already applied: Append after match '{match_str}'")
+
+    return content, applied_rules
+
+
 def setup_active_lab(src, validate_dir, active_lab_path, resume=False):
     """Prepares the active lab guide inside the dedicated lab validate_dir from local path or web URL."""
     # Resolve absolute path first if local
@@ -121,7 +290,7 @@ def setup_active_lab(src, validate_dir, active_lab_path, resume=False):
         if not os.path.exists(local_src):
             print(f"[Validator] Error: Local source file not found at {local_src}")
             sys.exit(1)
-            
+
     # Clear old state and run files in the dedicated directory to ensure a clean execution environment
     if os.path.exists(validate_dir):
         if resume:
@@ -130,10 +299,10 @@ def setup_active_lab(src, validate_dir, active_lab_path, resume=False):
             print(f"[Validator] Cleaning up previous run state from {validate_dir}...")
         for item in os.listdir(validate_dir):
             item_path = os.path.join(validate_dir, item)
-            # Do not delete the source file itself or variables.json!
+            # Do not delete the source file itself, variables.json, or overlay.json!
             if local_src and os.path.exists(item_path) and os.path.samefile(item_path, local_src):
                 continue
-            if item == "variables.json":
+            if item in ["variables.json", "overlay.json"]:
                 continue
             if resume and (item == ".tester_state" or item.endswith(".state") or item.endswith(".env")):
                 continue  # Preserve the state folder and environment cache files!
@@ -144,9 +313,9 @@ def setup_active_lab(src, validate_dir, active_lab_path, resume=False):
                     os.remove(item_path)
             except Exception as e:
                 print(f"[Warning] Could not remove {item_path}: {e}")
-                
+
     os.makedirs(validate_dir, exist_ok=True)
-    
+
     if src.startswith("http://") or src.startswith("https://"):
         content = download_url(src)
         with open(active_lab_path, "w", encoding="utf-8") as f:
@@ -159,7 +328,7 @@ def setup_active_lab(src, validate_dir, active_lab_path, resume=False):
         else:
             shutil.copy2(local_src, active_lab_path)
             print(f"[Validator] Copied local lab to: {active_lab_path}")
-        
+
     # Append frontmatter if missing to satisfy formatting rules
     with open(active_lab_path, "r+", encoding="utf-8") as f:
         content = f.read()
@@ -169,136 +338,42 @@ def setup_active_lab(src, validate_dir, active_lab_path, resume=False):
             f.write(frontmatter + content)
             print("[Validator] Injected missing metadata frontmatter into codelab guide.")
 
-    # Run dynamic placeholder sanitization and automation preprocessing
+    # Run dynamic placeholder sanitization and generic engine policies
     with open(active_lab_path, "r", encoding="utf-8") as f:
         content = f.read()
-        
+
     # 1. Comment out interactive authentication commands to prevent hanging
     content = re.sub(r'(?m)^\s*(gcloud auth login\b)', r'# \1', content)
     content = re.sub(r'(?m)^\s*(gcloud auth application-default login\b)', r'# \1', content)
-    
+
     # 2. Replace project ID placeholders
     content = re.sub(r'(?i)<your[- ]project[- ]id>', '${PROJECT_ID}', content)
     content = re.sub(r'(?i)<project[- ]id>', '${PROJECT_ID}', content)
-    
-    # 3. Replace AGENT_ID placeholder
-    content = content.replace("<numeric-id-from-output>", "$AGENT_ID")
-    
-    # 4. Comment out bash code blocks inside any sections marked as optional to prevent E2E execution blocks
+
+    # 3. Comment out bash code blocks inside any sections marked as optional to prevent E2E execution blocks
     def comment_optional_sections(text):
         h2_pattern = re.compile(r'^(##\s+.*)$', re.MULTILINE)
         parts = h2_pattern.split(text)
         for idx in range(1, len(parts), 2):
             header = parts[idx]
-            body = parts[idx+1]
+            body = parts[idx + 1]
             if "(optional)" in header.lower():
                 print(f"[Validator] Commenting out optional section: {header.strip()}")
                 body = re.sub(r'```bash\r?\n(.*?)\r?\n```(?:\r?\n|$)', r'# ```bash\n# \1\n# ```\n', body, flags=re.DOTALL)
-                parts[idx+1] = body
+                parts[idx + 1] = body
         return "".join(parts)
+
     content = comment_optional_sections(content)
-    
-    # 5. Automatically capture AGENT_ID from deploy_agent.py output
-    def transform_deploy_cmd(match):
-        cmd = match.group(1)
-        if "deploy_agent.py" in cmd and "export AGENT_ID" not in cmd:
-            wrapped = f"DEPLOY_OUT=$({cmd})\nprintf '%s\\n' \"$DEPLOY_OUT\"\nexport AGENT_ID=$(printf '%s\\n' \"$DEPLOY_OUT\" | grep -oE 'reasoningEngines/[0-9]+' | cut -d'/' -f2)"
-            return f"```bash\n{wrapped}\n```\n"
-        return f"```bash\n{cmd}\n```\n"
-        
-    content = re.sub(r'```bash\r?\n(.*?)\r?\n```(?:\r?\n|$)', transform_deploy_cmd, content, flags=re.DOTALL)
 
-    # 5b. Make gcloud alpha agent-registry services create idempotent by appending || true
-    def make_agent_registry_idempotent(match):
-        cmd = match.group(1)
-        if "gcloud alpha agent-registry services create" in cmd:
-            # Append || true to each service create command block ending in non-backslash
-            cmd = re.sub(r'(gcloud alpha agent-registry services create.*?[^\\])(?:\r?\n|$)', r'\1 || true\n', cmd, flags=re.DOTALL)
-            return f"```bash\n{cmd}\n```\n"
-        return f"```bash\n{cmd}\n```\n"
+    # 4. Apply per-lab overlay transforms if overlay.json exists
+    overlay_path = os.path.join(validate_dir, "overlay.json")
+    content, applied_transforms = apply_overlay(content, overlay_path)
 
-    content = re.sub(r'```bash\r?\n(.*?)\r?\n```(?:\r?\n|$)', make_agent_registry_idempotent, content, flags=re.DOTALL)
-    
-    # 5c. Fix bug in guide where it attempts to import a non-existent gateway config instead of exporting it
-    content = content.replace(
-        "agent-gateways import agent-gateway \\\n  --source=agent-gateway.yaml",
-        "agent-gateways export agent-gateway \\\n  --destination=agent-gateway.yaml"
-    )
-    
-    # 5d. Make manual REST API POST creations idempotent by appending || true to curl command blocks
-    def make_rest_calls_idempotent(match):
-        cmd = match.group(1)
-        if "curl " in cmd and "-X POST" in cmd and "googleapis.com" in cmd:
-            cmd = cmd.rstrip() + " || true\n"
-            return f"```bash\n{cmd}\n```\n"
-        return f"```bash\n{cmd}\n```\n"
-
-    content = re.sub(r'```bash\r?\n(.*?)\r?\n```(?:\r?\n|$)', make_rest_calls_idempotent, content, flags=re.DOTALL)
-    
-    # 6. Bypass sudo command for skaffold by copying to workspace bin
-    content = content.replace(
-        "sudo install skaffold /usr/local/bin/",
-        f"mkdir -p {repo_root}/bin && cp skaffold {repo_root}/bin/ && chmod +x {repo_root}/bin/skaffold"
-    )
-    
-    # 7. Comment out sudo apt-get installation of gettext-base (envsubst is already preinstalled)
-    content = re.sub(r'(?m)^\s*(sudo apt-get install -y gettext-base\b)', r'# \1', content)
-    
-    # 8. Automatically relax Terraform required_version constraints and fix HCL null-attribute validation bugs in static files
-    def add_tf_relax(match):
-        cmd = match.group(1)
-        if "git clone" in cmd and "cd demos/agent-gateway" in cmd:
-            cmd += '\nfind . -name "*.tf" -exec sed -i \'s/required_version\\s*=\\s*">= 1.12.2"/required_version = ">= 1.10.0"/g\' {} +'
-            cmd += '\nfind . -name "*.tf" -exec sed -i \'s/== null || endswith(/== null ? true : endswith(/g\' {} +'
-            cmd += '\nfind . -name "*.tf" -exec sed -i \'s/&& (var.mcp_internal_dns_zone == null || var.psc_interface_dns_zone.name != var.mcp_internal_dns_zone.name) ? 1 : 0/? (var.mcp_internal_dns_zone == null ? 1 : (var.psc_interface_dns_zone.name != var.mcp_internal_dns_zone.name ? 1 : 0)) : 0/g\' {} +'
-            cmd += '\nfind . -name "*.tf" -exec sed -i \'s/| jq -r \\x27.name\\x27/| python3 -c \\x27import sys, json; print(json.load(sys.stdin).get(\\"name\\", \\"\\"))\\x27/g\' {} +'
-            cmd += '\nfind . -name "*.tf" -exec sed -i \'s/| jq -r \\x27.done \\/\\/ false\\x27/| python3 -c \\x27import sys, json; print(str(json.load(sys.stdin).get(\\"done\\", False)).lower())\\x27/g\' {} +'
-            cmd += '\nfind . -name "*.tf" -exec sed -i \'/resource "google_network_security_authz_policy"/,/depends_on/s/depends_on\\s*=\\s*\\[time_sleep.wait_for_gateway\\]/depends_on = [terraform_data.dns_peering]/g\' {} +'
-        return f"```bash\n{cmd}\n```\n"
-    content = re.sub(r'```bash\r?\n(.*?)\r?\n```(?:\r?\n|$)', add_tf_relax, content, flags=re.DOTALL)
-    
-    # 9. Implement robust two-step Terraform initialization to relax version constraints inside dynamically downloaded .terraform modules
-    def transform_tf_init(match):
-        cmd = match.group(1)
-        if "terraform init" in cmd and "|| true" not in cmd:
-            # Wrap the terraform init command to download modules first, relax all version constraints dynamically, and re-initialize
-            cmd_clean = cmd.replace(
-                "terraform init -backend-config=backend.conf",
-                "terraform init -backend-config=backend.conf -get=true || true\nfind . -name \"*.tf\" -exec sed -i 's/required_version\\s*=\\s*\"\\s*>= 1.12.2\\s*\"/required_version = \">= 1.10.0\"/g' {} +\nterraform init -backend-config=backend.conf"
-            )
-            return f"```bash\n{cmd_clean}\n```\n"
-        return f"```bash\n{cmd}\n```\n"
-    content = re.sub(r'```bash\r?\n(.*?)\r?\n```(?:\r?\n|$)', transform_tf_init, content, flags=re.DOTALL)
-    
-    # 10. Automatically substitute your-bucket-name and project-name placeholders inside terraform/backend.conf
-    def transform_backend_conf(match):
-        cmd = match.group(1)
-        if "cp terraform/example.backend.conf" in cmd:
-            cmd += '\nsed -i "s/your-bucket-name/${PROJECT_ID}-tfstate/g" terraform/backend.conf\nsed -i "s/project-name/agent-gateway/g" terraform/backend.conf'
-        return f"```bash\n{cmd}\n```\n"
-    content = re.sub(r'```bash\r?\n(.*?)\r?\n```(?:\r?\n|$)', transform_backend_conf, content, flags=re.DOTALL)
-    
-    # 11. Automatically substitute placeholders inside terraform/terraform.tfvars
-    def transform_tfvars(match):
-        cmd = match.group(1)
-        print(f"[Debug] transform_tfvars evaluating block: {repr(cmd)}")
-        if "cp terraform/example.tfvars" in cmd:
-            print("[Debug] FOUND TARGET CP terraform/example.tfvars!")
-            cmd += '\nACTIVE_ACCOUNT=$(gcloud config get-value account)'
-            cmd += '\nsed -i \'s/project_id = "my-gcp-project-id"/project_id = "\'"${PROJECT_ID}"\'"/g\' terraform/terraform.tfvars'
-            cmd += '\nsed -i \'s/organization_id = "123456789012"/organization_id = "\'"${ORG_ID}"\'"/g\' terraform/terraform.tfvars'
-            cmd += '\nsed -i \'s/user:admin@example.com/user:\'"${ACTIVE_ACCOUNT}"\'/g\' terraform/terraform.tfvars'
-        return f"```bash\n{cmd}\n```\n"
-    content = re.sub(r'```bash\r?\n(.*?)\r?\n```(?:\r?\n|$)', transform_tfvars, content, flags=re.DOTALL)
-    
-    # 12. Comment out export ORG_ID=ID_FROM_OUTPUT to prevent overwriting the dynamically queried value
-    content = re.sub(r'(?m)^\s*(export ORG_ID=ID_FROM_OUTPUT\b)', r'# \1', content)
-    
-
-    
     with open(active_lab_path, "w", encoding="utf-8") as f:
         f.write(content)
     print("[Validator] Sanitized and automated active lab placeholders.")
+
+    return applied_transforms
 
 
 def run_command(command, description="Executing command"):
@@ -318,7 +393,7 @@ def run_command(command, description="Executing command"):
         return False, e.stderr
 
 
-def compile_report(tester_state_dir, report_dir, report_path, project_id, overall_success):
+def compile_report(tester_state_dir, report_dir, report_path, project_id, overall_success, applied_transforms=None):
     """Compiles the finalized test results into validation-report.md."""
     os.makedirs(report_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -347,6 +422,16 @@ def compile_report(tester_state_dir, report_dir, report_path, project_id, overal
     report.append(f"**Test Project ID:** `{project_id}`")
     report.append(f"**Overall Verdict:** <span style='color: {verdict_color}; font-weight: bold;'>{verdict}</span>")
     report.append("")
+    report.append("## Applied Overlay Transforms")
+    report.append("")
+    if applied_transforms:
+        report.append("The following per-lab overlay transforms were applied during validation:")
+        report.append("")
+        for t in applied_transforms:
+            report.append(f"- {t}")
+    else:
+        report.append("None — lab validated as written")
+    report.append("")
     report.append("## Step-by-Step Execution Summary")
     report.append("")
     report.append("| Step | Title | Status | Details / Output |")
@@ -366,19 +451,32 @@ def compile_report(tester_state_dir, report_dir, report_path, project_id, overal
             badge = "🟡 BLOCKED"
         elif status == "RUNNING":
             badge = "🔵 RUNNING"
+        elif status == "DEFERRED":
+            badge = "⏸️ DEFERRED"
         else:
             badge = "⚪ PENDING"
             
-        details = s.get("output", "").strip()
-        if not details:
-            details = s.get("error", "").strip()
-        if not details:
-            details = s.get("instructions", "")
-            
-        # Clean details for table display
-        details = details.replace("\n", "<br>").replace("|", "\\|")
-        if len(details) > 300:
-            details = details[:297] + "..."
+        units_data = s.get("units", [])
+        if units_data:
+            unit_lines = []
+            for u in units_data:
+                u_st = u.get("status", "PENDING")
+                u_tx = u.get("text", "").strip()
+                if len(u_tx) > 60:
+                    u_tx = u_tx[:57] + "..."
+                u_tx = u_tx.replace("|", "\\|").replace("\n", " ")
+                unit_lines.append(f"[{u_st}] <code>{u_tx}</code>")
+            details = "<br>".join(unit_lines)
+        else:
+            details = s.get("output", "").strip()
+            if not details:
+                details = s.get("error", "").strip()
+            if not details:
+                details = s.get("instructions", "")
+            # Clean details for table display
+            details = details.replace("\n", "<br>").replace("|", "\\|")
+            if len(details) > 300:
+                details = details[:297] + "..."
             
         report.append(f"| Step {num} | {title} | {badge} | {details} |")
         
@@ -448,7 +546,7 @@ def main():
     print(f"[Validator] Target Lab File: {active_lab_path}")
     
     # 1. Resolve active lab source inside dynamic validate_dir
-    setup_active_lab(args.src, validate_dir, active_lab_path, resume=args.resume)
+    applied_transforms = setup_active_lab(args.src, validate_dir, active_lab_path, resume=args.resume)
     
     # Scan dynamic variable placeholders
     placeholders = scan_placeholders(active_lab_path)
@@ -521,18 +619,20 @@ def main():
     run_command(f"gcloud config set project {project_id}", "Setting gcloud active project")
     
     # 3. Run Tester Suite
-    tester_cmd = f"python3 .agents/skills/codelab-validation/scripts/tester.py {active_lab_path}"
+    tester_cmd = f"python3 .agents/skills/codelab-validation/scripts/tester.py {active_lab_path} --project-id {project_id}"
     if args.artifact_dir:
         tester_cmd += f" --artifact-dir {args.artifact_dir}"
     if args.skip_cleanup:
-        tester_cmd += " --skip-cleanup"
+        tester_cmd += " --phase test"
+    else:
+        tester_cmd += " --phase all"
         
     print("[Validator] Launching stateful E2E verification engine...")
     test_success, test_output = run_command(tester_cmd, "Running tester suite")
     
     # 4. Compile Validation Report
     tester_state_dir = os.path.join(validate_dir, ".tester_state")
-    compile_report(tester_state_dir, report_dir, report_path, project_id, test_success)
+    compile_report(tester_state_dir, report_dir, report_path, project_id, test_success, applied_transforms=applied_transforms)
     
     # 5. Handle Project Cleanup Instructions
     if temp_project_created:

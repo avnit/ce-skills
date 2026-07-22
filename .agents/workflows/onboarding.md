@@ -10,8 +10,8 @@ Steer the onboarding execution lifecycle to prepare the active workspace environ
 
 ### Phase 1: Interactive Onboarding Parameters Intake
 
-1. Consult the `gcp_config.txt` template layout requirements (`folder_id`, `billing_account`, and optional `cloudtop_host`) alongside the Systems Engineering Persona definitions and the Developer Knowledge API server instruction metadata.
-2. Invoke the **`ask_question`** tool to present an interactive input intake modal for the user to supply their specific values. Present clear instructions across five structural intake questions:
+1. Consult the `gcp_config.txt` template layout requirements (`folder_id`, `billing_account`, `billing_project`, and optional `cloudtop_host`) alongside the Systems Engineering Persona definitions and the Developer Knowledge API server instruction metadata.
+2. Invoke the **`ask_question`** tool to present an interactive input intake modal for the user to supply their specific values. Present clear instructions across six structural intake questions:
    - **Question 1 (Systems Engineer Persona Binding)**:
      - `question`: "Select your primary Google Cloud Systems Engineer role/objective to steer future artifact focus dynamically:"
      - `options`:
@@ -31,14 +31,20 @@ Steer the onboarding execution lifecycle to prepare the active workspace environ
        - "Use custom write-in field below to supply Billing Account ID"
        - "Reuse sample template: 010101-A1A1A1-B2B2B2"
      - `is_multi_select`: false
-   - **Question 4 (Cloudtop Hostname)**:
+   - **Question 4 (Target Billing Project ID)**:
+     - `question`: "Please provide your target BigQuery Billing Project ID (containing the cloud billing export datasets) using the text write-in box below:"
+     - `options`:
+       - "Use custom write-in field below to supply Billing Project ID"
+       - "Reuse sample template: billing-350700"
+     - `is_multi_select`: false
+   - **Question 5 (Cloudtop Hostname)**:
      - `question`: "Please provide your dedicated Cloudtop workstation hostname using the text write-in box below (optional):"
      - `options`:
        - "Use custom write-in field below to supply Cloudtop Hostname"
        - "Reuse sample template: generic-dev-cloudtop.c.googlers.com"
        - "Skip / Leave empty"
      - `is_multi_select`: false
-   - **Question 5 (Developer Knowledge Quota Project ID)**:
+   - **Question 6 (Developer Knowledge Quota Project ID)**:
      - `question`: "Select or provide your target Google Cloud Project ID enabled for Developer Knowledge API access (used for MCP documentation search quota):"
      - `options`:
        - "(Recommended) Keep shared repository baseline default: codelab-creator-central"
@@ -55,6 +61,7 @@ Steer the onboarding execution lifecycle to prepare the active workspace environ
      --persona "<Selected Persona Name>" \
      --folder-id "<Folder ID>" \
      --billing-account "<Billing Account ID>" \
+     --billing-project "<Billing Project ID>" \
      --cloudtop-host "<Cloudtop Hostname or empty string>" \
      --knowledge-project "<Knowledge Project ID>" \
      --piper-workspace "ce-skills"

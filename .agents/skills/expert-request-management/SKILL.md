@@ -1,6 +1,9 @@
 ---
 name: expert-request-management
-description: Queries, segments, and reports on Service CloudBI expert request opportunity asks in BigQuery.
+description: |
+  Queries, segments, and reports on Service CloudBI expert request opportunity asks in BigQuery.
+  Use when: running structured CLI reporting, segmenting Service CloudBI expert requests by opportunity stage and product segment, or generating spend tables via the get_expert_requests.py script.
+  Don't use for: writing raw BigQuery SQL schema joins or custom metric calculations (use bq-expert-requests instead).
 ---
 
 # Skill: Expert Request Management

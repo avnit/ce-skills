@@ -56,7 +56,7 @@ _Staged Path_: `//depot/company/teams/practice-ce/whitepapers/customer_x/one-pag
 
 The script will:
 
-1. Locate an available CitC workspace containing a `/company` mount (e.g., `/google/src/cloud/$USER/ce-skills/company`).
+1. Locate an available CitC workspace containing a `/company` mount (e.g., `${CITC_WORKSPACE_ROOT:-/google/src/cloud/$USER/<your-client>}/company` or parent directory `${CITC_BASE_DIR:-/google/src/cloud/$USER}`).
 2. Resolve target destination directory based on `--scope` (`users/$USER` vs `teams/$TEAM`).
 3. Copy the artifact files into the target CitC directory.
 4. **G3doc Formatting**: For markdown files (`*.md`), inspect headers and automatically inject standard g3doc metadata blocks (`<!--* freshness: ... *-->` and `[TOC]`) if missing.
@@ -66,4 +66,4 @@ The script will:
 
 ## Additional Documentation
 
-For a comprehensive walkthrough of prerequisites, bridging mechanics, and Critique CL review rules (including personal exemption vs team LGTM policies), see [publishing_guide.md](file:///usr/local/google/home/shacharb/skynet/.agents/skills/publish-artifact/references/publishing_guide.md).
+For a comprehensive walkthrough of prerequisites, bridging mechanics, and Critique CL review rules (including personal exemption vs team LGTM policies), see [publishing_guide.md](references/publishing_guide.md).

@@ -25,8 +25,11 @@ class TestBugToLessonProcessor(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
+        self.env_patcher = patch.dict(os.environ, {"CLOSED_LOOP_STORAGE_BACKEND": "local"})
+        self.env_patcher.start()
 
     def tearDown(self):
+        self.env_patcher.stop()
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     # -----------------------------------------------------------------------
@@ -36,9 +39,9 @@ class TestBugToLessonProcessor(unittest.TestCase):
     def test_dual_identity_credentials_refresh_and_cache(self, mock_run):
         mock_run.return_value = MagicMock(stdout="mock_oauth_token_string\n", returncode=0)
 
-        creds = processor.GcloudUserCredentials(account="shacharb@google.com")
+        creds = processor.GcloudUserCredentials(account="test-user@google.com")
         self.assertFalse(creds.valid)
-        self.assertEqual(creds.account, "shacharb@google.com")
+        self.assertEqual(creds.account, "test-user@google.com")
 
         # Trigger refresh
         creds.refresh()
@@ -48,7 +51,7 @@ class TestBugToLessonProcessor(unittest.TestCase):
 
         # Ensure gcloud command invoked with correct account
         mock_run.assert_called_once_with(
-            ["gcloud", "auth", "print-access-token", "--account=shacharb@google.com"],
+            ["gcloud", "auth", "print-access-token", "--account=test-user@google.com"],
             capture_output=True, text=True, check=True
         )
 
@@ -122,7 +125,7 @@ class TestBugToLessonProcessor(unittest.TestCase):
     # -----------------------------------------------------------------------
     # 5. Atomic Error Handling Tests
     # -----------------------------------------------------------------------
-    @patch("bug_to_lesson_processor.push_to_firebase")
+    @patch.object(processor, "push_to_firebase")
     def test_atomic_error_handling_preserves_status_on_failure(self, mock_push):
         # Simulate storage write failure
         mock_push.side_effect = RuntimeError("Simulated Firestore write failure")
@@ -146,7 +149,7 @@ class TestBugToLessonProcessor(unittest.TestCase):
             disk_payload = json.load(f)
         self.assertEqual(disk_payload["status"], "FIXED")
 
-    @patch("bug_to_lesson_processor.push_to_firebase")
+    @patch.object(processor, "push_to_firebase")
     def test_successful_processing_updates_status(self, mock_push):
         mock_push.return_value = None  # Successful push
 

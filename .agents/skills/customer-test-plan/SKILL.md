@@ -16,10 +16,11 @@ Instead, it acts as a **Structured Test Harness Manifest** that links directly t
 - [ ] Step 2: Define the exact E2E verification parameters, success assertions, and prerequisite states inside `test_plan.md`.
 - [ ] Step 3: Document the unified validation execution command referencing `tester.py` to allow the Consulting Engineer or test-runner to run the entire E2E lifecycle dynamically.
 - [ ] Step 4: Save the finalized Test Plan directly to `meeting/<customer_name>/test_plan.md`.
+- [ ] Step 5: Validate the saved `test_plan.md` via the Phase 6 Pre-Flight Code Audit Gate (`preflight_audit.py --variables meeting/<customer_name>/variables.json --check-gcloud-surface`) before sandbox project provisioning.
 
 ## Analysis Prompt
 
-Use the unified discovery and solutions architect system prompt defined in [discovery_analyst.md](file:///prompts/discovery_analyst.md) passing the target flag: `--format test_plan`.
+Use the unified discovery and solutions architect system prompt defined in [discovery_analyst.md](../../../prompts/discovery_analyst.md) passing the target flag: `--format test_plan`.
 
 ---
 
@@ -47,7 +48,7 @@ This Test Plan acts as the structured validation harness manifest. It binds our 
 
 - **Reference Design**: `[design_blueprint.md](design_blueprint.md)`
 - **Execution Codelab**: `[customer-a-storage.lab.md](../../labs/dev/customer-a-storage/customer-a-storage.lab.md)`
-- **Verification Engine**: `[codelab-validation/tester.py](../../.agents/skills/codelab-validation/scripts/tester.py)`
+- **Verification Engine**: `[codelab-validation/tester.py](../codelab-validation/scripts/tester.py)`
 
 ---
 
@@ -59,6 +60,7 @@ To execute the E2E validation tests, run our centralized, stateful `tester.py` e
 # Run the unified stateful validation engine
 python3 .agents/skills/codelab-validation/scripts/tester.py \
     meeting/customer_a/test_plan.md \
+    --project-id "<PROJECT_ID>" \
     --artifact-dir meeting/customer_a/validation_artifacts \
     --skip-cleanup
 ```

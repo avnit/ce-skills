@@ -31,5 +31,5 @@ python3 .agents/skills/open-bug/scripts/open_bug.py --title "<issue_title>" --de
 ### How it works internally:
 
 1. **URL Fallback Generation**: Constructs a URL-encoded one-click filing link (`https://b.corp.google.com/issues/new?component=2150801&...`).
-2. **CLI Execution**: Invokes `/google/bin/releases/issues-cli/issues create` to create the ticket directly in Buganizer.
+2. **CLI Execution**: Invokes `${ISSUES:-/google/bin/releases/issues-cli/issues} create` to create the ticket directly in Buganizer.
 3. **Resiliency**: If CLI mutation is restricted by LOAS or credentials policy, the script catches the failure cleanly and instructs the user to click the pre-filled web UI link.

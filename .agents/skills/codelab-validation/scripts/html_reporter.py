@@ -41,7 +41,16 @@ BADGE_MAP = {
     "FAILED": '<span style="background: #fce8e6; color: #c53929; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">FAILED</span>',
     "BLOCKED": '<span style="background: #ffebee; color: #c53929; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">BLOCKED</span>',
     "IN PROGRESS": '<span style="background: #e8f0fe; color: #1a73e8; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">IN PROGRESS</span>',
-    "COMPLETED": '<span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">COMPLETED</span>'
+    "COMPLETED": '<span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">COMPLETED</span>',
+    "DEFERRED": '<span style="background: #e8eaed; color: #3c4043; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">DEFERRED</span>',
+    "SKIPPED/NO-OP": '<span style="background: #f1f3f4; color: #5f6368; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">SKIPPED/NO-OP</span>'
+}
+
+UNIT_BADGE_MAP = {
+    "DONE": '<span style="background: #e6f4ea; color: #137333; padding: 2px 6px; border-radius: 8px; font-weight: 600; font-size: 10px; letter-spacing: 0.5px; display: inline-block;">DONE</span>',
+    "FAILED": '<span style="background: #fce8e6; color: #c53929; padding: 2px 6px; border-radius: 8px; font-weight: 600; font-size: 10px; letter-spacing: 0.5px; display: inline-block;">FAILED</span>',
+    "SKIPPED-CACHED": '<span style="background: #e8f0fe; color: #1a73e8; padding: 2px 6px; border-radius: 8px; font-weight: 600; font-size: 10px; letter-spacing: 0.5px; display: inline-block;">SKIPPED-CACHED</span>',
+    "PENDING": '<span style="background: #f1f3f4; color: #5f6368; padding: 2px 6px; border-radius: 8px; font-weight: 600; font-size: 10px; letter-spacing: 0.5px; display: inline-block;">PENDING</span>'
 }
 
 class HTMLReporter:
@@ -88,6 +97,21 @@ class HTMLReporter:
                 safe_err = step["error"].replace("<", "&lt;").replace(">", "&gt;")
                 lines.append(f'<pre style="font-family: ui-monospace, monospace; font-size: 11px; background: #f1f3f4; padding: 8px 12px; border-radius: 6px; color: #202124; margin: 8px 0 0 0; white-space: pre-wrap; word-break: break-all;">{safe_err}</pre>')
             lines.append('</td></tr>')
+
+            if step.get("units"):
+                for unit in step["units"]:
+                    u_status = unit.get("status", "PENDING")
+                    u_chip = UNIT_BADGE_MAP.get(u_status, UNIT_BADGE_MAP["PENDING"])
+                    u_cmd = unit.get("text", "")
+                    if repo_root:
+                        prefix_to_strip = f'export PATH="{repo_root}/bin:$HOME/.local/bin:$PATH"'
+                        if u_cmd.startswith(prefix_to_strip):
+                            u_cmd = u_cmd[len(prefix_to_strip):].lstrip()
+                    u_preview = (u_cmd[:100] + "..." if len(u_cmd) > 100 else u_cmd).replace("<", "&lt;").replace(">", "&gt;")
+                    lines.append('<tr style="border-bottom: 1px solid #f1f3f4; background-color: #ffffff;">')
+                    lines.append(f'<td style="padding: 6px 24px 6px 40px; vertical-align: middle;">{u_chip}</td>')
+                    lines.append(f'<td style="padding: 6px 12px 6px 0; vertical-align: middle; font-size: 11px; color: #5f6368;" colspan="2"><code style="font-family: monospace; font-size: 11px; color: #202124; background: #f1f3f4; padding: 2px 4px; border-radius: 4px;">{u_preview}</code></td>')
+                    lines.append('</tr>')
 
         lines.append(HTML_SKELETON_BOT)
         return "\n".join(line.strip() for line in lines)

@@ -2,21 +2,25 @@ name: CI
 
 on:
   push:
-    branches: [main, shacharb, shacharb-subagents]
+    branches: [main, pre-main]
   pull_request:
-    branches: [main, shacharb, shacharb-subagents]
+    branches: [main, pre-main]
 
 # Cancel in-progress runs on the same branch when a new commit is pushed.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege GITHUB_TOKEN — every job only reads the repo (checkout, lint, test).
+permissions:
+  contents: read
+
 jobs:
   # --------------------------------------------------------------------
-  # 1. Markdown / DevSite Style — Formatting checks
+  # 1. Markdown / YAML — Prettier formatting check
   # --------------------------------------------------------------------
   lint-markdown:
-    name: Markdown / Codelab formatting check
+    name: Markdown / YAML formatting check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,10 +37,10 @@ jobs:
         run: prettier --check "**/*.{md,yml,yaml}"
 
   # --------------------------------------------------------------------
-  # 2. Python — .agents scripts & tools (ruff lints)
+  # 2. Python — ruff lint across .agents/ and scripts/ (recursive)
   # --------------------------------------------------------------------
   lint-py-agents:
-    name: Python .agents — ruff check
+    name: Python — ruff check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,13 +53,15 @@ jobs:
 
       - name: Ruff Linter Check
         run: |
-          uvx ruff check .agents/scripts/ .agents/skills/*/scripts/
+          uvx ruff check .agents/ scripts/
 
   # --------------------------------------------------------------------
-  # 3. JIT Prompt Manifest Check — Ensures compiled_subagents.json isn't stale
+  # 3. Prompt manifest — compile_prompts.py must succeed.
+  #    It sys.exit(1)s if a mapped prompt file is missing; manifest
+  #    completeness/non-emptiness is asserted in the unit tests.
   # --------------------------------------------------------------------
   validate-subagent-manifest:
-    name: JIT subagents manifest up-to-date
+    name: Prompt manifest compiles
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,18 +71,35 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Recompile Prompts Manifest
+      - name: Compile prompt manifest
         run: |
-          # Correct absolute path simulation for CI CWD
-          export WORKSPACE_ROOT=$GITHUB_WORKSPACE
           python3 .agents/scripts/compile_prompts.py
 
-      - name: Verify Manifest is Up-to-Date (Git Diff Gate)
+  # --------------------------------------------------------------------
+  # 4. Python — unit tests (hermetic: no live GCP / network)
+  # --------------------------------------------------------------------
+  unit-tests:
+    name: Unit tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Run pytest
         run: |
-          git diff --exit-code .agents/state/compiled_subagents.json
+          if [ -f "requirements.txt" ]; then
+            uvx --with-requirements requirements.txt pytest tests/ -q
+          else
+            uvx pytest tests/ -q
+          fi
 
   # --------------------------------------------------------------------
-  # 4. Terraform — fmt + validate (checks all lab directories recursively)
+  # 5. Terraform — fmt + validate (runs only if labs/dev is present)
   # --------------------------------------------------------------------
   terraform-check:
     name: Labs Terraform fmt + validate
@@ -98,7 +121,6 @@ jobs:
             echo "labs/dev directory not found, skipping terraform fmt."
           fi
 
-      # Loop recursively through all GKE/Filestore subdirectories containing HCL to validate syntax
       - name: Validate Terraform (All Dev Labs)
         run: |
           if [ -d "labs/dev" ]; then

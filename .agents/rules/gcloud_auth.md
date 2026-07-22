@@ -10,13 +10,14 @@ Before executing any workflow run, deploying workloads, provisioning resources, 
 ## Verification Requirements
 
 1. **Interactive Authentication Verification (Pre-Flight Gate)**:
-   - Prior to executing any GCP command, running a deployment script, or initiating a validation workflow, you **MUST** consult and execute the workspace-level skill: [.agents/skills/gcloud-auth-verification/SKILL.md](file:///.agents/skills/gcloud-auth-verification/SKILL.md).
+   - Prior to executing any GCP command, running a deployment script, or initiating a validation workflow, you **MUST** consult and execute the workspace-level skill: [.agents/skills/gcloud-auth-verification/SKILL.md](../skills/gcloud-auth-verification/SKILL.md).
    - Run `python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py` to retrieve the active and credentialed accounts.
 
-2. **Mandatory ask_question Modal**:
-   - You **MUST** present the active credentialed account options to the user using the **`ask_question`** tool.
-   - Populate the modal choices dynamically (Keep active, Switch to existing accounts, Authenticate new account, Configure ADC).
-   - If the user selects a different existing account, you **MUST** proactively execute `gcloud config set account <ACCOUNT>` on their behalf before running the workflow.
+2. **Conditional ask_question Modal**:
+   - If the active `gcloud` account matches the target environment (Sandbox for GCP work; Corporate for corp-service work), log the active identity (`Active gcloud account: <ACCOUNT>`) and proceed automatically without prompting.
+   - Present the **`ask_question`** tool modal ONLY when an account switch or user decision is required.
+   - When presenting the modal, populate choices dynamically (Keep active, Switch to existing accounts, Authenticate new account, Configure ADC).
+   - If the user selects a different existing account, execute `gcloud config set account <ACCOUNT>` on their behalf before running the workflow.
 
 3. **Application Default Credentials (ADC) Check**:
    - If executing Python libraries, terraform, or background runner scripts, ensure Application Default Credentials (ADC) are properly aligned.

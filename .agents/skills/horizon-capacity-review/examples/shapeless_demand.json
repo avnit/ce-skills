@@ -1,0 +1,30 @@
+{
+  "customer_id": "external/987654321",
+  "project_number": "123456789012",
+  "location": "us-central1",
+  "state": 1,
+  "justification": "Organic compute expansion for customer retail platform GKE cluster autoscaling. Reviewed via Buganizer #36912345.",
+  "demand_preferences": {
+    "justification": "Organic compute expansion for customer retail platform GKE cluster autoscaling. Reviewed via Buganizer #36912345.",
+    "is_mandatory": true,
+    "flexibility_options": ["REGION_FLEXIBLE_WITHIN_CONTINENT"]
+  },
+  "resources": [
+    {
+      "cpu_cores": 480,
+      "ram_gb": 1920,
+      "ramp_schedule": [
+        {
+          "start_date": "2026-08-01",
+          "cpu_cores": 240,
+          "ram_gb": 960
+        },
+        {
+          "start_date": "2026-10-01",
+          "cpu_cores": 480,
+          "ram_gb": 1920
+        }
+      ]
+    }
+  ]
+}

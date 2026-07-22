@@ -37,7 +37,7 @@ Steering Workflow:
      - Maintain the visual task preview board in real-time.
 
 4. **Phase 4: Result Compilation & Report Delivery**
-   - Once the validation run completes, read the generated validation report located at `/usr/local/google/home/shacharb/skynet/labs/validate/report/validation-report.md`.
+   - Once the validation run completes, read the generated validation report located at `labs/validate/<lab_name>/report/validation-report.md`.
    - Copy or output the report details cleanly to the user's workspace and chat interface.
    - Highlight any failed steps or architectural recommendations from the report.
 

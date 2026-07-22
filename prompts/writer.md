@@ -10,7 +10,7 @@ Generate the codelab content and save it as `[id].lab.md` in the target lab dire
 
 ## Standards (Strict Adherence)
 
-You MUST adhere strictly to all formatting standards, metadata conventions, and syntax rules detailed in the **codelab-formatting** skill ([SKILL.md](file:///.agents/skills/codelab-formatting/SKILL.md)).
+You MUST adhere strictly to all formatting standards, metadata conventions, and syntax rules detailed in the **codelab-formatting** skill ([SKILL.md](../.agents/skills/codelab-formatting/SKILL.md)).
 
 Key guidelines to keep top-of-mind:
 

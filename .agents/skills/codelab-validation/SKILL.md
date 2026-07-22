@@ -1,187 +1,103 @@
 ---
 name: codelab-validation
 description: >
-  Validates natural-language codelabs by interpreting tutorial steps,
-  executing them, and handling prerequisite gates for long-running
-  operations. Use when the user asks to validate, test, or check a
-  codelab, or to resume a previously started validation.
+  Validates natural-language codelabs statefully using the tester.py engine.
+  Use when validating, testing, or checking a codelab or test plan, or resuming
+  a validation run.
 ---
 
 # Codelab Validation
 
-This skill provides instructions and tools for validating natural-language codelabs by interpreting tutorial steps statefully, running commands natively in a persistent bash subshell, and maintaining a live visual status board.
+This skill provides instructions for statefully validating Google Cloud codelabs using the unified `tester.py` validation engine.
 
 ## Unified Execution Engine
 
-You **MUST** use the unified `tester.py` script as the exclusive execution engine for all E2E validation. It handles step-by-step state transitions, prerequisite notifications, command hash-caching, and unindented HTML progress updates automatically.
+Execute all E2E codelab and test plan validations via the `tester.py` script. The engine parses command blocks, manages step-by-step state transitions, caches executed command hashes (`<lab>.md.state`), persists environment variables (`<lab>.md.env`), and generates HTML status boards (`test_status.md`).
 
-### How to Run
+### CLI Invocation
 
 ```bash
-python3 .agents/skills/codelab-validation/scripts/tester.py path/to/your/codelab.md --artifact-dir <appDataDir>/brain/<conversation-id>
+python3 .agents/skills/codelab-validation/scripts/tester.py \
+    path/to/your/codelab.md \
+    --project-id "<PROJECT_ID>" \
+    --phase test \
+    --artifact-dir <appDataDir>/brain/<conversation-id>
 ```
 
-This merges the state tracking of `codelab-validation` with the persistent command execution of `deterministic_runner.py` into a single execution harness.
+#### Flags
 
-## Entry Point: Read State First
+- `--project-id <PROJECT_ID>` _(Required)_: Target GCP project. Exports `PROJECT_ID` and `CLOUDSDK_CORE_PROJECT` into the subshell environment session. Use `--allow-active-project` only as an explicit escape hatch to consciously adopt ambient workstation config.
+- `--phase {test|cleanup|all}` _(Default: `test`)_: Execution phase scope. (`--skip-cleanup` is a deprecated alias for `--phase test`).
+- `--artifact-dir <DIR>` _(Optional)_: Conversation context directory for HTML preview status boards.
+- `--timeout <SECONDS>` _(Default: 600)_: Step execution timeout in seconds.
+- `--fresh` _(Optional)_: Purges `.tester_state/`, `<lab>.md.state`, and `<lab>.md.env` for this lab before execution. **Restricted**: Reserved strictly for catastrophic state corruption (unparseable `.tester_state` JSON, unrecoverable state/infra divergence). Never use as a retry mechanism.
 
-Every invocation starts by checking `.tester_state/progress.json`.
+### Command Execution Tiers
 
-### No state exists → Parse the codelab
+`tester.py` decomposes command blocks into logical-line execution units using three tiers:
 
-1. Read the codelab source file.
-2. Think like a Software Engineer. Break it into ordered steps. For each step, determine:
-   - **title**: Short name.
-   - **instructions**: A single string describing the action to take.
-     **CRITICAL**: Maintain idempotency. If a step implies multiple actions,
-     **split it into multiple steps**.
-     Examples:
-     - **Explicit**: "Run `boq agent create`" (Split "Create file and run command" into two steps).
-     - **Implicit**: "A CL needs to be created" (e.g., if there is a code change).
-   - **prerequisite**: Does this step require a prior condition to be met?
-     Check for **both explicit and implicit** gates:
-     - **Explicit**: Phrases like:
-       - "After the deployment finishes…"
-       - "Wait for the build to complete, then…"
-       - "You should now see the service URL…"
-     - **Implicit**:
-       - **Pre-existing State**: Does it assume resources or data are already
-         present? (e.g., a GCS bucket exists, a CL in a previous step is
-         submitted, specific data is loaded).
-       - **Environment Configuration**: Does it imply specific settings or
-         permissions? (e.g., IAM roles, APIs enabled, quotas).
-         If found, record:
-     - `prerequisites`: A list of strings describing conditions that must be met.
-   - If no prerequisites, set `prerequisites` to [].
+1. **`flat`**: Independent commands executed sequentially. Each unit is individually hash-checked, executed with per-unit timeout, cached, and environment-persisted upon success.
+2. **`compound_pure`**: Shell construct blocks (loops, `if` statements, functions). Wrapped in `( set -eo pipefail ... )` and executed atomically.
+3. **`compound_stateful`**: Compound blocks (control flow/heredocs) that also mutate shell state (e.g. `cd`, `export`). Executed as a raw block in the main subshell. _Warning_: Intermediate command failures within compound stateful blocks cannot be individually isolated.
 
-3. **Identify User Inputs**:
-   - Scan for variables that require user values (e.g., `PROJECT_ID`, `REGION`, `ZONE`).
+## State Model & Resumption
 
-4. **INTERACTIVE CONFIRMATION (CRITICAL)**:
-   - Present the parsed plan to the user.
-   - List all steps, identified prerequisites (explicit & implicit), and required user inputs.
-   - **Ask the user to confirm the plan and provide necessary values.**
-   - **DO NOT proceed until the user confirms.** If they want to modify steps or prerequisites, adjust the plan accordingly.
+State files are managed automatically under `.tester_state/` in the lab directory:
 
-5. Write state files. (Only after confirmation). See `references/state_schema.md`.
-   - Write `.tester_state/progress.json` and `.tester_state/step-NNN.json` files.
-   - Save all user-provided values for identified variables into `.tester_state/user_inputs.json`.
+- `.tester_state/progress.json`: Tracks overall progress (`codelab`, `total_steps`, `current_step`, `status`).
+- `.tester_state/step-NNN.json`: Step details (`num`, `title`, `status`, `instructions`, `prerequisites`, `commands`, `output`, `error`, `has_gui`, `is_cleanup`).
+- `.tester_state/user_inputs.json`: Baseline variables mapped during run initialization.
+- `variables.json`: Custom key-value replacements passed to `tester.py`.
+- `overlay.json`: Per-lab transformation rules. See [overlay_schema.md](references/overlay_schema.md).
 
-### State exists → Resume
+### Step Statuses
 
-1. Read `current_step` from `.tester_state/progress.json` and the corresponding `.tester_state/step-NN.json` file.
-2. Read `.tester_state/user_inputs.json` to retrieve previously provided values. Use these values automatically instead of asking the user again.
+All step statuses are uppercase:
 
-**`pending`** (no prerequisite, or prerequisite is null):
-→ Execute the step. Set status to `done`.
+- `PENDING`: Waiting for execution.
+- `RUNNING`: Currently executing in subshell.
+- `DONE`: Executed successfully (or skipped via hash cache).
+- `FAILED`: Command exited non-zero or timed out.
+- `SKIPPED/NO-OP`: Step contains no executable commands.
+- `DEFERRED`: Step skipped during current phase (e.g. cleanup step during `--phase test`).
 
-- Set `execution_summary` to key outcome (e.g. "Resource X created").
-- Advance.
+### Resumption Protocol
 
-**`pending`** (has prerequisites):
-→ Verify that all prerequisites are met.
-→ If met: execute the step. Set `done`.
+Re-running `tester.py` automatically resumes from saved state. On a step failure, edit the broken command in `.lab.md` and re-run `tester.py` WITHOUT `--fresh` against the SAME `--project-id`. The engine preserves completed `DONE` steps (e.g. 15-minute cluster builds), re-reads the edited commands, and re-executes only the failed step. Completed step hashes stored in `<lab>.md.state` are skipped, and variables from `<lab>.md.env` are re-sourced into the subshell. `--fresh` is reserved for catastrophic state corruption and implies the old project's resources must be handled (cleanup pass or new project).
 
-- Set `execution_summary` to key outcome.
-- Advance.
-  → **Blocked State Strategy**:
+## Agent Role & Protocol
 
-1. Determine if the environment supports persistence (Check if
-   `~/.gemini/smith/` exists).
-2. If yes: You **MUST** immediately invoke the **smith-monitoring** skill to
-   register a persistent monitor for this blocker. Set status to `blocked`.
-3. If no (Standard JetSki):
-   → **Check if human intervention is required** (e.g., "Submit the CL"):
-   - If yes: Notify the user, set status to `blocked`. - **Provide ALL related links** (e.g., CL link, console URL). - Set `blocked_reason` to "waiting for user". - Set `execution_summary` to specific request (e.g., "Waiting for CL 123456 submission"). - Wait.
-     → Else: set status to `blocked`. - Set `blocked_reason` to "prerequisite not met". - Set `execution_summary` to failure detail (e.g., "Cluster not ready: some error detail"). - Record `last_check` timestamp.
+The agent acts as orchestrator around `tester.py`:
 
-**`blocked`**:
-→ Verify prerequisites again.
-→ Met: execute the step. Set `done`.
+1. **Pre-flight Configuration**: Provision a dedicated sandbox project (`create_project.py`), populate `variables.json` for custom placeholders, and pass `--project-id`.
+2. **Execution**: Launch `tester.py`. For steps marked `has_gui` or requiring manual external actions, perform the required action and re-run `tester.py` to resume.
+3. **Result Interpretation**: Check `tester.py` exit code and read generated `.tester_state/` output files.
 
-- Set `execution_summary` to key outcome.
-- Advance.
-  → Not met: increment `check_attempts`. Stay `blocked`.
-  → 3+ consecutive failures: set `failed`.
-- Set `execution_summary` to "Repeated prerequisite failure".
+### Error Classification & Remediation Protocol
 
-**`done`**:
-→ Advance to next step.
+When `tester.py` returns `FAILED`:
 
-**`failed`**:
-→ Stop. Report the failure using the **Error Handling & Bug Reporting** procedure.
+#### 1. Category A: Command Syntax & API Errors
 
-**All steps `done`**:
-→ Set progress status to `completed`.
+- **Indicators**: `gcloud` unknown flag, invalid syntax, missing argument, or YAML parse error.
+- **Remediation**: Investigate root cause before retrying. Search developer documentation (the `google-developer-knowledge` MCP server or `search_web`), edit the command block in `.lab.md` or apply a per-lab transform via `overlay.json` (see [overlay_schema.md](references/overlay_schema.md)), and re-run `tester.py`.
+- **Sandbox vs Narrative Doctrine**: **SYNTAX errors** are fixed directly in the `.lab.md` narrative. **ENVIRONMENT-specific remediations** (org-policy flags, sandbox quota/zone workarounds, `--no-address`, `--shielded-secure-boot`) go ONLY into the lab's `overlay.json`, NEVER into the published narrative (readers' org environments differ; baking sandbox-specific workaround flags into tutorials is forbidden).
 
-### 📋 Live Visual Task Board Tracking (Mandatory)
+#### 2. Category B: Transient Infrastructure Delays
 
-To provide the user with real-time visual status feedback directly in their IDE preview tab, System B **MUST** dynamically generate and update the unindented HTML `task.md` tracking sheet at the start of the run, and immediately after **every single step state transition**:
+- **Indicators**: API enablement propagation, network creation delays, `503 Service Unavailable`.
+- **Remediation**: Wait 60 seconds and re-run `tester.py` (up to 3 attempts).
 
-1.  **File Placement**: Save the file as `task.md` directly inside the conversation directory: `<appDataDir>/brain/<conversation-id>/task.md`.
-2.  **Syntax Rules**: You MUST strictly adhere to the zero-indentation syntax standard. Every single line of the generated HTML template must be written completely flush left (0 spaces of leading whitespace) to avoid parser corruption.
-3.  **Color Mapping**: Map state properties to the standardized inline-CSS colors:
-    - `pending` (waiting): **PENDING** background `#f1f3f4`, text `#5f6368`.
-    - `pending` (active): **RUNNING** background `#e8f0fe`, text `#1a73e8`.
-    - `blocked` (waiting/blocked): **BLOCKED** background `#ffebee`, text `#c53929`.
-    - `done`: **DONE** background `#e6f4ea`, text `#137333`.
-    - `failed`: **FAILED** background `#fce8e6`, text `#c53929`.
-4.  **Error Outputs**: If a step has `error` or `blocked_reason` content, render it beautifully inside a monospace `<pre style="font-family: ui-monospace, monospace; font-size: 11px; background: #f1f3f4; padding: 8px 12px; border-radius: 6px; color: #202124; margin: 8px 0 0 0; white-space: pre-wrap; word-break: break-all;">` container directly under the details inside the Details column.
+#### 3. Unrecoverable Failures & Bug Reporting
 
-### Generating a Report
+If remediation fails after 3 attempts:
 
-When asked, or when validation completes, or when report error in bug:
+1. `tester.py` automatically files a bug JSON in `<lab_dir>/bugs/bug_*.json` and central `~/.gemini/jetski/bugs/`.
+2. File a tracking issue using the issues CLI (e.g. `${ISSUES:-/google/bin/releases/issues-cli/issues}` create --title "[Codelab Failure] <Title>" --description "<Details>" --component_id 2022529). _Note_: If the issues CLI binary is unavailable (non-Google environment), reference the automatically generated `<lab_dir>/bugs/bug_*.json` file directly.
+3. Report the failure and bug details to the user.
 
-- Read all state files.
-- Produce `report/validation-report.md`:
-  - Summary table: step | title | status | execution_summary | blocked
-    duration.
-  - Overall verdict: COMPLETED or FAILED.
-  - For failed/blocked steps: details and last output.
-  - Codelab Improvements: Suggestions to make the codelab more robust.
+## Status Tracking & Reporting
 
-### 🚨 Error Classification & Handling Protocol
-
-When a terminal command fails during validation execution, you **MUST** immediately classify the failure category to execute the correct remediation path:
-
-#### 1. Category A: API & Command Syntax Errors
-
-- **Indicators**: `gcloud` error codes representing invalid flags, unknown commands, missing arguments, YAML syntax mismatches, or `command not found`.
-- **Protocol (Immediate Self-Healing)**: **DO NOT RETRY.** Retrying a syntax error is useless. You MUST immediately:
-  1. Pause command execution.
-  2. Search documentation natively (`search_documents` or `search_web`) to retrieve the exact working command syntax and flag parameters.
-  3. Directly edit and fix the command block inside the `.lab.md` file in your workspace.
-  4. Return the complete, fixed file in the `fixed_content` schema field.
-  5. Immediately resume/re-execute the step with the corrected command.
-
-#### 2. Category B: Transient Infrastructure & Propagation Blocks
-
-- **Indicators**: Active API enablement delays (e.g., _"API Compute is being enabled..."_), `503 Service Unavailable`, network creation timeouts, or resource state conflicts (e.g., Spanner/MIG resource exists but is not yet active).
-- **Protocol (Stateful Polling & Retry)**: You MUST execute state-based polling up to **3 times**:
-  1. Update the step status to `blocked`.
-  2. Set `blocked_reason` to "waiting for resource propagation".
-  3. Wait for 60 seconds.
-  4. Re-verify/re-execute the command.
-  5. If the blocker persists after 3 consecutive attempts, set the status to `failed`, stop execution, and file a bug in the issues tracker as defined in the Bug Reporting section.
-
-* If the failure persists or is unrecoverable, **stop execution**, file a bug using the
-  **Issues Tracker or Logging System**
-  (e.g., log the error to a local file, or use an available issue tracker. Google-internal users can use `/google/bin/releases/issues-cli/issues create --title "[Codelab Failure] <Title>" --description "<Details>" --component_id 2022529`),
-  and **notify the user with the bug link**.
-  - **Bug Details**: Refer to [bug_report_template.md](references/bug_report_template.md) for the required structure and details.
-
-## Rules
-
-1.  **State is truth.** Read state before acting. Never assume.
-2.  **Be idempotent.** `done` → skip. `blocked` → re-check. Calling the agent
-    twice on the same state = same outcome.
-3.  **One step at a time.** Finish or park the current step first.
-4.  **Show your reasoning** when you identify prerequisite gates. Your
-    interpretation of natural language may be wrong.
-5.  **Capture output.** Record command outputs and timestamps.
-6.  **Ask when unsure.** In headless mode, set `failed` with a clarification
-    message in the error field.
-7.  **Provide links for user interaction.** If a step requires the user to take
-    an action elsewhere, ALWAYS output the relevant link.
-8.  **Prefer CLI over Browser.** Always use CLI tools (e.g., `issues`, `blaze`) to perform actions or gather information.
-9.  **Verify CLI prerequisites.** Before executing a command using a CLI tool, check if the CLI is installed.
+- **Status Board**: `tester.py` generates `test_status.md` using `html_reporter.py`.
+- **Task Tracking**: Master `task.md` tracking follows [.agents/rules/tasks.md](.agents/rules/tasks.md).
+- **Validation Report**: Summary reports are compiled into `report/validation-report.md`.

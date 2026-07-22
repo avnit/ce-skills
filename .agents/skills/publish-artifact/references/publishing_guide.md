@@ -20,7 +20,7 @@ Rather than manually copying files between directories, the `publish-artifact` s
 
 Before running the publishing command, ensure your Cloudtop environment meets the following requirements:
 
-1. **Active Piper Workspace**: You must have at least one active CitC (`g4`) or Fig (`hg`) client located under `/google/src/cloud/$USER/<client>/` that includes the `company` view.
+1. **Active Piper Workspace**: You must have at least one active CitC (`g4`) or Fig (`hg`) client located under `${CITC_WORKSPACE_ROOT:-/google/src/cloud/$USER/<your-client>}` that includes the `company` view.
    > **Why is a Piper Workspace Required?**  
    > While _viewing_ CompanyDocs (`g3doc.corp.google.com/company/...`) requires no special permissions or Piper access, _authoring and publishing_ new documentation requires an active Piper client because all CompanyDoc source markdown files live inside Google's central Piper repository under `//depot/company/...`.
    - _Check_: The `publish.sh` script automatically reads `piper_workspace` from `gcp_config.txt` (or accepts `-w <workspace_name>`).
@@ -81,7 +81,7 @@ What you need to do before your document is publicly viewable depends on the sco
 - **Target Path**: `//depot/company/teams/<team_name>/...`
 - **Approval Requirement**: **Critique LGTM Approval**. Team spaces enforce two-party code review governance.
 - **Go-Live Process**:
-  1. Open your Piper directory (`cd /google/src/cloud/$USER/<client>/company/teams/<team_name>/`).
+  1. Open your Piper directory (`cd ${CITC_WORKSPACE_ROOT:-/google/src/cloud/$USER/<your-client>}/company/teams/<team_name>/`).
   2. Mail the changelist for review: `g4 mail` (or `hg mail`).
   3. Add a peer teammate or team owner (listed in `OWNERS`) as a reviewer.
   4. Once your reviewer grants an **LGTM**, click **Submit** in Critique.

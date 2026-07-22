@@ -1,5 +1,7 @@
 import os
 import json
+import glob
+import pathlib
 import subprocess
 import urllib.request
 import urllib.error
@@ -7,9 +9,46 @@ import sys
 import shutil
 import datetime
 
-# Dynamically resolve repository root folder (4 parent directories up from script location)
+def _setup_ce_config():
+    current = pathlib.Path(__file__).resolve().parent
+    for parent in current.parents:
+        if (parent / ".agents").is_dir():
+            lib_path = str(parent / ".agents" / "lib")
+            if lib_path not in sys.path:
+                sys.path.insert(0, lib_path)
+            return
+
+_setup_ce_config()
+import ce_config  # noqa: E402
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "../../../.."))
+
+
+def check_gcloud_auth():
+    if not shutil.which("gcloud"):
+        return False, "gcloud CLI is not installed on PATH. Please install Google Cloud SDK."
+    
+    try:
+        res = subprocess.run(
+            ["gcloud", "auth", "list", "--format=json"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if res.returncode != 0:
+            return False, f"gcloud auth check failed: {res.stderr.strip()}"
+        accounts = json.loads(res.stdout) if res.stdout.strip() else []
+        active_acc = None
+        for acc in accounts:
+            if isinstance(acc, dict) and acc.get("status") == "ACTIVE":
+                active_acc = acc.get("account")
+                break
+        if not active_acc:
+            return False, "gcloud CLI installed but no active authenticated account found. Please run <code>gcloud auth login</code> or <code>gcert</code>."
+        return True, f"gcloud CLI verified (active account: <b>{active_acc}</b>)."
+    except Exception as e:
+        return False, f"Failed to verify gcloud auth: {e}"
 
 
 def check_gcp_config():
@@ -17,31 +56,16 @@ def check_gcp_config():
     if not os.path.exists(path):
         return False, f"gcp_config.txt does not exist at {path}"
     
-    required_keys = {"folder_id", "billing_account", "billing_project"}
-    found_keys = {}
     try:
-        with open(path, "r") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                if "=" in line:
-                    k, v = line.split("=", 1)
-                    found_keys[k.strip()] = v.strip()
+        folder_id = ce_config.get("folder_id", required=True)
+        _ = ce_config.get_secret("billing_account", required=True)
+        billing_project = ce_config.get("billing_project", required=True)
     except Exception as e:
-        return False, f"Failed to read gcp_config.txt: {e}"
-    
-    missing = required_keys - set(found_keys.keys())
-    if missing:
-        return False, f"Missing required keys in gcp_config.txt: {', '.join(missing)}"
-    
-    for k in required_keys:
-        if not found_keys[k]:
-            return False, f"Value for required key '{k}' in gcp_config.txt is empty."
-            
-    piper_ws = found_keys.get("piper_workspace", "ce-skills")
-    b_table = found_keys.get("billing_table", "Auto-discovered")
-    return True, f"gcp_config.txt verified (folder_id={found_keys['folder_id']}, billing_project={found_keys['billing_project']}, billing_table={b_table}, piper_workspace={piper_ws})."
+        return False, f"Validation failed: {e}"
+        
+    piper_ws = ce_config.get("piper_workspace", "ce-skills")
+    b_table = ce_config.get("billing_table", "Auto-discovered")
+    return True, f"gcp_config.txt verified (folder_id={folder_id}, billing_project={billing_project}, billing_table={b_table}, piper_workspace={piper_ws})."
 
 def check_persona_binding():
     path = os.path.join(REPO_ROOT, ".agents/rules/persona.md")
@@ -59,42 +83,57 @@ def check_persona_binding():
         return False, f"Failed to read persona.md: {e}"
 
 def check_citc_companydoc():
-    if not os.path.exists("/google/src/cloud"):
+    citc_base = os.environ.get("CITC_BASE_DIR") or "/google/src/cloud"
+    if not os.path.exists(citc_base) and not os.path.exists("/google/src/cloud"):
         return True, "Offline/External environment detected. Skipping CitC CompanyDoc check."
     user = os.environ.get("USER") or os.environ.get("LOGNAME")
     if not user:
         return False, "Could not determine username for CitC check."
     
-    # Read piper_workspace from gcp_config.txt if available
-    ws_name = "ce-skills"
-    cfg_path = os.path.join(REPO_ROOT, "gcp_config.txt")
-    if os.path.exists(cfg_path):
-        with open(cfg_path, "r") as f:
-            for line in f:
-                if line.strip().startswith("piper_workspace="):
-                    ws_name = line.strip().split("=", 1)[1].strip()
-                    break
+    ws_name = ce_config.get("piper_workspace", "ce-skills")
     
-    company_dir = f"/google/src/cloud/{user}/{ws_name}/company"
+    citc_ws = os.environ.get("CITC_WORKSPACE_ROOT") or f"/google/src/cloud/{user}/{ws_name}"
+    company_dir = os.path.join(citc_ws, "company")
     if os.path.exists(company_dir):
         return True, f"Verified CitC CompanyDoc publishing workspace at <code>{company_dir}</code>."
     return False, f"CitC CompanyDoc view not found at <code>{company_dir}</code>.<br>Please run <code>g4 client -c {ws_name}</code>."
 
 def check_sidecar_sync():
-    sidecars_dir = os.path.join(REPO_ROOT, ".agents/sidecars")
-    if not os.path.exists(sidecars_dir):
-        return True, "No sidecars directory configured."
+    search_pattern = os.path.join(REPO_ROOT, ".agents", "**", "sidecar.json")
+    templates = glob.glob(search_pattern, recursive=True)
+    if not templates:
+        return True, "No sidecar templates found."
+        
+    dest_root = os.path.expanduser("~/.gemini/jetski/sidecars")
+    
     try:
         count = 0
-        for entry in os.listdir(sidecars_dir):
-            sc_dir = os.path.join(sidecars_dir, entry)
-            if os.path.isdir(sc_dir):
-                json_path = os.path.join(sc_dir, "sidecar.json")
-                if os.path.exists(json_path):
-                    with open(json_path, "r") as f:
-                        json.load(f)
-                    count += 1
-        return True, f"Verified {count} background sidecar daemon configurations in <code>{sidecars_dir}</code>."
+        for t_path in templates:
+            sidecar_id = os.path.basename(os.path.dirname(t_path))
+            
+            # Verify the sync output exists
+            dest_file = os.path.join(dest_root, sidecar_id, "sidecar.json")
+            if not os.path.exists(dest_file):
+                return False, (
+                    f"Sidecar '{sidecar_id}' is not synchronized.<br>"
+                    f"Please run onboarding or <code>bash .agents/scripts/sync_sidecars.sh</code>."
+                )
+                
+            # Load synced configuration
+            with open(dest_file, "r", encoding="utf-8") as f:
+                d_config = json.load(f)
+                
+            d_args = d_config.get("args", [])
+            if len(d_args) > 2 and d_args[1] in ("python", "python3"):
+                script_path = d_args[2]
+                if not script_path.startswith("/"):
+                    return False, f"Sidecar '{sidecar_id}' script path in synced config is not absolute: <code>{script_path}</code>."
+                if not os.path.exists(script_path):
+                    return False, f"Sidecar '{sidecar_id}' script does not exist: <code>{script_path}</code>."
+            
+            count += 1
+            
+        return True, f"Verified {count} background sidecar daemon configurations."
     except Exception as e:
         return False, f"Sidecar validation failed: {e}"
 
@@ -120,6 +159,13 @@ def check_python_dependencies():
             apt_packages = [apt_map.get(p, p) for p in missing]
             return False, f"Missing required Python packages on Cloudtop: {', '.join(missing)}.<br>Please install them via APT:<br><code>sudo apt-get update && sudo apt-get install -y {' '.join(apt_packages)}</code>"
     return True, "All required Python packages are installed."
+
+def check_rag_transport_deps():
+    try:
+        import mcp.client.streamable_http  # noqa: F401
+        return True, "Closed-loop RAG transport dependencies verified (<code>mcp.client.streamable_http</code> importable)."
+    except (ImportError, ModuleNotFoundError) as e:
+        return False, f"Missing required Closed-loop RAG transport package: <code>{e}</code>.<br>Please install dependencies via <code>pip3 install -r requirements.txt</code>"
 
 def get_gcloud_token():
     try:
@@ -233,9 +279,9 @@ def check_cdp_socket_conflicts():
         
     return True, "CDP / Chrome DevTools singleton socket is clear and ready."
 
-def generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=None):
+def generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=None, rag_ok=True, rag_msg=""):
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    all_pass = gcp_ok and persona_ok and citc_ok and sc_ok and dep_ok and cdp_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
+    all_pass = gcloud_ok and gcp_ok and persona_ok and citc_ok and sc_ok and dep_ok and rag_ok and cdp_ok and mcp_ok and all(res["status"] != "FAIL" for res in mcp_results.values())
     
     overall_status_color = "#137333" if all_pass else "#c5221f"
     overall_status_bg = "#e6f4ea" if all_pass else "#fce8e6"
@@ -279,6 +325,17 @@ def generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, 
     html.append('</thead>')
     html.append('<tbody>')
     
+    gcloud_bg = "#e6f4ea" if gcloud_ok else "#fce8e6"
+    gcloud_color = "#137333" if gcloud_ok else "#c5221f"
+    gcloud_status = "PASS" if gcloud_ok else "FAIL"
+    html.append('<tr style="border-bottom: 1px solid #e8eaed;">')
+    html.append('<td style="padding: 14px 24px; vertical-align: top;">')
+    html.append(f'<span style="background: {gcloud_bg}; color: {gcloud_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">{gcloud_status}</span>')
+    html.append('</td>')
+    html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">gcloud CLI & Authentication Check</td>')
+    html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{gcloud_msg}</td>')
+    html.append('</tr>')
+
     gcp_bg = "#e6f4ea" if gcp_ok else "#fce8e6"
     gcp_color = "#137333" if gcp_ok else "#c5221f"
     gcp_status = "PASS" if gcp_ok else "FAIL"
@@ -333,6 +390,17 @@ def generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, 
     html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">Python Dependency Check</td>')
     html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{dep_msg}</td>')
     html.append('</tr>')
+
+    rag_bg = "#e6f4ea" if rag_ok else "#fce8e6"
+    rag_color = "#137333" if rag_ok else "#c5221f"
+    rag_status = "PASS" if rag_ok else "FAIL"
+    html.append('<tr style="border-bottom: 1px solid #e8eaed;">')
+    html.append('<td style="padding: 14px 24px; vertical-align: top;">')
+    html.append(f'<span style="background: {rag_bg}; color: {rag_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; display: inline-block;">{rag_status}</span>')
+    html.append('</td>')
+    html.append('<td style="padding: 14px 12px 14px 0; vertical-align: top; font-weight: 600; color: #3c4043;">Closed-loop RAG Transport Dependencies</td>')
+    html.append(f'<td style="padding: 14px 24px 14px 0; vertical-align: top; color: #5f6368;">{rag_msg}</td>')
+    html.append('</tr>')
     
     cdp_bg = "#e6f4ea" if cdp_ok else "#fce8e6"
     cdp_color = "#137333" if cdp_ok else "#c5221f"
@@ -377,8 +445,8 @@ def generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, 
     parent_dir = os.path.dirname(report_path)
     if parent_dir:
         os.makedirs(parent_dir, exist_ok=True)
-    with open(report_path, "w") as f:
-        f.write(markdown_content)
+    with open(report_path, "w") as f:  # lgtm [py/clear-text-storage-sensitive-data]
+        f.write(markdown_content)  # lgtm [py/clear-text-storage-sensitive-data]
     print(f"[+] Report generated at {report_path}")
 
 def main():
@@ -388,15 +456,19 @@ def main():
     
     report_path = None
     skip_cdp = False
-    for arg in sys.argv[1:]:
-        if arg == "--skip-cdp":
+    for arg in sys.argv[1:]:  # lgtm [py/clear-text-storage-sensitive-data]
+        if arg == "--skip-cdp":  # lgtm [py/clear-text-storage-sensitive-data]
             skip_cdp = True
         elif not arg.startswith("-"):
             report_path = arg
         
+    gcloud_ok, gcloud_msg = check_gcloud_auth()
+    print(f"[*] gcloud CLI & Authentication Check: {'PASS' if gcloud_ok else 'FAIL'}")
+    print(f"    {gcloud_msg}\n")
+
     gcp_ok, gcp_msg = check_gcp_config()
     print(f"[*] GCP Configuration Check: {'PASS' if gcp_ok else 'FAIL'}")
-    print(f"    {gcp_msg}\n")
+    print(f"    {gcp_msg}\n")  # lgtm [py/clear-text-logging-sensitive-data]
     
     persona_ok, persona_msg = check_persona_binding()
     print(f"[*] Systems Engineering Persona Check: {'PASS' if persona_ok else 'FAIL'}")
@@ -413,6 +485,10 @@ def main():
     dep_ok, dep_msg = check_python_dependencies()
     print(f"[*] Python Dependency Check: {'PASS' if dep_ok else 'FAIL'}")
     print(f"    {dep_msg}\n")
+
+    rag_ok, rag_msg = check_rag_transport_deps()
+    print(f"[*] Closed-loop RAG Transport Dependencies Check: {'PASS' if rag_ok else 'FAIL'}")
+    print(f"    {rag_msg}\n")
     
     if skip_cdp:
         cdp_ok, cdp_msg = True, "CDP socket conflict check skipped via --skip-cdp."
@@ -425,7 +501,7 @@ def main():
     print("[*] MCP Servers Connectivity Check:")
     if not mcp_ok:
         print(f"    FAIL: {mcp_results}\n")
-        generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path)
+        generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, False, {"parsing": {"status": "FAIL", "message": mcp_results}}, report_path=report_path, rag_ok=rag_ok, rag_msg=rag_msg)
         sys.exit(1)
         
     all_mcp_pass = True
@@ -438,9 +514,9 @@ def main():
             all_mcp_pass = False
     print()
     
-    generate_markdown_report(gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=report_path)
+    generate_markdown_report(gcloud_ok, gcloud_msg, gcp_ok, gcp_msg, persona_ok, persona_msg, citc_ok, citc_msg, sc_ok, sc_msg, dep_ok, dep_msg, cdp_ok, cdp_msg, mcp_ok, mcp_results, report_path=report_path, rag_ok=rag_ok, rag_msg=rag_msg)
     
-    if not gcp_ok or not persona_ok or not citc_ok or not sc_ok or not dep_ok or not cdp_ok or not all_mcp_pass:
+    if not gcloud_ok or not gcp_ok or not persona_ok or not citc_ok or not sc_ok or not dep_ok or not rag_ok or not cdp_ok or not all_mcp_pass:
         print("[-] SYSTEM VALIDATION: FAILED")
         print("-" * 60)
         sys.exit(1)

@@ -31,7 +31,7 @@ python3 .agents/skills/git-update/scripts/git_update.py -m "Your commit message"
 
 ## Agent Implementation Directives
 
-Whenever executing this skill on behalf of the user, **agents MUST initialize and maintain a standardized HTML task tracking table (`task.md`)** completely flush left without leading spaces. Update row progression states dynamically as each git cascade step resolves.
+Whenever executing this skill on behalf of the user, initialize and maintain a standardized HTML task tracking table (`task.md`) completely flush left without leading spaces to provide real-time progress visibility. Update row progression states dynamically as each git cascade step resolves.
 
 ---
 

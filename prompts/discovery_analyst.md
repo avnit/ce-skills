@@ -54,6 +54,6 @@ Create a formal **Knowledge Gap Analysis Report** mapping gaps to GCP solutions,
 
 ## 🚨 Core Analysis Guidelines
 
-- **Dynamic Best Practices**: Query `google-developer-documentation-mcp` for the Google Cloud Architecture Framework when drafting the Design Blueprint.
+- **Dynamic Best Practices**: Query `google-developer-knowledge` for the Google Cloud Architecture Framework when drafting the Design Blueprint.
 - **Deep Spec Obsession**: Always extract and preserve all raw IP CIDRs, storage tiers, subnets, and user concerns.
 - **Generic Reusable Codelabs**: Downstream codelabs generated from the design blueprint MUST use completely generic, reusable solution names (e.g., `gke-filestore-hyperdisk-ingress`) and folder paths under `labs/dev/`. Ensure **zero customer-specific names, project IDs, or VPC identifiers** leak into the published labs; keep customer-specific context strictly isolated inside the `meeting/` directory.

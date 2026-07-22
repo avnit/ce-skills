@@ -4,17 +4,18 @@
 import argparse
 import datetime
 import fcntl
-import hashlib
 import json
 import logging
 import os
 import re
 import select
 import shlex
+import shutil
 import subprocess
 import sys
 import time
 import uuid
+from pathlib import Path
 from typing import Any, Tuple
 
 # Resolve repository root dynamically
@@ -23,6 +24,16 @@ repo_root = os.path.abspath(os.path.join(_script_dir, "..", "..", "..", ".."))
 
 # Add script directory to path to import modular components
 sys.path.append(_script_dir)
+from codelab_parser import (  # noqa: E402
+    _EXECUTABLE_FENCE_LANGS as _EXECUTABLE_FENCE_LANGS,
+    _FENCE_LINE_RE as _FENCE_LINE_RE,
+    _extract_command_blocks as _extract_command_blocks,
+    _filter_hermetic_commands as _filter_hermetic_commands,
+    classify_block as classify_block,
+    get_cmd_hash as get_cmd_hash,
+    normalize_command as normalize_command,
+)
+
 try:
     from html_reporter import HTMLReporter
 except ImportError:
@@ -117,30 +128,6 @@ class SubshellRunner:
         except Exception:
             pass
 
-def _filter_hermetic_commands(commands: list[str]) -> list[str]:
-    clean = []
-    for cmd in commands:
-        if "while true" in cmd.lower():
-            continue
-        if "gcloud compute ssh" in cmd.lower() and "--command" not in cmd.lower():
-            continue
-        clean.append(cmd)
-    return clean
-
-def normalize_command(cmd: str) -> str:
-    lines = []
-    for line in cmd.splitlines():
-        line_s = line.strip()
-        if not line_s or line_s.startswith("#"):
-            continue
-        if " #" in line_s:
-            line_s = line_s.split(" #", 1)[0].strip()
-        words = line_s.split()
-        lines.append(" ".join(words))
-    return "\n".join(lines)
-
-def get_cmd_hash(cmd: str) -> str:
-    return hashlib.sha256(normalize_command(cmd).encode("utf-8")).hexdigest()
 
 def get_active_project():
     if "CLOUDSDK_CORE_PROJECT" in os.environ:
@@ -215,17 +202,17 @@ def sanitize_command(cmd: str, project_id: str = "", custom_vars: dict = None) -
 
 class StatefulCodelabTester:
     """Orchestrates Codelab steps, state transitions, and command execution."""
-    def __init__(self, markdown_file: str, artifact_dir: str = None, timeout: int = 600, skip_cleanup: bool = False):
+    def __init__(self, markdown_file: str, artifact_dir: str = None, timeout: int = 600, phase: str = "test", project_id: str = None):
         self.md_path = os.path.abspath(markdown_file)
         self.lab_dir = os.path.dirname(self.md_path)
         self.tester_state_dir = os.path.join(self.lab_dir, ".tester_state")
         self.artifact_dir = artifact_dir
         self.timeout = timeout
-        self.skip_cleanup = skip_cleanup
+        self.phase = phase
         
         # Parse or load step states
         self.steps = []
-        self.project_id = get_active_project()
+        self.project_id = project_id if project_id else get_active_project()
         
         # Determine status files
         self.static_status_file = os.path.join(self.lab_dir, "test_status.md")
@@ -252,9 +239,8 @@ class StatefulCodelabTester:
             title = title_line.replace("##", "").strip()
             body = sections[idx+1] if idx+1 < len(sections) else ""
             
-            # Extract bash commands
-            bash_pattern = re.compile(r"```bash\n(.*?)\n[ \t]*```", re.DOTALL)
-            commands = [c.strip() for c in bash_pattern.findall(body)]
+            # Extract executable commands via proper fence pairing (never captures narrative)
+            commands = _extract_command_blocks(body)
             commands = _filter_hermetic_commands(commands)
             
             # Detect explicit or implicit prerequisites
@@ -269,6 +255,16 @@ class StatefulCodelabTester:
             elif re.search(r"(?i)(click|select|navigate|console|ui|save|dropdown|checkbox|fill out|button|radio button|under the|navigate to)", body):
                 has_gui = True
 
+            # Detect explicit phase marker for cleanup steps, falling back to title regex if no marker exists
+            has_marker = bool(
+                re.search(r"<!--\s*(phase:\s*cleanup|cleanup)\s*-->", body, re.IGNORECASE)
+                or re.search(r"<!--\s*(phase:\s*cleanup|cleanup)\s*-->", title_line, re.IGNORECASE)
+            )
+            if has_marker:
+                is_cleanup = True
+            else:
+                is_cleanup = bool(re.search(r"(?i)(clean\s*up|cleanup)", title))
+
             # Standardize instructions from body
             clean_body_lines = [line.strip() for line in body.splitlines() if line.strip() and not line.strip().startswith("```")]
             instructions = " ".join(clean_body_lines[:3]) + "..." if clean_body_lines else "Execute steps."
@@ -282,7 +278,9 @@ class StatefulCodelabTester:
                 "commands": commands,
                 "output": "",
                 "error": "",
-                "has_gui": has_gui
+                "has_gui": has_gui,
+                "is_cleanup": is_cleanup,
+                "units": [],
             })
             step_num += 1
             
@@ -307,14 +305,16 @@ class StatefulCodelabTester:
                         with open(step_file, "r") as sf:
                             cached_step = json.load(sf)
                         
-                        # If the step was already successfully completed, preserve its DONE status and outputs
+                        # If the step was already successfully completed, preserve its DONE status and outputs/units
                         if cached_step.get("status") == "DONE":
                             fresh_step["status"] = "DONE"
                             fresh_step["output"] = cached_step.get("output", "")
                             fresh_step["error"] = cached_step.get("error", "")
+                            fresh_step["units"] = cached_step.get("units", [])
                         # If it was failed or pending, we keep the fresh step's new commands and set status to FAILED/PENDING
                         else:
                             fresh_step["status"] = cached_step.get("status", "FAILED")
+                            fresh_step["units"] = []
                     except Exception:
                         pass
                 
@@ -415,8 +415,15 @@ class StatefulCodelabTester:
             logging.error(f"[Tester] Failed to write Bug File: {e}")
 
     def run(self) -> bool:
-        """Executes step-by-step state validation."""
         self.load_or_initialize_state()
+        
+        total_commands = sum(len(step.get("commands", [])) for step in self.steps)
+        if total_commands == 0:
+            print("no executable commands found — nothing was validated")
+            logging.error("[Tester] Hard Failure: No executable commands found in any step.")
+            self.save_state(0, "FAILED")
+            self.write_visual_boards("FAILED")
+            return False
         
         # Load custom variables mapped in variables.json
         custom_vars = {}
@@ -456,6 +463,7 @@ class StatefulCodelabTester:
                     runner.set_env(key, val)
             
             runner.set_env("PROJECT_ID", self.project_id)
+            runner.set_env("CLOUDSDK_CORE_PROJECT", self.project_id)
             
             # Iterate and run step state transitions
             for idx, step in enumerate(self.steps):
@@ -463,10 +471,15 @@ class StatefulCodelabTester:
                     logging.info("[Tester] Skipping step %d: %s (already DONE)", step["num"], step["title"])
                     continue
                 
-                if self.skip_cleanup and re.search(r"(?i)(clean\s*up|cleanup)", step["title"]):
-                    logging.info("[Tester] Skipping cleanup step %d: %s (skip-cleanup enabled)", step["num"], step["title"])
-                    step["status"] = "DONE"
-                    step["output"] = "Skipped per request to retain resources."
+                is_cleanup_step = step.get("is_cleanup", False)
+                if self.phase == "test" and is_cleanup_step:
+                    logging.info("[Tester] Skipping cleanup step %d: %s (deferred to explicit cleanup phase)", step["num"], step["title"])
+                    step["status"] = "DEFERRED"
+                    step["output"] = "Deferred to explicit cleanup phase."
+                    step["units"] = []
+                    continue
+                elif self.phase == "cleanup" and not is_cleanup_step:
+                    logging.info("[Tester] Skipping non-cleanup step %d: %s during cleanup phase", step["num"], step["title"])
                     continue
                 
                 logging.info("[Tester] Running step %d: %s...", step["num"], step["title"])
@@ -475,52 +488,106 @@ class StatefulCodelabTester:
                 self.write_visual_boards("IN PROGRESS")
                 
                 if not step["commands"]:
-                    logging.info("[Tester] Step has no commands. Automatically completed.")
-                    step["status"] = "DONE"
+                    logging.info("[Tester] Step has no commands. Marked as SKIPPED/NO-OP.")
+                    step["status"] = "SKIPPED/NO-OP"
+                    step["units"] = []
                     continue
 
                 step_failed = False
                 step_outputs = []
                 step_errors = []
-                
-                for cmd in step["commands"]:
-                    # Sanitize variables and deduplicate flags
-                    evaluated_cmd = sanitize_command(cmd, project_id=self.project_id, custom_vars=custom_vars)
-                    
-                    # Compute hash on evaluated command so runtime variable updates properly invalidate cache
-                    cmd_hash = get_cmd_hash(evaluated_cmd)
-                    if cmd_hash in executed_hashes:
-                        logging.info("[Tester] Command already in cache. Skipping execution.")
+                failed_command_str = ""
+                step["units"] = []
+
+                # Pre-extract all unit tuples for the step
+                all_unit_tuples = []
+                for block in step["commands"]:
+                    sanitized_block = sanitize_command(block, project_id=self.project_id, custom_vars=custom_vars)
+                    tier, units = classify_block(sanitized_block)
+                    if tier == "flat":
+                        for u in units:
+                            all_unit_tuples.append((u, "flat"))
+                    else:
+                        all_unit_tuples.append((sanitized_block, tier))
+
+                for u_text, u_tier in all_unit_tuples:
+                    if step_failed:
+                        step["units"].append({
+                            "text": u_text,
+                            "tier": u_tier,
+                            "status": "PENDING",
+                            "output_tail": ""
+                        })
                         continue
-                    
-                    # Run command in persistent subshell
-                    status, output = runner.run_command(evaluated_cmd, timeout=self.timeout)
-                    
+
+                    u_hash = get_cmd_hash(u_text)
+                    if u_hash in executed_hashes:
+                        logging.info("[Tester] Command already in cache. Skipping execution.")
+                        step["units"].append({
+                            "text": u_text,
+                            "tier": u_tier,
+                            "status": "SKIPPED-CACHED",
+                            "output_tail": ""
+                        })
+                        self.save_state(idx, "IN PROGRESS")
+                        self.write_visual_boards("IN PROGRESS")
+                        continue
+
+                    if u_tier == "flat":
+                        status, output = runner.run_command(u_text, timeout=self.timeout)
+                    elif u_tier == "compound_pure":
+                        wrapped_cmd = f"( set -eo pipefail\n{u_text}\n)"
+                        status, output = runner.run_command(wrapped_cmd, timeout=self.timeout)
+                    elif u_tier == "compound_stateful":
+                        warning_msg = (
+                            "[WARNING] Intermediate command failures inside this compound stateful block "
+                            "cannot be verified. Consider restructuring into flat commands or using phase markers."
+                        )
+                        logging.warning("[Tester] %s", warning_msg)
+                        status, raw_output = runner.run_command(u_text, timeout=self.timeout)
+                        output = f"{warning_msg}\n{raw_output}" if raw_output else warning_msg
+
+                    out_tail = output[-500:] if output else ""
+
                     if status != 0:
                         step_failed = True
                         step["status"] = "FAILED"
                         step["error"] = f"Command failed with status {status}.\nOutput:\n{output}"
                         step_errors.append(step["error"])
-                        break
-                    
-                    step_outputs.append(output)
-                    executed_hashes.append(cmd_hash)
-                    with open(state_file, "a") as f:
-                        f.write(cmd_hash + "\n")
-                        
-                    # Export environment variables to cache
-                    runner.run_command(f"export -p > {env_file}")
+                        failed_command_str = u_text
+                        step["units"].append({
+                            "text": u_text,
+                            "tier": u_tier,
+                            "status": "FAILED",
+                            "output_tail": out_tail
+                        })
+                    else:
+                        step_outputs.append(output)
+                        executed_hashes.append(u_hash)
+                        with open(state_file, "a") as f:
+                            f.write(u_hash + "\n")
+                        runner.run_command(f"export -p > {env_file}")
+                        step["units"].append({
+                            "text": u_text,
+                            "tier": u_tier,
+                            "status": "DONE",
+                            "output_tail": out_tail
+                        })
+                        self.save_state(idx, "IN PROGRESS")
+                        self.write_visual_boards("IN PROGRESS")
 
                 if step_failed:
                     self.save_state(idx, "FAILED")
                     self.write_visual_boards("FAILED")
                     logging.error("[Tester] Step %d failed.", step["num"])
-                    self.file_bug_and_notify_mailbox(step["num"], evaluated_cmd, step["error"])
+                    self.file_bug_and_notify_mailbox(step["num"], failed_command_str, step["error"])
                     return False
                 
                 # Step successfully completed
                 step["status"] = "DONE"
                 step["output"] = "\n".join(step_outputs)
+                self.save_state(idx, "IN PROGRESS")
+                self.write_visual_boards("IN PROGRESS")
                 
             # All steps done!
             self.save_state(len(self.steps) - 1, "COMPLETED")
@@ -538,18 +605,122 @@ class StatefulCodelabTester:
         finally:
             runner.close()
 
+def purge_lab_state(markdown_file: str) -> None:
+    """Purges .tester_state/, <lab>.md.state, and <lab>.md.env for this lab only."""
+    lab_path = Path(markdown_file).resolve()
+    if not lab_path.is_file():
+        print(f"[Tester Error] Markdown file does not exist: {markdown_file}")
+        return
+
+    lab_dir = lab_path.parent
+    tester_state_dir = lab_dir / ".tester_state"
+
+    progress_file = tester_state_dir / "progress.json"
+    done_count = 0
+    if progress_file.is_file():
+        try:
+            for step_file in tester_state_dir.glob("step-*.json"):
+                try:
+                    with open(step_file, "r") as sf:
+                        step_data = json.load(sf)
+                        if step_data.get("status") == "DONE":
+                            done_count += 1
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    if done_count > 0:
+        warning_msg = (
+            f"[Tester Warning] Purging state with {done_count} DONE step(s); "
+            f"resources created by those steps may still exist in the target project — "
+            f"prefer resumption (re-run without --fresh) unless state is corrupted."
+        )
+        print(warning_msg)
+        logging.warning(warning_msg)
+
+    state_file = lab_dir / f"{lab_path.name}.state"
+    env_file = lab_dir / f"{lab_path.name}.env"
+
+    removed = []
+
+    if tester_state_dir.is_dir():
+        shutil.rmtree(tester_state_dir)
+        removed.append(str(tester_state_dir))
+
+    if state_file.is_file():
+        state_file.unlink()
+        removed.append(str(state_file))
+
+    if env_file.is_file():
+        env_file.unlink()
+        removed.append(str(env_file))
+
+    if removed:
+        print(f"[Tester --fresh] Purged state files for {lab_path.name}:")
+        for item in removed:
+            print(f"  - {item}")
+        logging.info("[Tester --fresh] Purged: %s", ", ".join(removed))
+    else:
+        print(f"[Tester --fresh] No state files found for {lab_path.name} (no-op).")
+        logging.info("[Tester --fresh] No state files found for %s (no-op).", lab_path.name)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Unified stateful codelab verification CLI.")
     parser.add_argument("markdown_file", help="Path to the codelab markdown guide file.")
     parser.add_argument("--artifact-dir", help="Conversation context artifact directory.")
     parser.add_argument("--timeout", type=int, default=600, help="Step timeout in seconds.")
-    parser.add_argument("--skip-cleanup", action="store_true", help="Skip cleanup steps in the codelab.")
-    
+    parser.add_argument("--phase", choices=["test", "cleanup", "all"], default="test", help="Execution phase (test, cleanup, or all).")
+    parser.add_argument("--cleanup", action="store_true", help="Run explicit cleanup phase (equivalent to --phase cleanup).")
+    parser.add_argument("--skip-cleanup", action="store_true", help="Deprecated alias for --phase test.")
+    parser.add_argument("--project-id", help="Explicit GCP target project ID to execute against.")
+    parser.add_argument("--allow-active-project", action="store_true", help="Consciously adopt the ambient active gcloud project.")
+    parser.add_argument("--fresh", action="store_true", help="Purge state and cache files for this lab before running.")
+
     args = parser.parse_args()
-    
-    tester = StatefulCodelabTester(args.markdown_file, args.artifact_dir, args.timeout, args.skip_cleanup)
+
+    if not Path(args.markdown_file).is_file():
+        print(f"[Tester Error] Markdown file does not exist: {args.markdown_file}")
+        sys.exit(1)
+
+    if not args.project_id and not args.allow_active_project:
+        print("[Tester Error] Target GCP project must be specified explicitly.")
+        print("[Tester Error] Pass --project-id <PROJECT_ID> or --allow-active-project to consciously adopt the active gcloud project.")
+        sys.exit(1)
+
+    if args.fresh:
+        purge_lab_state(args.markdown_file)
+
+    if args.project_id:
+        target_project_id = args.project_id
+    else:
+        target_project_id = get_active_project()
+        if not target_project_id or target_project_id == "Unknown":
+            print("[Tester Error] Cannot adopt ambient project: get_active_project() returned empty or Unknown.")
+            sys.exit(1)
+        logging.warning(
+            "[WARNING] --allow-active-project was passed. Adopting ambient gcloud project: %s",
+            target_project_id
+        )
+        print(f"[WARNING] --allow-active-project passed. Adopting ambient project: {target_project_id}")
+
+    if args.cleanup:
+        phase = "cleanup"
+    elif args.skip_cleanup:
+        phase = "test"
+    else:
+        phase = args.phase
+
+    tester = StatefulCodelabTester(
+        args.markdown_file,
+        artifact_dir=args.artifact_dir,
+        timeout=args.timeout,
+        phase=phase,
+        project_id=target_project_id
+    )
     success = tester.run()
-    
+
     sys.exit(0 if success else 1)
 
 if __name__ == "__main__":

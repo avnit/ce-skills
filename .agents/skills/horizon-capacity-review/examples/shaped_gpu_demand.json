@@ -1,0 +1,31 @@
+{
+  "customer_id": "external/987654321",
+  "project_number": "123456789012",
+  "location": "us-central1",
+  "state": 1,
+  "justification": "Strategic inorganic capacity review for multi-quarter LLM training workload requiring dedicated H100 accelerator pods. Reviewed via Buganizer #36999999.",
+  "demand_preferences": {
+    "justification": "Strategic inorganic capacity review for multi-quarter LLM training workload requiring dedicated H100 accelerator pods. Reviewed via Buganizer #36999999.",
+    "is_mandatory": true,
+    "flexibility_options": ["NO_LOCATION_FLEXIBILITY"]
+  },
+  "resources": [
+    {
+      "planning_sku": "a3-megagpu-8g-h100",
+      "machine_shape": "a3-megagpu-8g",
+      "cpu_cores": 208,
+      "ram_gb": 1872,
+      "gpu_count": 8,
+      "ramp_schedule": [
+        {
+          "start_date": "2026-09-01",
+          "gpu_count": 4
+        },
+        {
+          "start_date": "2026-11-01",
+          "gpu_count": 8
+        }
+      ]
+    }
+  ]
+}

@@ -43,11 +43,11 @@ This workflow guides you through compiling and reviewing your Month-to-Date (MTD
 1.  Invoke the `ask_question` tool to prompt the user if they would like to email the compiled billing report to themselves or colleagues:
     - **Question**: "Would you like to email this beautifully compiled MTD Billing Report as an HTML card?"
     - **Options**:
-      - "Yes, send to my corporate email (shacharb@google.com)"
+      - "Yes, send to my corporate email (<user-corporate-email>)"
       - "Yes, send to custom email addresses..."
       - "No, skip email delivery"
 2.  If the user selects "Yes, send to my corporate email" (or custom emails):
-    - Connect to the `gcloud-auth-verification` skill to verify/switch the active account to their corporate `shacharb@google.com` identity (required for using internal `gmail` CLI).
+    - Connect to the `gcloud-auth-verification` skill to verify/switch the active account to their corporate `<user-corporate-email>` identity (required for using internal `gmail` CLI).
     - Execute the email delivery script:
       ```bash
       python3 .agents/skills/send-email/scripts/send_email.py --to "<user-email>" --subject "Month-To-Date GCP Spend Review" --body "<report_artifact_path>" --html

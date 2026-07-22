@@ -265,7 +265,7 @@ def send_email_api(to, subject, body_or_path, is_html=False, attachment=None):
     """Generic programmatic helper function that can be imported natively by other Python skills.
     Uses the Google Message Router (sendgmr) natively via local LOAS credentials to avoid gcloud auth changes.
     """
-    sendgmr_bin = "/google/bin/releases/gws-sre/files/sendgmr/sendgmr"
+    sendgmr_bin = os.environ.get("SENDGMR", "/google/bin/releases/gws-sre/files/sendgmr/sendgmr")
     
     # ENVIRONMENT AWARENESS CHECK: Are we running natively on Cloudtop?
     is_running_on_cloudtop = os.path.exists(sendgmr_bin)

@@ -10,7 +10,7 @@ Steering Workflow:
 2. Verify that the workspace has been properly onboarded per `/onboarding`:
    - Check that `gcp_config.txt` contains valid `folder_id` and `billing_account`.
    - Check that `.agents/rules/persona.md` binds an active Systems Engineering Persona.
-   - Check that all configured MCP servers are present in `.gemini/mcp_config.json`, including the local Google Workspace MCP server (`workspace` mapping to `/google/bin/releases/codemind-mcp-servers/workspace_server.par`).
+   - Check that all configured MCP servers are present in `.gemini/mcp_config.json`, including the local Google Workspace MCP server (`workspace` mapping to `${WORKSPACE_MCP_SERVER:-/google/bin/releases/codemind-mcp-servers/workspace_server.par}`).
 3. Execute the Python system verification script, passing the dynamic active JetSki conversation artifact directory to avoid polluting the user's workspace:
    ```bash
    python3 .agents/skills/system-validation/scripts/verify_system.py <appDataDir>/brain/<conversation-id>/system_validation_report.md

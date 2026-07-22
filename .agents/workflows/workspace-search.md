@@ -24,7 +24,7 @@ This workflow orchestrates cross-corpus semantic search across your corporate Go
 
 1. Execute the search query natively via `run_command`:
    ```bash
-   /google/bin/releases/csa-cli/csa_cli.par \
+   ${CSA_CLI:-/google/bin/releases/csa-cli/csa_cli.par} \
      --user_prompt="<user_query>" \
      --allowed_corpora="<selected_corpora>" \
      --latency_budget_seconds=45 \
