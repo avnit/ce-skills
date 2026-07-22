@@ -62,6 +62,18 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # 1. Dual-Identity ADC Authentication
 # ---------------------------------------------------------------------------
+def _redact(account: Optional[str]) -> str:
+    """Redacts account email for log safety (e.g. 'someuser@google.com' -> 'som***@google.com')."""
+    if not account or not isinstance(account, str):
+        return "***"
+    if "@" not in account:
+        prefix = account[:3] if len(account) >= 3 else account
+        return f"{prefix}***"
+    local, domain = account.split("@", 1)
+    prefix = local[:3] if len(local) >= 3 else local
+    return f"{prefix}***@{domain}"
+
+
 class GcloudUserCredentials(BaseCredentials):
     """
     Custom credentials subclass that dynamically executes
@@ -97,7 +109,7 @@ class GcloudUserCredentials(BaseCredentials):
         if self.valid:
             return
         try:
-            logging.info(f"Refreshing gcloud access token for account {self.account}...")
+            logging.info(f"Refreshing gcloud access token for account {_redact(self.account)}...")
             cmd = ["gcloud", "auth", "print-access-token", f"--account={self.account}"]
             res = subprocess.run(cmd, capture_output=True, text=True, check=True)
             output = res.stdout.strip()
@@ -105,10 +117,10 @@ class GcloudUserCredentials(BaseCredentials):
                 raise ValueError("Received empty access token from gcloud command.")
             self.token = output
             self.expiry = now + datetime.timedelta(seconds=self._cache_duration_sec)
-            logging.info(f"Successfully refreshed token for {self.account} (cached for 55 minutes).")
+            logging.info(f"Successfully refreshed token for {_redact(self.account)} (cached for 55 minutes).")
         except Exception as e:
-            logging.error(f"Failed to fetch access token via gcloud for {self.account}: {e}")
-            raise RuntimeError(f"Authentication failed for {self.account}: {e}") from e
+            logging.error(f"Failed to fetch access token via gcloud for {_redact(self.account)}: {e}")
+            raise RuntimeError(f"Authentication failed for {_redact(self.account)}: {e}") from e
 
 
 def get_user_credentials() -> Any:
