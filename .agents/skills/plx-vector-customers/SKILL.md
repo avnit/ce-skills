@@ -89,13 +89,13 @@ Run the standalone CLI helper script directly inside your terminal or from custo
 
 ```bash
 # Lookup customer by name (includes Vector URLs & 1..N indexing)
-python3 .agents/skills/plx_vector_customers/scripts/vector_lookup.py --account "Workday"
+python3 .agents/skills/plx-vector-customers/scripts/vector_lookup.py --account "Workday"
 
 # List accounts for a NAL ID
-python3 .agents/skills/plx_vector_customers/scripts/vector_lookup.py --nal 2507192445
+python3 .agents/skills/plx-vector-customers/scripts/vector_lookup.py --nal 2507192445
 
 # Lookup assigned FSR / CE account team
-python3 .agents/skills/plx_vector_customers/scripts/vector_lookup.py --team "Workday"
+python3 .agents/skills/plx-vector-customers/scripts/vector_lookup.py --team "Workday"
 ```
 
 ---
