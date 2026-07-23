@@ -4,12 +4,13 @@ Production-grade GoogleSQL queries for PLX `ExecuteSql` targeting `gcc.vector_cu
 
 ---
 
-## Query 1: Full Customer Account & Territory Summary
-Lookup account details, segment, region, sub-region, and NAL for a given customer name:
+## Query 1: Full Customer Account, Vector Link & Territory Summary
+Lookup account details, direct Salesforce Vector link, segment, region, sub-region, and NAL for a given customer name:
 
 ```sql
 SELECT
   reporting_id,
+  CONCAT('https://vector.lightning.force.com/lightning/r/Account/', reporting_id, '/view') AS vector_url,
   core.account_name AS account_name,
   core.segment AS segment,
   core.nal_id AS nal_id,
@@ -32,6 +33,7 @@ Extract the assigned Field Sales Representative (FSR) and Customer Engineer (CE)
 ```sql
 SELECT DISTINCT
   reporting_id,
+  CONCAT('https://vector.lightning.force.com/lightning/r/Account/', reporting_id, '/view') AS vector_url,
   core.account_name AS account_name,
   core.nal_id AS nal_id,
   core.nal_name AS nal_name,
@@ -45,11 +47,12 @@ WHERE LOWER(core.account_name) LIKE '%workday%';
 ---
 
 ## Query 3: Account Roster by NAL ID
-List all accounts assigned to a specific NAL ID:
+List all accounts assigned to a specific NAL ID with Vector links:
 
 ```sql
 SELECT
   reporting_id,
+  CONCAT('https://vector.lightning.force.com/lightning/r/Account/', reporting_id, '/view') AS vector_url,
   core.account_name AS account_name,
   core.segment AS segment,
   core.region AS region,
@@ -68,6 +71,7 @@ List all Digital Native accounts in a specific region with assigned NALs:
 ```sql
 SELECT
   reporting_id,
+  CONCAT('https://vector.lightning.force.com/lightning/r/Account/', reporting_id, '/view') AS vector_url,
   core.account_name AS account_name,
   core.nal_id AS nal_id,
   core.nal_name AS nal_name,

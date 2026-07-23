@@ -9,13 +9,13 @@ Examples:
 """
 
 import argparse
-import json
 import sys
 
 def build_account_lookup_sql(account_name: str) -> str:
     escaped_name = account_name.replace("'", "''")
     return f"""SELECT
   reporting_id,
+  CONCAT('https://vector.lightning.force.com/lightning/r/Account/', reporting_id, '/view') AS vector_url,
   core.account_name AS account_name,
   core.nal_id AS nal_id,
   core.nal_name AS nal_name,
@@ -29,6 +29,7 @@ def build_team_lookup_sql(account_name: str) -> str:
     escaped_name = account_name.replace("'", "''")
     return f"""SELECT DISTINCT
   reporting_id,
+  CONCAT('https://vector.lightning.force.com/lightning/r/Account/', reporting_id, '/view') AS vector_url,
   core.account_name AS account_name,
   core.nal_id AS nal_id,
   core.nal_name AS nal_name,
@@ -42,6 +43,7 @@ LIMIT 10;"""
 def build_nal_roster_sql(nal_id: int) -> str:
     return f"""SELECT
   reporting_id,
+  CONCAT('https://vector.lightning.force.com/lightning/r/Account/', reporting_id, '/view') AS vector_url,
   core.account_name AS account_name,
   core.segment AS segment,
   core.region AS region,
@@ -53,9 +55,9 @@ LIMIT 50;"""
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Query PLX gcc.vector_customers for reporting IDs, NAL rosters, or team assignments."
+        description="Query PLX gcc.vector_customers for reporting IDs, Vector links, NAL rosters, or team assignments."
     )
-    parser.add_argument("--account", help="Search customer name for reporting ID and NAL details")
+    parser.add_argument("--account", help="Search customer name for reporting ID, Vector URL, and NAL details")
     parser.add_argument("--nal", type=int, help="List accounts for a given NAL ID")
     parser.add_argument("--team", help="Lookup assigned FSR and Customer Engineer for an account")
     parser.add_argument("--sql-only", action="store_true", help="Only output the generated SQL query without executing")
@@ -77,10 +79,10 @@ def main():
         print(sql)
         sys.exit(0)
 
-    print("Generated SQL for PLX ExecuteSql:")
-    print("-" * 50)
+    print("Generated SQL for PLX ExecuteSql (includes direct Vector Salesforce URLs):")
+    print("-" * 70)
     print(sql)
-    print("-" * 50)
+    print("-" * 70)
 
 if __name__ == "__main__":
     main()
