@@ -5,6 +5,7 @@ vector_lookup.py - CLI tool & Python API for querying PLX gcc.vector_customers.
 Examples:
     python3 vector_lookup.py --account "Workday"
     python3 vector_lookup.py --nal 2507192445
+    python3 vector_lookup.py --cluster "West 4 (CL)"
     python3 vector_lookup.py --team "Workday"
 """
 
@@ -19,6 +20,7 @@ def build_account_lookup_sql(account_name: str) -> str:
   core.account_name AS account_name,
   core.nal_id AS nal_id,
   core.nal_name AS nal_name,
+  core.nal_cluster AS nal_cluster,
   core.region AS region,
   core.sub_region AS sub_region
 FROM gcc.vector_customers
@@ -33,6 +35,7 @@ def build_team_lookup_sql(account_name: str) -> str:
   core.account_name AS account_name,
   core.nal_id AS nal_id,
   core.nal_name AS nal_name,
+  core.nal_cluster AS nal_cluster,
   acc.primary_field_rep AS fsr_ldaps,
   acc.customer_engineer AS ce_ldaps
 FROM gcc.vector_customers,
@@ -46,6 +49,8 @@ def build_nal_roster_sql(nal_id: int) -> str:
   CONCAT('https://vector.lightning.force.com/lightning/r/Account/', reporting_id, '/view') AS vector_url,
   core.account_name AS account_name,
   core.segment AS segment,
+  core.nal_name AS nal_name,
+  core.nal_cluster AS nal_cluster,
   core.region AS region,
   core.sub_region AS sub_region
 FROM gcc.vector_customers
@@ -53,18 +58,36 @@ WHERE core.nal_id = {nal_id}
 ORDER BY core.account_name
 LIMIT 50;"""
 
+def build_cluster_roster_sql(cluster_name: str) -> str:
+    escaped_cluster = cluster_name.replace("'", "''")
+    return f"""SELECT DISTINCT
+  reporting_id,
+  CONCAT('https://vector.lightning.force.com/lightning/r/Account/', reporting_id, '/view') AS vector_url,
+  core.account_name AS account_name,
+  core.segment AS segment,
+  core.nal_id AS nal_id,
+  core.nal_name AS nal_name,
+  core.nal_cluster AS nal_cluster,
+  core.region AS region,
+  core.sub_region AS sub_region
+FROM gcc.vector_customers
+WHERE LOWER(core.nal_cluster) LIKE '%{escaped_cluster.lower()}%'
+ORDER BY account_name
+LIMIT 50;"""
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Query PLX gcc.vector_customers for reporting IDs, Vector links, NAL rosters, or team assignments."
+        description="Query PLX gcc.vector_customers for reporting IDs, Vector links, NAL rosters, Clusters, or team assignments."
     )
     parser.add_argument("--account", help="Search customer name for reporting ID, Vector URL, and NAL details")
     parser.add_argument("--nal", type=int, help="List accounts for a given NAL ID")
+    parser.add_argument("--cluster", help="List accounts for a given NAL Cluster name or ID")
     parser.add_argument("--team", help="Lookup assigned FSR and Customer Engineer for an account")
     parser.add_argument("--sql-only", action="store_true", help="Only output the generated SQL query without executing")
 
     args = parser.parse_args()
 
-    if not (args.account or args.nal or args.team):
+    if not (args.account or args.nal or args.cluster or args.team):
         parser.print_help()
         sys.exit(1)
 
@@ -74,12 +97,14 @@ def main():
         sql = build_team_lookup_sql(args.team)
     elif args.nal:
         sql = build_nal_roster_sql(args.nal)
+    elif args.cluster:
+        sql = build_cluster_roster_sql(args.cluster)
 
     if args.sql_only:
         print(sql)
         sys.exit(0)
 
-    print("Generated SQL for PLX ExecuteSql (includes direct Vector Salesforce URLs):")
+    print("Generated SQL for PLX ExecuteSql (includes Cluster & Vector URLs):")
     print("-" * 70)
     print(sql)
     print("-" * 70)

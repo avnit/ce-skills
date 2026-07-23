@@ -1,5 +1,5 @@
-# Evaluation test suite for plx-vector-customers skill
-skill_name: "plx-vector-customers"
+# Evaluation test suite for vector-customers skill
+skill_name: "vector-customers"
 
 test_cases {
   id: "account_reporting_id_lookup"

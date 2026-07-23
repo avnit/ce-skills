@@ -1,5 +1,5 @@
 ---
-name: plx-vector-customers
+name: vector-customers
 description: >-
   Provides exact SQL recipes, schema definitions, gotchas, and CLI scripts for
   querying concord-prod.service_cloudbi.vector_customers via PLX (gcc.vector_customers).
@@ -129,16 +129,16 @@ Run the standalone CLI helper script directly inside your terminal or from custo
 
 ```bash
 # Lookup customer by name (includes Vector URLs & 1..N indexing)
-python3 .agents/skills/plx-vector-customers/scripts/vector_lookup.py --account "Workday"
+python3 .agents/skills/vector-customers/scripts/vector_lookup.py --account "Workday"
 
 # List accounts for a NAL ID
-python3 .agents/skills/plx-vector-customers/scripts/vector_lookup.py --nal 2507192445
+python3 .agents/skills/vector-customers/scripts/vector_lookup.py --nal 2507192445
 
 # List accounts for a Cluster Name
-python3 .agents/skills/plx-vector-customers/scripts/vector_lookup.py --cluster "West 4 (CL)"
+python3 .agents/skills/vector-customers/scripts/vector_lookup.py --cluster "West 4 (CL)"
 
 # Lookup assigned FSR / CE account team
-python3 .agents/skills/plx-vector-customers/scripts/vector_lookup.py --team "Workday"
+python3 .agents/skills/vector-customers/scripts/vector_lookup.py --team "Workday"
 ```
 
 ---
