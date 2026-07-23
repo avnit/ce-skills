@@ -3,7 +3,7 @@
 **Author:** Practice CE / Cloud Architect  
 **Date:** 2026-07-21  
 **Status:** Final  
-**Target Audience:** Cloud Architect / Enterprise Operator  
+**Target Audience:** Cloud Architect / Enterprise Operator
 
 ---
 
@@ -25,7 +25,7 @@ Before selecting the hybrid interconnect topology, the following trade-off prior
 > [!IMPORTANT]
 > **Pre-GA / Preview Feature Alert**  
 > All core architectural components proposed in this document—including **Dedicated Cross-Cloud Interconnect (CCI)**, **99.99% SLA Critical Production Topology**, **Network Connectivity Center (NCC) Hub & Spokes**, and **Router Appliance NVA Integration**—are **Generally Available (GA)**.  
-> *Note on Partner Automation:* If adopting *Partner Cross-Cloud Interconnect for AWS with automated NCC provisioning*, that specific partner orchestration feature is currently in **Preview**. Standard Dedicated Cross-Cloud Interconnect is fully GA.
+> _Note on Partner Automation:_ If adopting _Partner Cross-Cloud Interconnect for AWS with automated NCC provisioning_, that specific partner orchestration feature is currently in **Preview**. Standard Dedicated Cross-Cloud Interconnect is fully GA.
 
 ---
 
@@ -77,7 +77,7 @@ graph LR
 
     subgraph GCP["Google Cloud Platform (us-east1)"]
         NCCHub["Network Connectivity Center (NCC) Hub"]
-        
+
         subgraph HubVPC["Transit / Hub VPC (Security Perimeter)"]
             ILB["Internal Passthrough Load Balancer (ILB)"]
             NVA["NVA Firewall Appliance Cluster (Palo Alto / Fortinet)"]
@@ -137,13 +137,13 @@ sequenceDiagram
 
 This architecture is verified against the five pillars of the Google Cloud Well-Architected Framework (WAF), directly addressing the priorities established during discovery:
 
-| WAF Pillar | Architectural Design Decision & Technical Mitigation | Verification Evidence & Citation Link |
-| :--- | :--- | :--- |
-| **Operational Excellence** | Infrastructure as Code (Terraform) provisioning of NCC hubs, Cloud Routers, and VLAN attachments. Centralized Cloud Audit Logs and VPC Flow Logs enabled across all hub and spoke VPCs. | [Cloud Interconnect Overview](https://docs.cloud.google.com/network-connectivity/docs/interconnect/concepts/overview) |
-| **Security, Privacy & Compliance** | Zero internet exposure for cross-cloud traffic. Centralized Layer 7 NVA firewall inspection for all east-west AWS-to-GCP flows. Enforces microsegmentation using GCP Firewall Policies and VPC Service Controls. | [CCN NVA Reference Architecture](https://docs.cloud.google.com/architecture/ccn-distributed-apps-design/ccn-nva-ra) |
-| **Reliability** | **99.99% Availability SLA** using dual Edge Availability Domains with active-active ECMP BGP routing. Router Appliance VMs in multi-zone configuration prevent single NVA node failure. | [Establishing 99.99% SLA Interconnect](https://docs.cloud.google.com/network-connectivity/docs/interconnect/tutorials/dedicated-creating-9999-availability) |
-| **Cost Optimization** | Eliminates third-party colocation facilities and expensive cross-connect cabling fees. Direct Cross-Cloud Interconnect egress rates provide lower per-GB pricing compared to public internet egress. | [Cross-Cloud Interconnect Overview](https://docs.cloud.google.com/network-connectivity/docs/interconnect/concepts/cci-overview) |
-| **Performance Efficiency** | Sub-10ms latency over dedicated 10 Gbps / 100 Gbps physical links. High-throughput packet forwarding via GCP Internal Load Balancer and multi-queue NVA instances. | [Network Connectivity Center Overview](https://docs.cloud.google.com/network-connectivity/docs/network-connectivity-center/concepts/overview) |
+| WAF Pillar                         | Architectural Design Decision & Technical Mitigation                                                                                                                                                             | Verification Evidence & Citation Link                                                                                                                       |
+| :--------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Operational Excellence**         | Infrastructure as Code (Terraform) provisioning of NCC hubs, Cloud Routers, and VLAN attachments. Centralized Cloud Audit Logs and VPC Flow Logs enabled across all hub and spoke VPCs.                          | [Cloud Interconnect Overview](https://docs.cloud.google.com/network-connectivity/docs/interconnect/concepts/overview)                                       |
+| **Security, Privacy & Compliance** | Zero internet exposure for cross-cloud traffic. Centralized Layer 7 NVA firewall inspection for all east-west AWS-to-GCP flows. Enforces microsegmentation using GCP Firewall Policies and VPC Service Controls. | [CCN NVA Reference Architecture](https://docs.cloud.google.com/architecture/ccn-distributed-apps-design/ccn-nva-ra)                                         |
+| **Reliability**                    | **99.99% Availability SLA** using dual Edge Availability Domains with active-active ECMP BGP routing. Router Appliance VMs in multi-zone configuration prevent single NVA node failure.                          | [Establishing 99.99% SLA Interconnect](https://docs.cloud.google.com/network-connectivity/docs/interconnect/tutorials/dedicated-creating-9999-availability) |
+| **Cost Optimization**              | Eliminates third-party colocation facilities and expensive cross-connect cabling fees. Direct Cross-Cloud Interconnect egress rates provide lower per-GB pricing compared to public internet egress.             | [Cross-Cloud Interconnect Overview](https://docs.cloud.google.com/network-connectivity/docs/interconnect/concepts/cci-overview)                             |
+| **Performance Efficiency**         | Sub-10ms latency over dedicated 10 Gbps / 100 Gbps physical links. High-throughput packet forwarding via GCP Internal Load Balancer and multi-queue NVA instances.                                               | [Network Connectivity Center Overview](https://docs.cloud.google.com/network-connectivity/docs/network-connectivity-center/concepts/overview)               |
 
 ---
 
