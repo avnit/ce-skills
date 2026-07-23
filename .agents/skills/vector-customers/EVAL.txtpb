@@ -1,0 +1,25 @@
+# proto-file: learning/gemini/agents/evaluation/evalin/proto/eval_suite.proto
+# proto-message: EvalSuite
+# txtpbfmt: wrap_strings_after_newlines
+
+suite_name: "vector-customers Skill Evals"
+timeout_seconds: 300
+
+cases {
+  name: "account_reporting_id_lookup"
+  prompt: "What is the Vector reporting ID and NAL ID for Workday, Inc. using PLX vector_customers?"
+  expectations: "The agent queries gcc.vector_customers and retrieves reporting ID 0014M00001hmLq3QAE for Workday, Inc."
+  expectations: "The agent constructs the direct Salesforce Vector URL."
+}
+
+cases {
+  name: "account_team_lookup"
+  prompt: "Find the assigned FSR and CE for Workday using the PLX vector_customers dataset."
+  expectations: "The agent unnested account_details to retrieve primary_field_rep and customer_engineer."
+}
+
+cases {
+  name: "nal_roster_extraction"
+  prompt: "Generate a list of accounts assigned to NAL 2507192445 using gcc.vector_customers."
+  expectations: "The agent lists accounts assigned to NAL 2507192445 including NAL Cluster."
+}
