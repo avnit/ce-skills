@@ -10,7 +10,7 @@ description: >-
   artifacts to the brain directory (<appDataDir>/brain/<conversation-id>/...).
 ---
 
-# Skill: PLX Vector Customers & NAL Territory Analytics
+# Skill: Vector Customers & NAL Territory Analytics
 
 Cheatsheet and recipes for interacting with Google Cloud's `vector_customers` dataset in BigQuery/PLX (`concord-prod.service_cloudbi.vector_customers` via PLX table `gcc.vector_customers`).
 
