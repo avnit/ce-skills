@@ -1,0 +1,43 @@
+# Evaluation test suite for plx-vector-customers skill
+skill_name: "plx-vector-customers"
+
+test_cases {
+  id: "account_reporting_id_lookup"
+  description: "Lookup SFDC Vector reporting ID, NAL ID, and Sales Region for customer Workday"
+  prompt: "What is the Vector reporting ID and NAL ID for Workday, Inc. using PLX vector_customers?"
+  expected_outputs {
+    contains_all: [
+      "0014M00001hmLq3QAE",
+      "Workday, Inc.",
+      "2507192445",
+      "gcc.vector_customers"
+    ]
+  }
+}
+
+test_cases {
+  id: "account_team_lookup"
+  description: "Identify assigned FSR (Primary Field Rep) and Customer Engineer (CE) for Workday"
+  prompt: "Find the assigned FSR and CE for Workday using the PLX vector_customers dataset."
+  expected_outputs {
+    contains_all: [
+      "primary_field_rep",
+      "customer_engineer",
+      "UNNEST(account_details)",
+      "edwardsbill"
+    ]
+  }
+}
+
+test_cases {
+  id: "nal_roster_extraction"
+  description: "List all accounts assigned to NAL ID 2507192445"
+  prompt: "Generate a list of accounts assigned to NAL 2507192445 using gcc.vector_customers."
+  expected_outputs {
+    contains_all: [
+      "core.nal_id = 2507192445",
+      "gcc.vector_customers",
+      "Workday, Inc."
+    ]
+  }
+}
