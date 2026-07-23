@@ -1,43 +1,25 @@
-# Evaluation test suite for vector-customers skill
-skill_name: "vector-customers"
+# proto-file: learning/gemini/agents/evaluation/evalin/proto/eval_suite.proto
+# proto-message: EvalSuite
+# txtpbfmt: wrap_strings_after_newlines
 
-test_cases {
-  id: "account_reporting_id_lookup"
-  description: "Lookup SFDC Vector reporting ID, NAL ID, and Sales Region for customer Workday"
+suite_name: "vector-customers Skill Evals"
+timeout_seconds: 300
+
+cases {
+  name: "account_reporting_id_lookup"
   prompt: "What is the Vector reporting ID and NAL ID for Workday, Inc. using PLX vector_customers?"
-  expected_outputs {
-    contains_all: [
-      "0014M00001hmLq3QAE",
-      "Workday, Inc.",
-      "2507192445",
-      "gcc.vector_customers"
-    ]
-  }
+  expectations: "The agent queries gcc.vector_customers and retrieves reporting ID 0014M00001hmLq3QAE for Workday, Inc."
+  expectations: "The agent constructs the direct Salesforce Vector URL."
 }
 
-test_cases {
-  id: "account_team_lookup"
-  description: "Identify assigned FSR (Primary Field Rep) and Customer Engineer (CE) for Workday"
+cases {
+  name: "account_team_lookup"
   prompt: "Find the assigned FSR and CE for Workday using the PLX vector_customers dataset."
-  expected_outputs {
-    contains_all: [
-      "primary_field_rep",
-      "customer_engineer",
-      "UNNEST(account_details)",
-      "edwardsbill"
-    ]
-  }
+  expectations: "The agent unnested account_details to retrieve primary_field_rep and customer_engineer."
 }
 
-test_cases {
-  id: "nal_roster_extraction"
-  description: "List all accounts assigned to NAL ID 2507192445"
+cases {
+  name: "nal_roster_extraction"
   prompt: "Generate a list of accounts assigned to NAL 2507192445 using gcc.vector_customers."
-  expected_outputs {
-    contains_all: [
-      "core.nal_id = 2507192445",
-      "gcc.vector_customers",
-      "Workday, Inc."
-    ]
-  }
+  expectations: "The agent lists accounts assigned to NAL 2507192445 including NAL Cluster."
 }
