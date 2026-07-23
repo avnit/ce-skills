@@ -5,6 +5,7 @@ Production-grade GoogleSQL queries for PLX `ExecuteSql` targeting `gcc.vector_cu
 ---
 
 ## Query 1: Full Customer Account, Vector Link & Territory Summary
+
 Lookup account details, direct Salesforce Vector link, segment, region, sub-region, NAL ID, NAL Name, and NAL Cluster for a given customer name:
 
 ```sql
@@ -28,6 +29,7 @@ ORDER BY core.account_name;
 ---
 
 ## Query 2: Unnested Account Team (FSR & Customer Engineer)
+
 Extract the assigned Field Sales Representative (FSR) and Customer Engineer (CE) LDAPs for an account:
 
 ```sql
@@ -48,6 +50,7 @@ WHERE LOWER(core.account_name) LIKE '%workday%';
 ---
 
 ## Query 3: Account Roster by NAL ID (with Cluster)
+
 List all accounts assigned to a specific NAL ID with Vector links and NAL Cluster:
 
 ```sql
@@ -69,6 +72,7 @@ ORDER BY core.account_name;
 ---
 
 ## Query 4: Account Roster by Cluster
+
 List all accounts sharing the same NAL Cluster as a target reporting ID (e.g. `0014M00001h3l17QAA` / `West 4 (CL)`):
 
 ```sql
@@ -96,6 +100,7 @@ ORDER BY account_name;
 ---
 
 ## Query 5: Digital Native Accounts in a Region
+
 List all Digital Native accounts in a specific region with assigned NALs and Clusters:
 
 ```sql
