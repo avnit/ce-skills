@@ -17,6 +17,7 @@ Cheatsheet and recipes for interacting with Google Cloud's `vector_customers` da
 ## Quick Start Recipes
 
 ### 1. Lookup Reporting ID & Vector Link from Account Name
+
 Find SFDC Vector `reporting_id`, direct Vector URL, NAL ID, NAL Cluster, and Sales Region for a customer:
 
 ```sql
@@ -37,6 +38,7 @@ LIMIT 10;
 > **User Output Rule:** Always format search results as a **numbered list (1..N)** including the clickable `[Vector Link](url)` so users can click directly to open Salesforce, or reply with `#1` or `#2` to request deeper account details.
 
 ### 2. Lookup Account Team (FSR & Customer Engineer)
+
 Unnest `account_details` to retrieve assigned **Primary Field Reps (FSR)** and **Customer Engineers (CE)**:
 
 ```sql
@@ -56,6 +58,7 @@ LIMIT 5;
 ```
 
 ### 3. Accounts Roster by NAL / Territory Cluster
+
 List all accounts assigned to a specific NAL ID or NAL Name, including `nal_cluster`:
 
 ```sql
@@ -74,6 +77,7 @@ ORDER BY core.account_name;
 ```
 
 ### 4. Accounts Roster by Cluster (or Target Account's Cluster)
+
 List all accounts sharing the same NAL Cluster as a target reporting ID or cluster name (e.g. `West 4 (CL)`):
 
 ```sql
@@ -145,6 +149,6 @@ python3 .agents/skills/vector-customers/scripts/vector_lookup.py --team "Workday
 
 ## Supplementary References
 
-*   **Schema Details:** See [references/schema.md](references/schema.md) for full `CoreDetails` and `AccountDetails` proto schemas.
-*   **Production SQL Queries:** See [references/reference_sql.md](references/reference_sql.md) for advanced GoogleSQL queries.
-*   **Sample Reports:** See [references/sample_reports.md](references/sample_reports.md) for example report output formats with Vector links, clusters, and brain artifacts.
+- **Schema Details:** See [references/schema.md](references/schema.md) for full `CoreDetails` and `AccountDetails` proto schemas.
+- **Production SQL Queries:** See [references/reference_sql.md](references/reference_sql.md) for advanced GoogleSQL queries.
+- **Sample Reports:** See [references/sample_reports.md](references/sample_reports.md) for example report output formats with Vector links, clusters, and brain artifacts.
