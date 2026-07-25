@@ -15,7 +15,7 @@ To process all bugs in a given lab directory (e.g., created by `tester.py`):
 python3 .agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py --scan-dir /path/to/lab/bugs
 ```
 
-This script reads all `bug_*.json` files that haven't been processed, uses Vertex AI to extract a generalized lesson, and pushes it to the centralized Firebase backend for human curation in the Admin Portal.
+This script reads all `bug_*.json` files that haven't been processed. It prioritizes Agent API subagent distillation (eliminating direct Vertex AI GCP project enablement requirements for end users), falling back to Vertex AI or deterministic parsing, and pushes the structured lesson to the centralized backend for human curation in the Admin Portal.
 
 ## Autonomous Bug Resolution & Feedback Logging
 

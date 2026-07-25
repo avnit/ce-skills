@@ -171,6 +171,32 @@ class TestBugToLessonProcessor(unittest.TestCase):
             disk_payload = json.load(f)
         self.assertEqual(disk_payload["status"], "PROCESSED")
 
+    # -----------------------------------------------------------------------
+    # 6. Agent API Subagent Extraction Tests
+    # -----------------------------------------------------------------------
+    @patch("subprocess.run")
+    @patch("shutil.which")
+    @patch("os.path.exists")
+    def test_agentapi_subagent_extraction(self, mock_exists, mock_which, mock_run):
+        mock_which.return_value = "/mock/path/agentapi"
+        mock_exists.return_value = True
+
+        mock_payload = {
+            "specific_lesson": "Verified resolution: Impersonate service account.",
+            "generalized_lesson": "Always configure ADC impersonation.\n\nCommand sample:\n`gcloud auth print-access-token`",
+            "topics": ["GKE", "IAM"]
+        }
+        mock_run.return_value = MagicMock(stdout=json.dumps(mock_payload), returncode=0)
+
+        with patch.dict(os.environ, {"ANTIGRAVITY_LS_ADDRESS": "mock_address"}):
+            res = processor.try_agentapi_extraction(
+                failed_cmd="kubectl get pods",
+                error_msg="Unauthorized",
+                remediation="Verified remediation: Impersonate service account."
+            )
+            self.assertIsNotNone(res)
+            self.assertEqual(res["topics"], ["GKE", "IAM"])
+
 
 if __name__ == "__main__":
     unittest.main()
