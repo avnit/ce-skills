@@ -15,8 +15,11 @@ from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LIB_DIR = REPO_ROOT / ".agents" / "lib"
+CLOSED_LOOP_SCRIPTS_DIR = REPO_ROOT / ".agents" / "skills" / "closed-loop-learning" / "scripts"
 SKILL_SCRIPTS_DIR = REPO_ROOT / ".agents" / "skills" / "codelab-memory" / "scripts"
 
+if str(CLOSED_LOOP_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(CLOSED_LOOP_SCRIPTS_DIR))
 if str(LIB_DIR) not in sys.path:
     sys.path.insert(0, str(LIB_DIR))
 if str(SKILL_SCRIPTS_DIR) not in sys.path:
