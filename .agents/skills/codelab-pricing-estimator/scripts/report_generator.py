@@ -30,7 +30,7 @@ class HTMLReportGenerator:
             "",
             "## Active Billable Resources",
             "",
-            '<div style="max-width: 1000px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; background: #ffffff; border-radius: 12px; border: 1px solid #e8eaed; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">',
+            "<div style=\"max-width: 1000px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #ffffff; border-radius: 12px; border: 1px solid #e8eaed; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);\">",
             '<table style="width: 100%; border-collapse: collapse; margin: 0; font-size: 13px;">',
             "<thead>",
             '<tr style="background-color: #f8f9fa; border-bottom: 2px solid #e8eaed; text-align: left; color: #3c4043;">',
@@ -46,30 +46,42 @@ class HTMLReportGenerator:
         ]
 
         for r in resources:
-            status_bg = "#e6f4ea" if r["status"] in ("RUNNING", "RUNNABLE", "PROVISIONED") else "#f1f3f4"
-            status_color = "#137333" if r["status"] in ("RUNNING", "RUNNABLE", "PROVISIONED") else "#5f6368"
-            lines.extend([
-                '<tr style="border-bottom: 1px solid #e8eaed; background-color: #ffffff;">',
-                f'<td style="padding: 14px 16px; font-weight: 600; color: #3c4043;">`{r["name"]}`</td>',
-                f'<td style="padding: 14px 16px; color: #5f6368;">{r["type"]}</td>',
-                f'<td style="padding: 14px 16px;"><span style="background: {status_bg}; color: {status_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px;">{r["status"]}</span></td>',
-                f'<td style="padding: 14px 16px; color: #5f6368;">{r["config"]}</td>',
-                f'<td style="padding: 14px 16px; color: #5f6368;">{r["location"]}</td>',
-                f'<td style="padding: 14px 16px; font-weight: 600; color: #1a73e8;">${r["hourly_cost"]:.4f}</td>',
-                "</tr>",
-            ])
+            status_bg = (
+                "#e6f4ea"
+                if r["status"] in ("RUNNING", "RUNNABLE", "PROVISIONED")
+                else "#f1f3f4"
+            )
+            status_color = (
+                "#137333"
+                if r["status"] in ("RUNNING", "RUNNABLE", "PROVISIONED")
+                else "#5f6368"
+            )
+            lines.extend(
+                [
+                    '<tr style="border-bottom: 1px solid #e8eaed; background-color: #ffffff;">',
+                    f'<td style="padding: 14px 16px; font-weight: 600; color: #3c4043;">`{r["name"]}`</td>',
+                    f'<td style="padding: 14px 16px; color: #5f6368;">{r["type"]}</td>',
+                    f'<td style="padding: 14px 16px;"><span style="background: {status_bg}; color: {status_color}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 11px;">{r["status"]}</span></td>',
+                    f'<td style="padding: 14px 16px; color: #5f6368;">{r["config"]}</td>',
+                    f'<td style="padding: 14px 16px; color: #5f6368;">{r["location"]}</td>',
+                    f'<td style="padding: 14px 16px; font-weight: 600; color: #1a73e8;">${r["hourly_cost"]:.4f}</td>',
+                    "</tr>",
+                ]
+            )
 
-        lines.extend([
-            "</tbody>",
-            "</table>",
-            "</div>",
-            "",
-            f"**Total Deployed Sandbox Cost**: `${total_cost:.4f} / hour`",
-            "",
-            "## Audit Warnings & Disclaimers",
-            "",
-            "> [!NOTE]",
-            "> This audit represents exact deterministic hourly configuration charges currently running in your project based on active topologies and Billing Catalog metrics. Volume-based usage (network egress, query scans) is excluded.",
-        ])
+        lines.extend(
+            [
+                "</tbody>",
+                "</table>",
+                "</div>",
+                "",
+                f"**Total Deployed Sandbox Cost**: `${total_cost:.4f} / hour`",
+                "",
+                "## Audit Warnings & Disclaimers",
+                "",
+                "> [!NOTE]",
+                "> This audit represents exact deterministic hourly configuration charges currently running in your project based on active topologies and Billing Catalog metrics. Volume-based usage (network egress, query scans) is excluded.",
+            ]
+        )
 
         return "\n".join(lines)
