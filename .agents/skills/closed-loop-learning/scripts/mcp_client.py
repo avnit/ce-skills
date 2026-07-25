@@ -187,4 +187,6 @@ def call_mcp_tool(
             or ce_config.get("mcp_server_url")
             or DEFAULT_MCP_SERVER_URL
         )
+    if not url.endswith("/mcp"):
+        url = f"{url.rstrip('/')}/mcp"
     return asyncio.run(call_mcp_tool_async(tool_name, arguments, url))
