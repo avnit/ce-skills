@@ -13,10 +13,14 @@ import ce_config
 DEFAULT_MCP_SERVER_URL = "https://closed-loop-mcp-529861882743.us-west1.run.app/mcp"
 
 def find_mcp_proxy_binary() -> Optional[str]:
-    """Finds the local mcp_session_proxy wrapper script if available on workstation."""
+    """Finds the official corp-mcp-proxy server.par or local mcp_session_proxy wrapper."""
     env_path = os.environ.get("MCP_PROXY_BINARY")
     if env_path and os.path.isfile(env_path) and os.access(env_path, os.X_OK):
         return env_path
+
+    prod_proxy = "/google/bin/releases/corp-mcp-proxy/server.par"
+    if os.path.isfile(prod_proxy) and os.access(prod_proxy, os.X_OK):
+        return prod_proxy
 
     repo_root = pathlib.Path(__file__).resolve().parent.parent.parent
     for candidate_name in ["mcp_session_proxy", "mcp_session_proxy_bin"]:
@@ -126,10 +130,19 @@ async def call_mcp_tool_async(
                 "(or run via: uv run --with-requirements requirements.txt python3 ...)"
             ) from e
 
-        logging.info(f"Connecting to MCP server via session proxy: {proxy_binary} --mcp_server={url}")
+        target_server = url
+        proxy_args = []
+        if "corp-mcp-proxy" in proxy_binary:
+            if target_server.endswith("/mcp"):
+                target_server = target_server[:-4]
+            proxy_args = [f"--mcp_server={target_server}", "--use_corp_sso=true"]
+        else:
+            proxy_args = [f"--mcp_server={target_server}"]
+
+        logging.info(f"Connecting to MCP server via session proxy: {proxy_binary} {' '.join(proxy_args)}")
         server_params = StdioServerParameters(
             command=proxy_binary,
-            args=[f"--mcp_server={url}"],
+            args=proxy_args,
             env=dict(os.environ),
         )
         try:
