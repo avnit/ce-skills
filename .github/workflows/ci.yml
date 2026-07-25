@@ -93,9 +93,9 @@ jobs:
       - name: Run pytest
         run: |
           if [ -f "requirements.txt" ]; then
-            uvx --with-requirements requirements.txt pytest tests/ -q
+            uvx --with-requirements requirements.txt pytest -q
           else
-            uvx pytest tests/ -q
+            uvx pytest -q
           fi
 
   # --------------------------------------------------------------------
