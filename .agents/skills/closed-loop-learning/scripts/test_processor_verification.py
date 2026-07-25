@@ -125,10 +125,10 @@ class TestBugToLessonProcessor(unittest.TestCase):
     # -----------------------------------------------------------------------
     # 5. Atomic Error Handling Tests
     # -----------------------------------------------------------------------
-    @patch.object(processor, "push_to_firebase")
-    def test_atomic_error_handling_preserves_status_on_failure(self, mock_push):
-        # Simulate storage write failure
-        mock_push.side_effect = RuntimeError("Simulated Firestore write failure")
+    @patch.object(processor, "submit_to_mcp")
+    def test_atomic_error_handling_preserves_status_on_failure(self, mock_submit):
+        # Simulate MCP submission failure
+        mock_submit.side_effect = RuntimeError("Simulated MCP submission failure")
 
         bug_file = os.path.join(self.test_dir, "bug_fail.json")
         initial_payload = {
@@ -149,9 +149,9 @@ class TestBugToLessonProcessor(unittest.TestCase):
             disk_payload = json.load(f)
         self.assertEqual(disk_payload["status"], "FIXED")
 
-    @patch.object(processor, "push_to_firebase")
-    def test_successful_processing_updates_status(self, mock_push):
-        mock_push.return_value = None  # Successful push
+    @patch.object(processor, "submit_to_mcp")
+    def test_successful_processing_updates_status(self, mock_submit):
+        mock_submit.return_value = {"extraction_mode": "subagent", "status": "submitted"}  # Successful submit
 
         bug_file = os.path.join(self.test_dir, "bug_success.json")
         initial_payload = {

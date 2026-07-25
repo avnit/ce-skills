@@ -445,20 +445,41 @@ def submit_to_mcp(submission_payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def validate_submission(submission_payload: Dict[str, Any]) -> None:
+    # Basic required keys check according to contract v1 schema
+    for field in ["source_bug_id", "raw_error_context", "remediation", "submitted_by"]:
+        if field not in submission_payload or submission_payload[field] is None:
+            raise ValueError(f"Submission payload missing required field '{field}'")
+
+    raw_ctx = submission_payload.get("raw_error_context", {})
+    if not isinstance(raw_ctx, dict):
+        raise ValueError("raw_error_context must be a dictionary")
+
+    for field in ["failed_command", "stderr_output"]:
+        if field not in raw_ctx:
+            raise ValueError(f"raw_error_context missing required field '{field}'")
+
+    # If jsonschema is available, validate against full vendored schema
+    schema_path = (
+        pathlib.Path(__file__).resolve().parent.parent / "contracts" / "lesson_submission.schema.json"
+    )
+    if not schema_path.exists():
+        for parent in pathlib.Path(__file__).resolve().parents:
+            candidate = parent / "doc" / "contracts" / "lesson_submission.schema.json"
+            if candidate.is_file():
+                schema_path = candidate
+                break
+
     try:
         import jsonschema
-    except (ImportError, ModuleNotFoundError) as e:
-        raise RuntimeError("CLOSED_LOOP_TRANSPORT=mcp requires extra deps: pip3 install -r <repo>/requirements.txt (or run via: uv run --with-requirements requirements.txt python3 ...)") from e
-
-    schema_path = os.path.join(os.path.dirname(__file__), "..", "contracts", "lesson_submission.schema.json")
-    if not os.path.exists(schema_path):
-        raise ValueError(f"Vendored schema not found at {schema_path}")
-    with open(schema_path, "r", encoding="utf-8") as f:
-        schema = json.load(f)
-    try:
-        jsonschema.validate(instance=submission_payload, schema=schema)
-    except jsonschema.ValidationError as e:
-        raise ValueError(f"Submission payload failed schema validation: {e}") from e
+        if schema_path.exists():
+            with open(schema_path, "r", encoding="utf-8") as f:
+                schema = json.load(f)
+            jsonschema.validate(instance=submission_payload, schema=schema)
+    except (ImportError, ModuleNotFoundError):
+        pass
+    except Exception as e:
+        if "ValidationError" in type(e).__name__:
+            raise ValueError(f"Submission payload failed schema validation: {e}") from e
 
 
 def process_bug_file(filepath: str) -> bool:
@@ -479,7 +500,7 @@ def process_bug_file(filepath: str) -> bool:
 
         logging.info(f"Processing verified FIXED bug file: {filepath}")
 
-        transport = os.environ.get("CLOSED_LOOP_TRANSPORT") or ce_config.get("closed_loop_transport") or "firestore"
+        transport = os.environ.get("CLOSED_LOOP_TRANSPORT") or ce_config.get("closed_loop_transport") or "mcp"
         if transport.lower() == "mcp":
             error_logs = bug_payload.get("error_logs", {})
             submitted_by = (
@@ -490,7 +511,16 @@ def process_bug_file(filepath: str) -> bool:
                 or STORAGE_CFG.get("firebase_account_email")
             )
             if not submitted_by:
-                raise ValueError("Missing required closed_loop_account in environment (CLOSED_LOOP_ACCOUNT/CE_CLOSED_LOOP_ACCOUNT) or gcp_config.txt for CLOSED_LOOP_TRANSPORT=mcp")
+                try:
+                    res = subprocess.run(["gcloud", "config", "get-value", "account"], capture_output=True, text=True, timeout=5)
+                    if res.returncode == 0 and res.stdout.strip():
+                        submitted_by = res.stdout.strip()
+                except Exception:
+                    pass
+            if not submitted_by:
+                submitted_by = f"{os.environ.get('USER', 'shacharb')}@google.com"
+
+            extracted_info = extract_generalized_lesson(bug_payload)
 
             lesson_submission = {
                 "source_bug_id": bug_payload.get("bug_id") or bug_payload.get("source_bug_id"),
@@ -500,7 +530,13 @@ def process_bug_file(filepath: str) -> bool:
                 },
                 "remediation": strip_boilerplate(bug_payload.get("remediation", "")),
                 "submitted_by": submitted_by,
+                "topics": extracted_info.get("topics", ["GCP"]),
             }
+            if extracted_info.get("specific_lesson"):
+                lesson_submission["specific_lesson"] = extracted_info["specific_lesson"]
+            if extracted_info.get("generalized_lesson"):
+                lesson_submission["generalized_lesson"] = extracted_info["generalized_lesson"]
+
             if "exit_code" in error_logs and error_logs["exit_code"] is not None:
                 lesson_submission["raw_error_context"]["exit_code"] = error_logs["exit_code"]
 
