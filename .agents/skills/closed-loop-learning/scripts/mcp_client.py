@@ -119,7 +119,7 @@ async def call_mcp_tool_async(
     Prioritizes bin/mcp_session_proxy stdio transport when available for Corp SSO / Uberproxy.
     Falls back to direct streamable-http client.
     """
-    proxy_binary = find_mcp_proxy_binary()
+    proxy_binary = find_mcp_proxy_binary() if "cr.gclb.goog" in url else None
     if proxy_binary:
         try:
             from mcp.client.session import ClientSession
