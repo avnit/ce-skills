@@ -33,35 +33,17 @@ class TestBugToLessonProcessor(unittest.TestCase):
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     # -----------------------------------------------------------------------
-    # 1. Dual-Identity ADC Authentication Tests
+    # 1. MCP Submitter Account Resolution Tests
     # -----------------------------------------------------------------------
     @patch("subprocess.run")
-    def test_dual_identity_credentials_refresh_and_cache(self, mock_run):
-        mock_run.return_value = MagicMock(stdout="mock_oauth_token_string\n", returncode=0)
+    def test_resolve_submitted_by_from_gcloud(self, mock_run):
+        mock_run.return_value = MagicMock(stdout="shacharb@google.com\n", returncode=0)
 
-        creds = processor.GcloudUserCredentials(account="test-user@google.com")
-        self.assertFalse(creds.valid)
-        self.assertEqual(creds.account, "test-user@google.com")
-
-        # Trigger refresh
-        creds.refresh()
-        self.assertTrue(creds.valid)
-        self.assertEqual(creds.token, "mock_oauth_token_string")
-        self.assertIsNotNone(creds.expiry)
-
-        # Ensure gcloud command invoked with correct account
-        mock_run.assert_called_once_with(
-            ["gcloud", "auth", "print-access-token", "--account=test-user@google.com"],
-            capture_output=True, text=True, check=True
-        )
-
-        # Test caching: refresh again within cache window should NOT call subprocess again
-        creds.refresh()
-        self.assertEqual(mock_run.call_count, 1)
-
-        # Simulate expiration
-        creds.expiry = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) - datetime.timedelta(seconds=60)
-        self.assertFalse(creds.valid)
+        with patch.dict(os.environ, {}, clear=False):
+            if "CLOSED_LOOP_ACCOUNT" in os.environ:
+                del os.environ["CLOSED_LOOP_ACCOUNT"]
+            account = processor.resolve_submitted_by()
+            self.assertEqual(account, "shacharb@google.com")
 
     # -----------------------------------------------------------------------
     # 3. Boilerplate Stripping Tests (Iterative / Multi-layered)
