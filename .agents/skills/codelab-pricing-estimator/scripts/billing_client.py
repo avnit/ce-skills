@@ -11,6 +11,7 @@ import pathlib
 import subprocess
 import sys
 
+
 def _setup_ce_config():
     current = pathlib.Path(__file__).resolve().parent
     for parent in current.parents:
@@ -19,6 +20,7 @@ def _setup_ce_config():
             if lib_path not in sys.path:
                 sys.path.insert(0, lib_path)
             return
+
 
 _setup_ce_config()
 import ce_config  # noqa: E402
@@ -46,8 +48,9 @@ STATIC_COMPUTE_RATES = {
 STATIC_DISK_RATES = {
     "pd-standard": 0.040 / 730.0,  # ~$0.04 / GB / month
     "pd-balanced": 0.100 / 730.0,  # ~$0.10 / GB / month
-    "pd-ssd": 0.170 / 730.0,       # ~$0.17 / GB / month
-    "pd-extreme": 0.370 / 730.0,   # ~$0.37 / GB / month
+    "pd-ssd": 0.170 / 730.0,  # ~$0.17 / GB / month
+    "pd-extreme": 0.370 / 730.0,  # ~$0.37 / GB / month
+    "hyperdisk-extreme": 0.500 / 730.0,
 }
 
 STATIC_SQL_RATES = {
@@ -60,41 +63,41 @@ STATIC_SQL_RATES = {
 
 # Fixed hourly rates for Networking & Security resources
 STATIC_NETWORKING_RATES = {
-    "swp_gateway": 0.0800,         # Secure Web Proxy gateway instance
-    "firewall_endpoint": 1.2500,   # Cloud Firewall Plus endpoint
-    "vpn_gateway": 0.0500,         # Cloud VPN gateway tunnel interface hour
-    "nat_gateway": 0.0440,         # Cloud NAT gateway hour
-    "forwarding_rule": 0.0250,     # Load Balancer forwarding rule base rate
+    "swp_gateway": 0.0800,  # Secure Web Proxy gateway instance
+    "firewall_endpoint": 1.2500,  # Cloud Firewall Plus endpoint
+    "vpn_gateway": 0.0500,  # Cloud VPN gateway tunnel interface hour
+    "nat_gateway": 0.0440,  # Cloud NAT gateway hour
+    "forwarding_rule": 0.0250,  # Load Balancer forwarding rule base rate
 }
 
 # Fixed hourly rates for Vertex AI provisioned nodes
 STATIC_VERTEX_RATES = {
-    "index_endpoint": 0.0840,      # Provisioned Vector Search shard / node hour (e2-standard-2 equivalent)
-    "model_endpoint": 0.1900,      # Deployed model dedicated VM fallback (n1-standard-4 equivalent)
+    "index_endpoint": 0.0840,  # Provisioned Vector Search shard / node hour (e2-standard-2 equivalent)
+    "model_endpoint": 0.1900,  # Deployed model dedicated VM fallback (n1-standard-4 equivalent)
 }
 
 # Cloud Run rates per unit per hour
 STATIC_CLOUD_RUN_RATES = {
-    "vcpu_hour": 0.0864,           # ~$0.000024 per vCPU-second
-    "memory_gb_hour": 0.0090,      # ~$0.0000025 per GB-second
+    "vcpu_hour": 0.0864,  # ~$0.000024 per vCPU-second
+    "memory_gb_hour": 0.0090,  # ~$0.0000025 per GB-second
 }
 
 # Catch-all rates for universal provisioned services
 STATIC_UNIVERSAL_RATES = {
-    "redis": 0.0490,               # Memorystore for Redis basic
-    "memcache": 0.0350,            # Memorystore for Memcached node
-    "spanner": 0.9000,             # Cloud Spanner node hour
-    "alloydb": 0.3500,             # AlloyDB instance fallback
-    "dataproc": 0.1000,            # Dataproc cluster fee + base estimate
-    "bigtable": 0.6500,            # Cloud Bigtable node hour
-    "kafka": 0.2500,               # Managed Service for Apache Kafka
-    "tpu": 1.5000,                 # Cloud TPU slice base estimate
-    "composer": 0.4500,            # Cloud Composer environment hour
-    "datafusion": 0.3500,          # Cloud Data Fusion instance hour
-    "apigee": 0.8000,              # Apigee API Management node hour
-    "filestore": 0.2000,           # Filestore instance hour
-    "elasticsearch": 0.3000,       # Elastic Cloud deployment hour
-    "mongo": 0.2500,               # MongoDB Atlas managed instance
+    "redis": 0.0490,  # Memorystore for Redis basic
+    "memcache": 0.0350,  # Memorystore for Memcached node
+    "spanner": 0.9000,  # Cloud Spanner node hour
+    "alloydb": 0.3500,  # AlloyDB instance fallback
+    "dataproc": 0.1000,  # Dataproc cluster fee + base estimate
+    "bigtable": 0.6500,  # Cloud Bigtable node hour
+    "kafka": 0.2500,  # Managed Service for Apache Kafka
+    "tpu": 1.5000,  # Cloud TPU slice base estimate
+    "composer": 0.4500,  # Cloud Composer environment hour
+    "datafusion": 0.3500,  # Cloud Data Fusion instance hour
+    "apigee": 0.8000,  # Apigee API Management node hour
+    "filestore": 0.2000,  # Filestore instance hour
+    "elasticsearch": 0.3000,  # Elastic Cloud deployment hour
+    "mongo": 0.2500,  # MongoDB Atlas managed instance
 }
 
 
@@ -106,8 +109,8 @@ def run_command(cmd_args, timeout=60):
             shell=False,
             capture_output=True,
             text=True,
-            encoding='utf-8',
-            timeout=timeout
+            encoding="utf-8",
+            timeout=timeout,
         )
         return result.returncode == 0, result.stdout, result.stderr
     except subprocess.TimeoutExpired as e:
@@ -130,17 +133,29 @@ def fetch_price_from_bq(service_desc, sku_pattern, region):
       AND '{region}' IN UNNEST(geo_taxonomy.regions)
     LIMIT 1
     """
-    cmd_args = ["bq", "query", "--use_legacy_sql=false", "--max_rows=1", "--format=json", query]
+    cmd_args = [
+        "bq",
+        "query",
+        "--use_legacy_sql=false",
+        "--max_rows=1",
+        "--format=json",
+        query,
+    ]
     success, stdout, _ = run_command(cmd_args, timeout=15)
-    
+
     if success and stdout:
         try:
             results = json.loads(stdout)
-            if results and isinstance(results, list) and len(results) > 0 and 'price' in results[0]:
-                return float(results[0]['price'])
+            if (
+                results
+                and isinstance(results, list)
+                and len(results) > 0
+                and "price" in results[0]
+            ):
+                return float(results[0]["price"])
         except Exception:
             pass
-            
+
     return 0.0
 
 
@@ -148,12 +163,22 @@ def get_compute_price(machine_type, region="us-central1"):
     """Finds the hourly price for a compute instance."""
     if not machine_type:
         machine_type = "e2-medium"
-        
+
+    if machine_type.startswith("custom-"):
+        parts = machine_type.split("-")
+        if len(parts) >= 3:
+            try:
+                vcpu = float(parts[1])
+                ram_mb = float(parts[2])
+                return (vcpu * 0.0316) + ((ram_mb / 1024.0) * 0.0042)
+            except ValueError:
+                pass
+
     family = machine_type.split("-")[0].upper()
     rate = fetch_price_from_bq("Compute Engine", family, region)
     if rate > 0.0:
         return rate
-        
+
     return STATIC_COMPUTE_RATES.get(machine_type, 0.0335)
 
 
@@ -163,13 +188,13 @@ def get_disk_price(disk_type, size_gb, region="us-central1"):
         disk_type = "pd-standard"
     if size_gb <= 0:
         size_gb = 10
-        
+
     resolved_type = "pd-standard"
     for t in STATIC_DISK_RATES.keys():
         if t in disk_type:
             resolved_type = t
             break
-            
+
     rate_per_gb = STATIC_DISK_RATES.get(resolved_type, 0.040 / 730.0)
     return rate_per_gb * float(size_gb)
 
@@ -178,11 +203,11 @@ def get_sql_price(tier, region="us-central1"):
     """Finds the hourly price for a Cloud SQL instance."""
     if not tier:
         tier = "db-f1-micro"
-        
+
     rate = fetch_price_from_bq("Cloud SQL", tier, region)
     if rate > 0.0:
         return rate
-        
+
     return STATIC_SQL_RATES.get(tier, 0.0130)
 
 
@@ -191,7 +216,7 @@ def get_gke_price(node_count, machine_type, region="us-central1", status="RUNNIN
     node_rate = 0.0
     if status in ("RUNNING", "RECONCILING"):
         node_rate = get_compute_price(machine_type, region)
-        
+
     gke_mgmt_fee = 0.10  # Standard $0.10/hour cluster fee
     return (node_rate * float(node_count)) + gke_mgmt_fee
 
@@ -215,7 +240,9 @@ def get_networking_price(resource_subtype, count=1):
     return 0.0
 
 
-def get_vertex_price(resource_subtype, machine_type=None, node_count=1, region="us-central1"):
+def get_vertex_price(
+    resource_subtype, machine_type=None, node_count=1, region="us-central1"
+):
     """Calculates hourly charges for Vertex AI Index Endpoints and Model Endpoints."""
     c = float(max(1, node_count))
     if resource_subtype == "index_endpoint":
@@ -232,9 +259,10 @@ def get_cloud_run_price(min_instances=0, vcpu=1.0, memory_gb=0.5):
     """Calculates continuous hourly charges for Cloud Run services with min-instances > 0 or always-allocated CPU."""
     if min_instances <= 0:
         return 0.0
-        
-    hourly_per_instance = (float(vcpu) * STATIC_CLOUD_RUN_RATES["vcpu_hour"]) + \
-                          (float(memory_gb) * STATIC_CLOUD_RUN_RATES["memory_gb_hour"])
+
+    hourly_per_instance = (float(vcpu) * STATIC_CLOUD_RUN_RATES["vcpu_hour"]) + (
+        float(memory_gb) * STATIC_CLOUD_RUN_RATES["memory_gb_hour"]
+    )
     return hourly_per_instance * float(min_instances)
 
 
