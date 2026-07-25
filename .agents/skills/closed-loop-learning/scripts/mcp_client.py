@@ -135,6 +135,7 @@ async def call_mcp_tool_async(
         if "corp-mcp-proxy" in proxy_binary:
             if target_server.endswith("/mcp"):
                 target_server = target_server[:-4]
+            target_server = target_server.replace("https://", "").replace("http://", "").rstrip("/")
             proxy_args = [f"--mcp_server={target_server}", "--use_corp_sso=true"]
         else:
             proxy_args = [f"--mcp_server={target_server}"]
