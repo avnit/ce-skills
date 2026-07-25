@@ -10,7 +10,7 @@ script_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".age
 if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
 
-import get_release_notes
+import get_release_notes  # noqa: E402
 
 
 class TestGcpReleaseNotes(unittest.TestCase):
