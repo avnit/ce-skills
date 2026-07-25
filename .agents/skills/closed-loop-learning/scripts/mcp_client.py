@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 import ce_config
 
+DEFAULT_MCP_SERVER_URL = "https://closed-loop-mcp-529861882743.us-west1.run.app/mcp"
 
 def find_mcp_proxy_binary() -> Optional[str]:
     """Finds the local mcp_session_proxy wrapper script if available on workstation."""
@@ -18,9 +19,17 @@ def find_mcp_proxy_binary() -> Optional[str]:
         return env_path
 
     repo_root = pathlib.Path(__file__).resolve().parent.parent.parent
-    candidate = repo_root / "bin" / "mcp_session_proxy"
-    if candidate.is_file() and os.access(str(candidate), os.X_OK):
-        return str(candidate)
+    for candidate_name in ["mcp_session_proxy", "mcp_session_proxy_bin"]:
+        candidate = repo_root / "bin" / candidate_name
+        if candidate.is_file() and os.access(str(candidate), os.X_OK):
+            # Test if candidate actually executes without runfiles/environment error
+            try:
+                import subprocess
+                res = subprocess.run([str(candidate), "--help"], capture_output=True, timeout=1)
+                if res.returncode == 0:
+                    return str(candidate)
+            except Exception:
+                pass
 
     return None
 
@@ -129,8 +138,8 @@ async def call_mcp_tool_async(
                     await session.initialize()
                     res = await session.call_tool(tool_name, arguments=arguments)
                     return _parse_mcp_response(res)
-        except Exception as e:
-            logging.warning(f"MCP session proxy stdio call failed: {e}. Falling back to streamable HTTP.")
+        except BaseException as e:
+            logging.warning(f"MCP session proxy stdio call failed ({e}). Falling back to streamable HTTP.")
 
     try:
         from mcp.client.session import ClientSession
@@ -160,9 +169,9 @@ def call_mcp_tool(
 ) -> Any:
     """Synchronous wrapper to invoke a tool on a remote MCP server."""
     if not url:
-        url = ce_config.get("mcp_server_url") or os.environ.get("CE_MCP_SERVER_URL")
-    if not url:
-        raise ValueError(
-            "Missing required mcp_server_url in environment or gcp_config.txt for CLOSED_LOOP_TRANSPORT=mcp"
+        url = (
+            os.environ.get("CE_MCP_SERVER_URL")
+            or ce_config.get("mcp_server_url")
+            or DEFAULT_MCP_SERVER_URL
         )
     return asyncio.run(call_mcp_tool_async(tool_name, arguments, url))

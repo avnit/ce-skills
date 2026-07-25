@@ -55,6 +55,7 @@ Output ONLY valid JSON."""
         )
         if res.returncode == 0 and res.stdout.strip():
             text_resp = res.stdout.strip()
+            logging.info(f"Subagent Raw Response Trace:\n{text_resp}")
             if text_resp.startswith("```json"):
                 text_resp = text_resp[7:]
             if text_resp.endswith("```"):

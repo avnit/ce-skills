@@ -42,7 +42,7 @@ from mcp_publisher import (  # noqa: E402
 )
 
 
-def process_bug_file(filepath: str) -> bool:
+def process_bug_file(filepath: str, delete_on_success: bool = False) -> bool:
     """
     Processes a single bug file into an MCP lesson submission.
     Returns True if successful or cleanly skipped, False on failure.
@@ -53,6 +53,9 @@ def process_bug_file(filepath: str) -> bool:
             bug_payload = json.load(f)
 
         if bug_payload.get("status") == "PROCESSED":
+            if delete_on_success:
+                os.remove(filepath)
+                logging.info(f"Deleted already PROCESSED bug file: {filepath}")
             return True
 
         if bug_payload.get("status") != "FIXED":
@@ -61,15 +64,15 @@ def process_bug_file(filepath: str) -> bool:
 
         logging.info(f"Processing verified FIXED bug file: {filepath}")
 
-        error_logs = bug_payload.get("error_logs", {})
+        raw_ctx = bug_payload.get("raw_error_context") or bug_payload.get("error_logs", {})
         submitted_by = resolve_submitted_by()
         extracted_info = extract_generalized_lesson(bug_payload)
 
         lesson_submission = {
             "source_bug_id": bug_payload.get("bug_id") or bug_payload.get("source_bug_id"),
             "raw_error_context": {
-                "failed_command": error_logs.get("failed_command", ""),
-                "stderr_output": error_logs.get("stderr_output") or error_logs.get("error_message", ""),
+                "failed_command": raw_ctx.get("failed_command", ""),
+                "stderr_output": raw_ctx.get("stderr_output") or raw_ctx.get("error_message", ""),
             },
             "remediation": strip_boilerplate(bug_payload.get("remediation", "")),
             "submitted_by": submitted_by,
@@ -80,8 +83,8 @@ def process_bug_file(filepath: str) -> bool:
         if extracted_info.get("generalized_lesson"):
             lesson_submission["generalized_lesson"] = extracted_info["generalized_lesson"]
 
-        if "exit_code" in error_logs and error_logs["exit_code"] is not None:
-            lesson_submission["raw_error_context"]["exit_code"] = error_logs["exit_code"]
+        if "exit_code" in raw_ctx and raw_ctx["exit_code"] is not None:
+            lesson_submission["raw_error_context"]["exit_code"] = raw_ctx["exit_code"]
 
         origin_dict = {}
         if bug_payload.get("lab_name") is not None:
@@ -111,11 +114,14 @@ def process_bug_file(filepath: str) -> bool:
                 raise
 
         # Atomic transition: reached ONLY if submit_to_mcp succeeded without raising
-        bug_payload["status"] = "PROCESSED"
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(bug_payload, f, indent=2)
-
-        logging.info(f"Successfully processed and updated status for {filepath}")
+        if delete_on_success:
+            os.remove(filepath)
+            logging.info(f"Successfully processed and deleted bug file: {filepath}")
+        else:
+            bug_payload["status"] = "PROCESSED"
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(bug_payload, f, indent=2)
+            logging.info(f"Successfully processed and updated status for {filepath}")
         return True
 
     except Exception as e:
@@ -126,6 +132,7 @@ def process_bug_file(filepath: str) -> bool:
 def main():
     parser = argparse.ArgumentParser(description="Process bugs into lessons learned via submit_lesson MCP tool.")
     parser.add_argument("--scan-dir", type=str, required=True, help="Directory to scan for bug JSON files.")
+    parser.add_argument("--delete-on-success", action="store_true", help="Delete bug JSON file after successful MCP submission.")
     args = parser.parse_args()
 
     search_pattern = os.path.join(args.scan_dir, "bug_*.json")
@@ -136,7 +143,7 @@ def main():
         return
 
     for bug_file in bug_files:
-        process_bug_file(bug_file)
+        process_bug_file(bug_file, delete_on_success=args.delete_on_success)
 
 
 if __name__ == "__main__":
