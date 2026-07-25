@@ -32,7 +32,7 @@ def render_html_email(raw_data, account_name="Cloud Blockers Report"):
       lines = raw_data.strip().split("\n")
       # Check if it's a markdown table
       for line in lines:
-        if line.startswith("|") and not line.startswith("| #") and not "---" in line:
+        if line.startswith("|") and not line.startswith("| #") and "---" not in line:
           parts = [p.strip() for p in line.split("|")[1:-1]]
           if len(parts) >= 10:
             rows.append(parts)
@@ -128,7 +128,7 @@ def render_html_email(raw_data, account_name="Cloud Blockers Report"):
     sev_badge_cls = f"badge-{severity.lower()}" if severity else "badge-s3"
     triage_badge_cls = (
         "badge-triaged"
-        if "Triaged" in triage_status and not "Pending" in triage_status
+        if "Triaged" in triage_status and "Pending" not in triage_status
         else "badge-pending"
     )
 
