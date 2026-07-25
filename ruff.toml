@@ -1,0 +1,6 @@
+# Pin the lint rule set so `uvx ruff` version drift cannot newly-fail
+# pre-existing code. This restores ruff's historical default select (the set
+# the repo was green under); adopting newer rules (UP*, BLE*, I*) is a separate,
+# deliberate change with a one-time `ruff check --fix` pass.
+[lint]
+select = ["E4", "E7", "E9", "F"]
