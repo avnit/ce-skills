@@ -10,7 +10,7 @@
     "python3",
     ".agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py",
     "--scan-dir",
-    "bugs",
+    "{{bug_scan_dir}}",
     "--delete-on-success"
   ],
   "restart_policy": "always",

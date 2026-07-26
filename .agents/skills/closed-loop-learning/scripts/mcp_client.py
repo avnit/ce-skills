@@ -176,7 +176,10 @@ async def call_mcp_tool_async(
     except Exception as e:
         if "CLOSED_LOOP_TRANSPORT=mcp requires extra deps" in str(e):
             raise
-        raise RuntimeError(f"MCP Server communication error: {e}") from e
+        real_err = e
+        while hasattr(real_err, "exceptions") and real_err.exceptions:
+            real_err = real_err.exceptions[0]
+        raise RuntimeError(f"MCP Server communication error: {real_err}") from e
 
 
 def call_mcp_tool(

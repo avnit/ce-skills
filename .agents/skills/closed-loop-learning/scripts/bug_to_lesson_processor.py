@@ -106,13 +106,16 @@ def process_bug_file(filepath: str, delete_on_success: bool = False) -> bool:
             if possible_dups:
                 logging.info(f"Advisory: possible duplicates found: {possible_dups}")
         except Exception as e:
-            err_str = str(e)
+            real_err = e
+            while hasattr(real_err, "exceptions") and real_err.exceptions:
+                real_err = real_err.exceptions[0]
+            err_str = str(real_err) or str(e)
             if "already exists with status" in err_str or "Conflict" in err_str:
                 logging.warning(f"Terminal conflict error for {filepath}: {err_str}. Transitioning status to PROCESSED to stop retry loop.")
             else:
                 raise
 
-        # Atomic transition: reached ONLY if submit_to_mcp succeeded without raising
+        # Atomic transition: reached ONLY if submit_to_mcp succeeded without raising or conflict
         if delete_on_success:
             os.remove(filepath)
             logging.info(f"Successfully processed and deleted bug file: {filepath}")
@@ -124,7 +127,11 @@ def process_bug_file(filepath: str, delete_on_success: bool = False) -> bool:
         return True
 
     except Exception as e:
-        logging.error(f"Processing aborted for {filepath} due to error: {e}. File status preserved.")
+        real_err = e
+        while hasattr(real_err, "exceptions") and real_err.exceptions:
+            real_err = real_err.exceptions[0]
+        err_str = str(real_err) or str(e)
+        logging.error(f"Processing aborted for {filepath} due to error: {err_str}. File status preserved.")
         return False
 
 
