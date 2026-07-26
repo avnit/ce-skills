@@ -56,9 +56,9 @@ def validate_submission(submission_payload: Dict[str, Any]) -> None:
 def resolve_submitted_by() -> str:
     """Resolves active submitter account email."""
     account = (
-        ce_config.get_secret("closed_loop_account")
-        or os.environ.get("CLOSED_LOOP_ACCOUNT")
+        os.environ.get("CLOSED_LOOP_ACCOUNT")
         or os.environ.get("CE_CLOSED_LOOP_ACCOUNT")
+        or ce_config.get_secret("closed_loop_account")
     )
     if not account:
         try:

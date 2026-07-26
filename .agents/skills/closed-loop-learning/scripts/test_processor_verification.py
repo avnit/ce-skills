@@ -42,8 +42,9 @@ class TestBugToLessonProcessor(unittest.TestCase):
         mock_run.return_value = MagicMock(stdout="test-developer@google.com\n", returncode=0)
 
         with patch.dict(os.environ, {}, clear=False):
-            if "CLOSED_LOOP_ACCOUNT" in os.environ:
-                del os.environ["CLOSED_LOOP_ACCOUNT"]
+            for k in ["CLOSED_LOOP_ACCOUNT", "CE_CLOSED_LOOP_ACCOUNT", "CLOSED_LOOP_CREDENTIAL_ACCOUNT"]:
+                if k in os.environ:
+                    del os.environ[k]
             account = processor.resolve_submitted_by()
             self.assertEqual(account, "test-developer@google.com")
 
