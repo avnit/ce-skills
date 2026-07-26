@@ -1,7 +1,7 @@
 import importlib.util
 import subprocess
-from pathlib import Path
 import sys
+from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 

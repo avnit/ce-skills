@@ -1,6 +1,6 @@
 import pathlib
-import unittest
 import re
+import unittest
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO / ".agents" / "skills"

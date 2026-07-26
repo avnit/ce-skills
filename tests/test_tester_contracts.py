@@ -4,8 +4,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch, MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 REPO = Path(__file__).resolve().parents[1]
 TESTER_PATH = REPO / ".agents" / "skills" / "codelab-validation" / "scripts" / "tester.py"
