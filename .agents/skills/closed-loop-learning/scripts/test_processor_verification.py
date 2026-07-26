@@ -36,7 +36,7 @@ class TestBugToLessonProcessor(unittest.TestCase):
     # -----------------------------------------------------------------------
     # 1. MCP Submitter Account Resolution Tests
     # -----------------------------------------------------------------------
-    @patch("mcp_publisher.ce_config.get_secret", return_value=None)
+    @patch("ce_config.get_secret", return_value=None)
     @patch("subprocess.run")
     def test_resolve_submitted_by_from_gcloud(self, mock_run, mock_get_secret):
         mock_run.return_value = MagicMock(stdout="test-developer@google.com\n", returncode=0)
