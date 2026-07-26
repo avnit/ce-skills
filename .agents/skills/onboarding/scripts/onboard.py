@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 
+
 def _setup_ce_config():
     current = pathlib.Path(__file__).resolve().parent
     for parent in current.parents:
@@ -206,6 +207,7 @@ def main():
     parser.add_argument("--piper-workspace", default=ce_config.get("piper_workspace", "ce-skills"), help="Preferred Piper/CitC workspace name for CompanyDoc publishing")
     parser.add_argument("--waf-mcp-cwd", default=ce_config.get("waf_mcp_cwd"), help="Local google3 workspace CWD directory for WAF MCP Blaze commands")
     parser.add_argument("--bug-scan-dir", default=ce_config.get("bug_scan_dir") or os.path.expanduser("~/.gemini/jetski/bugs"), help="Absolute path to directory scanning local bug/FIX inbox JSON files")
+    parser.add_argument("--mcp-server-url", default=ce_config.get("mcp_server_url") or os.environ.get("CE_MCP_SERVER_URL", "https://closed-loop-mcp-529861882743.cr.gclb.goog/mcp"), help="Closed Loop MCP Server Endpoint URL")
     
     args = parser.parse_args()
     
@@ -267,6 +269,7 @@ def main():
         f.write(f"piper_workspace={args.piper_workspace}\n")
         f.write(f"waf_mcp_cwd={args.waf_mcp_cwd or ''}\n")
         f.write(f"bug_scan_dir={args.bug_scan_dir or ''}\n")
+        f.write(f"mcp_server_url={args.mcp_server_url or ''}\n")
         f.write("USE_GKE_GCLOUD_AUTH_PLUGIN=True\n")
     print(f"✅ Generated credentials config: {gcp_config_path}")
 
