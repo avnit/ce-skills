@@ -18,6 +18,8 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import bug_to_lesson_processor as processor
+import lesson_extractor
+import tag_scrubber
 
 
 class TestBugToLessonProcessor(unittest.TestCase):
@@ -34,8 +36,9 @@ class TestBugToLessonProcessor(unittest.TestCase):
     # -----------------------------------------------------------------------
     # 1. MCP Submitter Account Resolution Tests
     # -----------------------------------------------------------------------
+    @patch("ce_config.get_secret", return_value=None)
     @patch("subprocess.run")
-    def test_resolve_submitted_by_from_gcloud(self, mock_run):
+    def test_resolve_submitted_by_from_gcloud(self, mock_run, mock_get_secret):
         mock_run.return_value = MagicMock(stdout="test-developer@google.com\n", returncode=0)
 
         with patch.dict(os.environ, {}, clear=False):
@@ -68,17 +71,17 @@ class TestBugToLessonProcessor(unittest.TestCase):
     def test_enforce_command_scaffolding(self):
         # Case 1: No command sample present, failed_cmd provided without backticks
         raw = "Verified remediation: Enable the Cloud SQL Admin API."
-        res = processor.enforce_command_scaffolding(raw, "gcloud services enable sqladmin.googleapis.com")
+        res = tag_scrubber.enforce_command_scaffolding(raw, "gcloud services enable sqladmin.googleapis.com")
         self.assertIn("Enable the Cloud SQL Admin API.", res)
         self.assertIn("Command sample:\n`gcloud services enable sqladmin.googleapis.com`", res)
 
         # Case 2: Command sample already present
         raw_with_sample = "Use IAM binding.\n\nCommand sample:\n`gcloud projects add-iam-policy-binding ...`"
-        res2 = processor.enforce_command_scaffolding(raw_with_sample, "some other cmd")
+        res2 = tag_scrubber.enforce_command_scaffolding(raw_with_sample, "some other cmd")
         self.assertEqual(res2, raw_with_sample)
 
         # Case 3: failed_cmd provided with messy existing backticks/whitespace
-        res3 = processor.enforce_command_scaffolding("Fix permissions.", "  `gcloud auth login`  ")
+        res3 = tag_scrubber.enforce_command_scaffolding("Fix permissions.", "  `gcloud auth login`  ")
         self.assertIn("Command sample:\n`gcloud auth login`", res3)
         self.assertNotIn("``", res3)
 
@@ -88,19 +91,19 @@ class TestBugToLessonProcessor(unittest.TestCase):
     def test_clean_topics_filtering_and_word_boundary_fallback(self):
         # Case 1: LLM returns mixture of valid product tags and banned process tags
         raw_topics = ["Validation", "GCS", "Remediation", "CloudStorage", "Bug", "Error", "gcs"]
-        res = processor.clean_topics(raw_topics, "Failed running gcs copy")
+        res = tag_scrubber.clean_topics(raw_topics, "Failed running gcs copy")
         self.assertEqual(res, ["GCS", "CloudStorage"])
 
         # Case 2: Conditional fallback triggered, word boundary matching rejects substring false positives
         # W2 had a bug where 'running' matched 'run'. Here we test that 'running' does NOT match 'run'.
         raw_banned_only = ["Validation", "ClosedLoop"]
-        res2 = processor.clean_topics(raw_banned_only, "Error while running network sync in VPC subnets")
+        res2 = tag_scrubber.clean_topics(raw_banned_only, "Error while running network sync in VPC subnets")
         self.assertIn("VPC", res2)
         self.assertIn("Networking", res2)
         self.assertNotIn("CloudRun", res2)  # Proves word-boundary fix worked!
 
         # Case 3: Empty list and no domain keyword matches -> default fallback
-        res3 = processor.clean_topics([], "Unknown generic system alert")
+        res3 = tag_scrubber.clean_topics([], "Unknown generic system alert")
         self.assertEqual(res3, ["GCP", "gcloud"])
 
     # -----------------------------------------------------------------------
@@ -170,7 +173,7 @@ class TestBugToLessonProcessor(unittest.TestCase):
         mock_run.return_value = MagicMock(stdout=json.dumps(mock_payload), returncode=0)
 
         with patch.dict(os.environ, {"ANTIGRAVITY_LS_ADDRESS": "mock_address"}):
-            res = processor.try_agentapi_extraction(
+            res = lesson_extractor.try_agentapi_extraction(
                 failed_cmd="kubectl get pods",
                 error_msg="Unauthorized",
                 remediation="Verified remediation: Impersonate service account."
