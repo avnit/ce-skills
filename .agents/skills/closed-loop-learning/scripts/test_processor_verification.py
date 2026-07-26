@@ -37,17 +37,17 @@ class TestBugToLessonProcessor(unittest.TestCase):
     # 1. MCP Submitter Account Resolution Tests
     # -----------------------------------------------------------------------
     @patch("mcp_publisher.ce_config.get_secret", return_value=None)
+    @patch("ce_config.get_secret", return_value=None)
     @patch("subprocess.run")
-    def test_resolve_submitted_by_from_gcloud(self, mock_run, mock_get_secret):
+    def test_resolve_submitted_by_from_gcloud(self, mock_run, mock_get_secret_ce, mock_get_secret_mcp):
         mock_run.return_value = MagicMock(stdout="test-developer@google.com\n", returncode=0)
 
         with patch.dict(os.environ, {}, clear=False):
             for k in ["CLOSED_LOOP_ACCOUNT", "CE_CLOSED_LOOP_ACCOUNT", "CLOSED_LOOP_CREDENTIAL_ACCOUNT"]:
                 if k in os.environ:
                     del os.environ[k]
-            with patch("ce_config._cached_config", {}):
-                account = processor.resolve_submitted_by()
-                self.assertEqual(account, "test-developer@google.com")
+            account = processor.resolve_submitted_by()
+            self.assertEqual(account, "test-developer@google.com")
 
     # -----------------------------------------------------------------------
     # 3. Boilerplate Stripping Tests (Iterative / Multi-layered)
