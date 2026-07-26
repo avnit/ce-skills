@@ -1,12 +1,13 @@
+import getpass
 import importlib.util
-from pathlib import Path
 import os
-import pytest
+import subprocess
 import sys
 import tempfile
-import getpass
-import subprocess
+from pathlib import Path
 from unittest.mock import MagicMock
+
+import pytest
 
 # Mock vertexai before executing imports
 sys.modules["vertexai"] = MagicMock()
@@ -23,32 +24,14 @@ def _load(module_path):
     return module
 
 def test_closed_loop_learning_no_shacharb_fallbacks(monkeypatch):
-    """Verifies bug_to_lesson_processor.py uses env overrides and does not fallback to shacharb/hyperstack-dev."""
-    bug_processor = _load(REPO / ".agents" / "skills" / "closed-loop-learning" / "scripts" / "bug_to_lesson_processor.py")
+    """Verifies closed-loop learning scripts use env overrides for account resolution."""
+    publisher = _load(REPO / ".agents" / "skills" / "closed-loop-learning" / "scripts" / "mcp_publisher.py")
 
-    # Clear env vars
-    monkeypatch.delenv("CLOSED_LOOP_CREDENTIAL_ACCOUNT", raising=False)
-    monkeypatch.delenv("CLOSED_LOOP_VERTEX_PROJECT", raising=False)
+    monkeypatch.delenv("CLOSED_LOOP_ACCOUNT", raising=False)
+    monkeypatch.delenv("CE_CLOSED_LOOP_ACCOUNT", raising=False)
 
-    # Empty config
-    monkeypatch.setattr(bug_processor, "STORAGE_CFG", {})
-    monkeypatch.setattr(bug_processor, "VERTEX_CFG", {})
-
-    # Instantiating GcloudUserCredentials with no config/env should raise ValueError
-    with pytest.raises(ValueError) as excinfo:
-        bug_processor.GcloudUserCredentials()
-    assert "No credentials account configured" in str(excinfo.value)
-
-    # Injected env account should be respected
-    monkeypatch.setenv("CLOSED_LOOP_CREDENTIAL_ACCOUNT", "test-user@google.com")
-    creds = bug_processor.GcloudUserCredentials()
-    assert creds.account == "test-user@google.com"
-
-    # Injected CONFIG account should be respected if env is missing
-    monkeypatch.delenv("CLOSED_LOOP_CREDENTIAL_ACCOUNT", raising=False)
-    monkeypatch.setattr(bug_processor, "STORAGE_CFG", {"account": "config-user@google.com"})
-    creds = bug_processor.GcloudUserCredentials()
-    assert creds.account == "config-user@google.com"
+    monkeypatch.setenv("CLOSED_LOOP_ACCOUNT", "test-user@google.com")
+    assert publisher.resolve_submitted_by() == "test-user@google.com"
 
 def test_pricing_estimator_configurable_table_and_tempfile(monkeypatch):
     """Verifies pricing estimator uses env/tempfile and does not fallback to shacharb."""

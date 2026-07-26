@@ -15,8 +15,8 @@ if str(LIB_DIR) not in sys.path:
 if str(SKILLS_DIR) not in sys.path:
     sys.path.insert(0, str(SKILLS_DIR))
 
-from tag_scrubber import strip_boilerplate  # noqa: E402
 from mcp_publisher import resolve_submitted_by  # noqa: E402
+from tag_scrubber import strip_boilerplate  # noqa: E402
 
 
 def test_strip_boilerplate_clean_prefixes():

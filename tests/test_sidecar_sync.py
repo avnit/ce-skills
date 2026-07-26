@@ -1,7 +1,7 @@
 import importlib.util
-from pathlib import Path
-import os
 import json
+import os
+from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 

@@ -1,6 +1,7 @@
 import pathlib
-import pytest
 import sys
+
+import pytest
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 LIB_DIR = REPO / ".agents" / "lib"
@@ -58,8 +59,8 @@ def test_config_loader_resolution(tmp_path, monkeypatch):
 
 def test_onboarding_writes_all_documented_keys(tmp_path, monkeypatch):
     """Verifies that onboard.py writes all 15 configuration keys (including persona) to gcp_config.txt."""
-    import importlib.util
     import getpass
+    import importlib.util
     import subprocess
     
     # Load onboard.py dynamically

@@ -10,13 +10,12 @@ Verifies all 5 enhancements rigorously:
 5. Atomic Error Handling failure preservation and success transitions.
 """
 
-import datetime
 import json
 import os
 import shutil
 import tempfile
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import bug_to_lesson_processor as processor
 
@@ -37,13 +36,13 @@ class TestBugToLessonProcessor(unittest.TestCase):
     # -----------------------------------------------------------------------
     @patch("subprocess.run")
     def test_resolve_submitted_by_from_gcloud(self, mock_run):
-        mock_run.return_value = MagicMock(stdout="shacharb@google.com\n", returncode=0)
+        mock_run.return_value = MagicMock(stdout="test-developer@google.com\n", returncode=0)
 
         with patch.dict(os.environ, {}, clear=False):
             if "CLOSED_LOOP_ACCOUNT" in os.environ:
                 del os.environ["CLOSED_LOOP_ACCOUNT"]
             account = processor.resolve_submitted_by()
-            self.assertEqual(account, "shacharb@google.com")
+            self.assertEqual(account, "test-developer@google.com")
 
     # -----------------------------------------------------------------------
     # 3. Boilerplate Stripping Tests (Iterative / Multi-layered)

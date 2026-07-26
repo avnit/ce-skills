@@ -7,15 +7,13 @@ Validates submission payloads against Contract v1 schema.
 """
 
 import json
-import logging
 import os
 import pathlib
 import subprocess
-from typing import Dict, Any
+from typing import Any, Dict
 
 import ce_config
 import mcp_client
-from tag_scrubber import strip_boilerplate
 
 
 def validate_submission(submission_payload: Dict[str, Any]) -> None:
@@ -69,7 +67,8 @@ def resolve_submitted_by() -> str:
                 account = res.stdout.strip()
         except Exception:
             pass
-    return account or f"{os.environ.get('USER', 'shacharb')}@google.com"
+    user = os.environ.get("USER", "agent")
+    return account or f"{user}@google.com"
 
 
 def submit_to_mcp(submission_payload: Dict[str, Any]) -> Dict[str, Any]:

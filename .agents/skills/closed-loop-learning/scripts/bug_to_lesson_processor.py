@@ -13,10 +13,12 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Dict, Any
+
 
 def _setup_ce_config():
     current = pathlib.Path(__file__).resolve().parent
+    if str(current) not in sys.path:
+        sys.path.insert(0, str(current))
     for parent in current.parents:
         if (parent / ".agents").is_dir():
             lib_path = str(parent / ".agents" / "lib")
@@ -26,19 +28,16 @@ def _setup_ce_config():
 
 _setup_ce_config()
 
-from tag_scrubber import (  # noqa: E402
-    strip_boilerplate,
-    enforce_command_scaffolding,
-    clean_topics,
-)
 from lesson_extractor import (  # noqa: E402
-    try_agentapi_extraction,
     extract_generalized_lesson,
 )
 from mcp_publisher import (  # noqa: E402
-    validate_submission,
     resolve_submitted_by,
     submit_to_mcp,
+    validate_submission,
+)
+from tag_scrubber import (  # noqa: E402
+    strip_boilerplate,
 )
 
 

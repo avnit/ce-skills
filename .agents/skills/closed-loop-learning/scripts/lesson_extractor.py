@@ -11,9 +11,9 @@ import logging
 import os
 import shutil
 import subprocess
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-from tag_scrubber import strip_boilerplate, enforce_command_scaffolding, clean_topics
+from tag_scrubber import clean_topics, enforce_command_scaffolding, strip_boilerplate
 
 
 def try_agentapi_extraction(failed_cmd: str, error_msg: str, remediation: str) -> Optional[Dict[str, Any]]:
@@ -24,7 +24,7 @@ def try_agentapi_extraction(failed_cmd: str, error_msg: str, remediation: str) -
     if not os.environ.get("ANTIGRAVITY_LS_ADDRESS"):
         return None
 
-    agentapi_cmd = shutil.which("agentapi") or "/usr/local/google/home/shacharb/.gemini/jetski/bin/agentapi"
+    agentapi_cmd = shutil.which("agentapi") or os.path.expanduser("~/.gemini/jetski/bin/agentapi")
     if not os.path.exists(agentapi_cmd) and not shutil.which("agentapi"):
         return None
 

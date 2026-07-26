@@ -11,12 +11,12 @@ Covers:
 import json
 import os
 import shutil
+import sys
 import tempfile
 import unittest
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
-import sys
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = REPO_ROOT / ".agents" / "skills" / "closed-loop-learning" / "scripts"
 if str(SKILLS_DIR) not in sys.path:

@@ -9,7 +9,7 @@ Provides:
 """
 
 import re
-from typing import List, Any
+from typing import Any, List
 
 BANNED_PROCESS_TAGS = {
     "validation", "remediation", "closedloop", "bug", "error",

@@ -1,8 +1,8 @@
 import importlib.util
+import json
+import os
 import urllib.request
 from pathlib import Path
-import os
-import json
 
 REPO = Path(__file__).resolve().parents[1]
 

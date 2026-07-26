@@ -42,6 +42,7 @@ def get_mcp_auth_headers(url: str) -> Dict[str, str]:
     """Generates OIDC ID token authorization headers for the target MCP server URL."""
     try:
         from urllib.parse import urlparse
+
         from google.auth.transport.requests import Request as AuthRequest
         from google.oauth2 import id_token
 
@@ -123,7 +124,7 @@ async def call_mcp_tool_async(
     if proxy_binary:
         try:
             from mcp.client.session import ClientSession
-            from mcp.client.stdio import stdio_client, StdioServerParameters
+            from mcp.client.stdio import StdioServerParameters, stdio_client
         except (ImportError, ModuleNotFoundError) as e:
             raise RuntimeError(
                 "CLOSED_LOOP_TRANSPORT=mcp requires extra deps: pip3 install -r <repo>/requirements.txt "
