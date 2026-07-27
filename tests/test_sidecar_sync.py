@@ -21,7 +21,7 @@ def test_sync_sidecars_resolves_relative_script_and_placeholders(tmp_path, monke
     agents_dir.mkdir()
     
     # 1. Mock sidecar template 1
-    sc1_dir = agents_dir / "sample-listener"
+    sc1_dir = agents_dir / "closed-loop-listener"
     sc1_dir.mkdir()
     sc1_config = {
         "builtin": "schedule",
@@ -58,7 +58,7 @@ def test_sync_sidecars_resolves_relative_script_and_placeholders(tmp_path, monke
     
     sync_sidecars.main()
     
-    sc1_dest = dest_root / "sample-listener" / "sidecar.json"
+    sc1_dest = dest_root / "closed-loop-listener" / "sidecar.json"
     assert sc1_dest.exists()
     with open(sc1_dest, "r") as f:
         sc1_data = json.load(f)

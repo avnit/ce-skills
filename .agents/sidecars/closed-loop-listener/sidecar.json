@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "builtin": "schedule",
+  "args": [
+    "*/1 * * * *",
+    "uv",
+    "run",
+    "--with-requirements",
+    "requirements.txt",
+    "python3",
+    ".agents/skills/closed-loop-learning/scripts/bug_to_lesson_processor.py",
+    "--scan-dir",
+    "{{bug_scan_dir}}",
+    "--delete-on-success"
+  ],
+  "restart_policy": "always",
+  "description": "Scans the centralized bug inbox every 1 minute for verified FIXED bugs and ingests their problem-solution pairs into Firestore RAG memory via submit_lesson MCP tool."
+}
