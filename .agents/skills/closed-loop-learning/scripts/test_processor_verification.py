@@ -39,17 +39,18 @@ class TestBugToLessonProcessor(unittest.TestCase):
     # -----------------------------------------------------------------------
     @patch("ce_config.get_secret", return_value=None)
     @patch("mcp_publisher.ce_config.get_secret", return_value=None)
+    @patch("subprocess.run")
     @patch("mcp_publisher.subprocess.run")
-    def test_resolve_submitted_by_from_gcloud(self, mock_run, mock_mcp_sec, mock_ce_sec):
-        mock_run.return_value = MagicMock(stdout="test-developer@google.com\n", returncode=0)
+    def test_resolve_submitted_by_from_gcloud(self, mock_mcp_run, mock_sub_run, mock_mcp_sec, mock_ce_sec):
+        mock_mcp_run.return_value = MagicMock(stdout="test-developer@google.com\n", returncode=0)
+        mock_sub_run.return_value = MagicMock(stdout="test-developer@google.com\n", returncode=0)
 
-        with patch.dict(os.environ, {}, clear=False):
-            for k in ["CLOSED_LOOP_ACCOUNT", "CE_CLOSED_LOOP_ACCOUNT", "CLOSED_LOOP_CREDENTIAL_ACCOUNT"]:
-                if k in os.environ:
-                    del os.environ[k]
+        with patch.dict(os.environ, {"USER": "agent"}, clear=True):
             with patch("ce_config.load_config", return_value={}):
-                account = mcp_publisher.resolve_submitted_by()
-                self.assertEqual(account, "test-developer@google.com")
+                with patch("ce_config.get_secret", return_value=None):
+                    with patch("mcp_publisher.ce_config.get_secret", return_value=None):
+                        account = mcp_publisher.resolve_submitted_by()
+                        self.assertEqual(account, "test-developer@google.com")
 
     # -----------------------------------------------------------------------
     # 3. Boilerplate Stripping Tests (Iterative / Multi-layered)
