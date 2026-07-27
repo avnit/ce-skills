@@ -11,7 +11,14 @@ Required parameters from the user:
 
 Steering Workflow:
 
+0. **Phase 0: Pre-Flight Authentication & ADC Verification**
+   - Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
+   - Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
+   - If active account matches target environment, log active identity and proceed automatically.
+   - If an account switch or user decision is required, invoke the `ask_question` tool modal to let the user select or confirm the active account.
+
 1. **Phase 1: Intake & Verification**
+
    - Confirm that the source parameter is provided.
    - If the source is a URL, the workflow will download and extract the relevant commands automatically.
    - Initialize/update the `task.md` table inside your conversation's brain directory.

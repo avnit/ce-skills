@@ -8,7 +8,15 @@ This workflow guides you through generating a premium, Google Cloud-styled archi
 
 ## Operational Workflow
 
+### Phase 0: Pre-Flight Authentication & ADC Verification
+
+1. Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
+2. Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
+3. If active account matches target environment, log active identity and proceed automatically.
+4. If an account switch or user decision is required, invoke the `ask_question` tool modal to let the user select or confirm the active account.
+
 ### Phase 1: Source Material Selection & Ingestion
+
 
 1.  Invoke the `ask_question` tool to ask the user for their intake preference:
     - **Option A (Workspace File)**: Supply the path to an existing technical file (e.g., `meeting/customer_a/design_blueprint.md` or a Terraform `.tf` file).
