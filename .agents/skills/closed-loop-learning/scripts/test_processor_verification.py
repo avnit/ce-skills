@@ -47,7 +47,7 @@ class TestBugToLessonProcessor(unittest.TestCase):
             for k in ["CLOSED_LOOP_ACCOUNT", "CE_CLOSED_LOOP_ACCOUNT", "CLOSED_LOOP_CREDENTIAL_ACCOUNT"]:
                 if k in os.environ:
                     del os.environ[k]
-            with patch("ce_config._cached_config", {}):
+            with patch("ce_config.load_config", return_value={}):
                 account = mcp_publisher.resolve_submitted_by()
                 self.assertEqual(account, "test-developer@google.com")
 
