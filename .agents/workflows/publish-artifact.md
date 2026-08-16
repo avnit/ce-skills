@@ -8,15 +8,7 @@ This workflow guides you through publishing, structuring, and syncing local arti
 
 ## Operational Workflow
 
-### Phase 0: Pre-Flight Authentication & ADC Verification
-
-1. Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
-2. Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
-3. If active account matches target environment, log active identity and proceed automatically.
-4. If an account switch or user decision is required, invoke the `ask_question` tool modal to let the user select or confirm the active account.
-
 ### Phase 1: Clarify Parameters & Scoping
-
 
 1. Use the `ask_question` tool to determine the publishing scope and artifact details:
    - **Publishing Scope**: Ask the user to choose between:

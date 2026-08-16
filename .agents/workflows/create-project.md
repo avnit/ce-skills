@@ -10,7 +10,7 @@ Required parameters from the user:
 
 Steering Workflow:
 
-1. **Phase 0: Pre-Flight Authentication & ADC Verification**
+1. **Phase 0: Pre-Flight Authentication Verification**
    - Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
    - Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
    - If active account matches target Sandbox environment (`admin@*.altostrat.com`), log the active identity and proceed automatically.
@@ -18,4 +18,3 @@ Steering Workflow:
 2. Instruct the agent to read the full execution instructions documented in the **gcp-provisioning** skill manifest.
 3. Execute the project provisioning and organization policy removal tasks exactly as defined by the skill's operational guidelines.
 4. Return the fully configured `PROJECT_ID` along with linked billing summaries cleanly to the user.
-

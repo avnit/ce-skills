@@ -4,15 +4,7 @@ This workflow orchestrates cross-corpus semantic search across your corporate Go
 
 ## Operational Workflow
 
-### Phase 0: Pre-Flight Authentication & ADC Verification
-
-1. Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
-2. Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
-3. If active account matches target Corporate identity (`<ldap>@google.com`), log active identity and proceed automatically.
-4. If an account switch or user decision is required, invoke the `ask_question` tool modal to let the user select or confirm the active account.
-
 ### Phase 1: Interactive Query & Corpora Scoping
-
 
 1. Use the `ask_question` tool to gather search parameters:
    - **Search Target / Query**: Prompt the user for the specific natural language question or topic (e.g., _"Find all design blueprints and email discussions regarding Customer X in the last 14 days"_).

@@ -10,17 +10,13 @@ Required parameters from the user:
 
 Overall Orchestration Lifecycle:
 
-0. **Phase 0: Pre-Flight Authentication & ADC Verification**
-   - Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
-   - Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
-   - If active account matches target environment, log active identity and proceed automatically.
-   - If an account switch or user decision is required, invoke the `ask_question` tool modal to let the user select or confirm the active account.
-1. **Phase 0.5: Interactive Parameter Elicitation Gate**
+1. **Phase 0: Interactive Parameter Elicitation Gate**
 
    - **Interactive Parameter Inquiry**: Before initiating the capture or parser, the orchestrator MUST invoke the **`ask_question`** tool to present a parameter configuration modal to the user:
      - **Authors**: Prompt the user to specify the author list (propose `Practice CE` as the recommended choice).
      - **Codelab ID & Suggested Folder Name**: Proactively suggest a clean, lowercase hyphenated directory name and identifier based on the source lab title, and allow the user to modify or accept it.
      - **Suggested Keywords**: Proactively suggest a set of technical keywords based on the lab technology, and allow the user to modify or accept them.
+
 2. **Phase 1: Source Intake & Ingestion Sequence**
    - Consult the **qwiklabs-to-codelab** skill instructions alongside core repository formatting standards.
    - **Live Browser Extraction**: If the user provides a specific hosted web URL, immediately invoke the **`browser_subagent`** tool to retrieve target content using these explicit parameters:

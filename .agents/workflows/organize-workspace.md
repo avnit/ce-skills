@@ -8,15 +8,7 @@ Steer automated structural audits across the repository to identify misplaced fi
 
 ## Overall Orchestration Lifecycle
 
-### Phase 0: Pre-Flight Authentication & ADC Verification
-
-1. Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
-2. Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
-3. If active account matches target environment, log active identity and proceed automatically.
-4. If an account switch or user decision is required, invoke the `ask_question` tool modal to let the user select or confirm the active account.
-
 ### Phase 1: Scope Intake & Target Definition
-
 
 1. Consult the **workspace-organizer** skill manifest (`.agents/skills/workspace-organizer/SKILL.md`) to load established directory boundaries and file placement patterns.
 2. Invoke the **`ask_question`** tool to present an interactive intake modal allowing the user to configure the exact cleanup scope:
