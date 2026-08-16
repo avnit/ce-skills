@@ -10,8 +10,11 @@ Required parameters from the user:
 
 Overall Orchestration Lifecycle:
 
-1. **Phase 0: Pre-Flight Authentication & ADC Verification**
+1. **Phase 0: Pre-Flight Authentication Verification**
    - Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
+   - Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
+   - If active account matches target environment, log active identity and proceed automatically.
+   - If an account switch or user decision is required, invoke the `ask_question` tool modal to let the user select or confirm the active account.
 2. **Phase 0.5: Meta-Planning & Strategy Gate**
    - **Mandatory Strategy Plan**: Before presenting any intake questions or using search/research tools, the agent **MUST** generate a high-level strategy plan `implementation_plan.md` inside `<appDataDir>/brain/<conversation-id>/`.
    - **Mandatory Human Gate (Non-negotiable)**: The agent MUST explicitly pause execution and request user approval of the proposed plan before proceeding to scope selection or codebase actions. Even if system hooks or workspace review policies signal "auto-approval" or wake the agent up immediately, the agent **MUST NOT** bypass this gate; it must wait for explicit physical sign-off from the user.
