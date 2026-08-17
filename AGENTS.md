@@ -6,23 +6,20 @@ it, `.github/workflows/*`, or `.github/agent-allowlist.json` without an architec
 
 ## Roles
 
-| Role          | Who                                                        | Authority                                                                                      |
-| ------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| **Owner**     | shacharb                                                   | Priorities, decisions, verification gates                                                      |
-| **Architect** | interactive session, invoked by the owner                  | Design, reviews **every** PR, `ARCH-APPROVED <sha>` merge gate                                 |
-| **Dev agent** | you (Antigravity queue worker / hub-dispatched task cards) | Implementation via small PRs with tests; merges PRs once green CI and `ARCH-APPROVED` assigned |
-
-_The PR gate chain requires green CI, followed by the architect posting `ARCH-APPROVED <sha>` for the latest commit, before the dev agent executes the merge._
+| Role          | Who                                                        | Authority                                                      |
+| ------------- | ---------------------------------------------------------- | -------------------------------------------------------------- |
+| **Owner**     | shacharb                                                   | Priorities, decisions, merges, live verification gates         |
+| **Architect** | interactive session, invoked by the owner                  | Design, reviews **every** PR, `ARCH-APPROVED <sha>` merge gate |
+| **Dev agent** | you (Antigravity queue worker / hub-dispatched task cards) | Implementation via small PRs with tests                        |
 
 ## Source of truth
 
 1. The GitHub **issue** you are implementing (acceptance criteria live there).
 2. The Wave-4 design: `doc/wave4_client_cutover.md` **in the backend repo**
-   ([`cloud-gtm/ce-skills-close-loop-learning`](https://github.com/cloud-gtm/ce-skills-close-loop-learning)), plus its parent `doc/mcp_migration_design.md`
+   (`cloud-gtm/ce-skills-close-loop-learning`), plus its parent `doc/mcp_migration_design.md`
    and the contract schemas under `doc/contracts/`. If an issue conflicts with the design,
    stop and ask on the issue.
-3. `AGENT_HUB_HANDOFF.md` — operational summary of the hub (gates, pickup protocol, gotchas).
-4. This file, then `CONTRIBUTING.md` for repo conventions not covered here.
+3. This file, then `CONTRIBUTING.md` for repo conventions not covered here.
 
 ## How you get work — Agent Hub
 
