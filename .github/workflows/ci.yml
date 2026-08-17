@@ -92,6 +92,12 @@ jobs:
 
       - name: Run pytest
         run: |
+          # main is customer-facing only: release policy strips the dev test suites
+          # (tests/, skill-local tests, pytest.ini), so this gate is a no-op there.
+          if [ ! -d "tests" ]; then
+            echo "No dev test suite on this branch (main excludes tests per release policy)."
+            exit 0
+          fi
           if [ -f "requirements.txt" ]; then
             uvx --with-requirements requirements.txt pytest -q
           else
