@@ -14,13 +14,19 @@ To maintain strict integration compatibility with the CE Workbench graphical das
 
 ## 🔄 Operational Workflow Lifecycle
 
+### Phase 0: Pre-Flight Authentication Verification
+
+1. Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
+2. Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
+3. If active account matches target environment, log active identity and proceed automatically.
+4. If an account switch or user decision is required, invoke the `ask_question` tool modal to let the user select or confirm the active account.
+
 ### Phase 1: Customer Scoping Intake
 
-1. Present the active Google Cloud credentialed account and verify that the correct Argolis sandbox identity is active using the `gcloud-auth-verification` skill.
-2. Ask the human Customer Engineer (CE) if they want to:
+1. Ask the human Customer Engineer (CE) if they want to:
    - **Option A: Interactive Scoping Wizard**: Walk through a live discovery session step-by-step.
    - **Option B: Automated Test / Simulation Suite**: Trigger prepackaged programmatic scenarios to validate the pipeline.
-3. Capture the initial scoping parameters:
+2. Capture the initial scoping parameters:
    - Customer Name & Industry Vertical
    - Governing Compliance Frameworks (e.g., `PCI-DSS`, `HIPAA`, `FedRAMP`, `SOC2`, `None`)
    - Area of Technology (Supports multi-selection or composite technical configurations: `NETWORKING`, `DATABASES`, `GKE`)

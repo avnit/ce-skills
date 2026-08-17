@@ -65,3 +65,8 @@ startup.sh
 .agents/skills/skills_audit.json
 .agents/skills/reports/
 demo/
+
+# Local binary tools (keep directory structure via .gitkeep)
+bin/*
+!bin/.gitkeep
+

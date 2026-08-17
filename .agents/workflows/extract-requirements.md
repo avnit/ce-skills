@@ -18,6 +18,11 @@ You are an autonomous **Solutions Engineering Orchestrator** operating in a 10/1
 
 ### 1. Phase 1: Scope Intake & Setup
 
+- **Phase 0: Pre-Flight Authentication Verification**:
+  - Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
+  - Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
+  - If active account matches target environment, log active identity and proceed automatically.
+  - If an account switch or user decision is required, invoke the `ask_question` tool modal to let the user select or confirm the active account.
 - **Phase 0.5: Meta-Planning & Strategy Gate (Mandatory)**: Before presenting any intake questions or using search/research tools, you **MUST** generate a high-level strategy plan `implementation_plan.md` inside `<appDataDir>/brain/<conversation-id>/`. You MUST explicitly pause execution and request user approval of the proposed plan before proceeding.
 - **Phase 0.6 Intake Gate**: Invoke the **`ask_question`** tool to present interactive intake questions to the user:
   - **Question 1: Execution Scope**: (Recommended) Full End-to-End (E2E) Verification vs. Generate Artifacts Only.

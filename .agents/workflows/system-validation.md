@@ -6,11 +6,18 @@ Consult the **system-validation** skill to orchestrate the end-to-end validation
 
 Steering Workflow:
 
+0. **Phase 0: Pre-Flight Authentication Verification**
+   - Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
+   - Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
+   - If active account matches target environment, log active identity and proceed automatically.
+   - If an account switch or user decision is required, invoke the `ask_question` tool modal to let the user select or confirm the active account.
 1. Instruct the agent to read the full operational instructions documented in the **system-validation** skill.
 2. Verify that the workspace has been properly onboarded per `/onboarding`:
+
    - Check that `gcp_config.txt` contains valid `folder_id` and `billing_account`.
    - Check that `.agents/rules/persona.md` binds an active Systems Engineering Persona.
    - Check that all configured MCP servers are present in `.gemini/mcp_config.json`, including the local Google Workspace MCP server (`workspace` mapping to `${WORKSPACE_MCP_SERVER:-/google/bin/releases/codemind-mcp-servers/workspace_server.par}`).
+
 3. Execute the Python system verification script, passing the dynamic active JetSki conversation artifact directory to avoid polluting the user's workspace:
    ```bash
    python3 .agents/skills/system-validation/scripts/verify_system.py <appDataDir>/brain/<conversation-id>/system_validation_report.md

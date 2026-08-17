@@ -1,0 +1,84 @@
+# proto-file: learning/gemini/agents/evaluation/evalin/proto/eval_suite.proto
+# proto-message: EvalSuite
+# txtpbfmt: wrap_strings_after_newlines
+
+suite_name: "cloud-blockers Skill Evals"
+timeout_seconds: 300
+
+cases {
+  name: "provide_cr_for_customer_x"
+  prompt: "Provide all Customer Requests and Cloud Blockers for Anthropic, Pbc"
+  expectations: "The agent should use vector-customers to verify reporting_id for Anthropic, Pbc, prompt via ask_question if ambiguous, query PLX for linked CRs/CBs, format results as a numbered list with hyperlinked Buganizer and Vector URLs, and save a brain artifact."
+}
+
+cases {
+  name: "network_related_cr_lookup"
+  prompt: "What are the network related Customer Requests?"
+  expectations: "The agent should filter PLX for Networking PST / Product Areas (e.g. Cloud Interconnect, VPC, Cloud DNS), returning hyperlinked Buganizer CRs and triage status."
+}
+
+cases {
+  name: "cluster_cr_lookup"
+  prompt: "What are the Customer Requests for my cluster West 4 (CL)?"
+  expectations: "The agent should query PLX filtering for NAL Cluster or Sub-region 'West 4 (CL)', returning triaged and pending CRs."
+}
+
+cases {
+  name: "cloud_blocker_cr_id_lookup"
+  prompt: "Lookup Customer Request bug 537381675"
+  expectations: "The agent should query PLX for cr_issue_id 537381675, returning severity S0, Anthropic Pbc account, linked Workload aBJKf000009WCKQOA4, and CB 519126417."
+}
+
+cases {
+  name: "cloud_blocker_triage_status_filter"
+  prompt: "Find all S0 customer requests pending triage"
+  expectations: "The agent should filter for cr_severity = S0 and triaged = 'CR Pending Triage', listing untriaged high-severity blocker requests."
+}
+
+cases {
+  name: "dashboard_filter_pcs_interface"
+  prompt: "Show all Cloud Blockers and Customer Requests for PCS Interface"
+  expectations: "The agent should filter PLX by product area or title for PCS Interface / PSC Interfaces, returning formatted 33-column records and rendering a brain report artifact via render_report.py."
+}
+
+cases {
+  name: "filter_by_resolution_status"
+  prompt: "Find all Cloud Blockers with GA Launched status in Cloud Networking"
+  expectations: "The agent should filter PLX for cb_pm_resolution_status = 'GA Launched' or launch_status = 'GA Launched' under Product Group 'Cloud Networking'."
+}
+
+cases {
+  name: "filter_by_interlock_period"
+  prompt: "List all Cloud Blockers submitted during GTM Interlock"
+  expectations: "The agent should filter PLX for cb_if_submitted_during_GTM_interlock = 'Yes' or cb_interlock_submission_period IS NOT NULL, summarizing interlock commitments."
+}
+
+cases {
+  name: "filter_by_request_type"
+  prompt: "Show all Feature Request Cloud Blockers for Enterprise accounts in NORTHAM"
+  expectations: "The agent should filter PLX by cb_request_type = 'Feature Request', region = 'NORTHAM', and customer segment = 'Enterprise'."
+}
+
+cases {
+  name: "multi_filter_account_and_severity"
+  prompt: "Provide S1 and S2 Customer Requests for 24 7.ai, Inc"
+  expectations: "The agent should resolve 24 7.ai, Inc via vector-customers, filter PLX for cr_severity IN ('S1', 'S2'), render a formatted 33-column Markdown artifact, and present clickable URLs."
+}
+
+cases {
+  name: "strict_pst_area_networking"
+  prompt: "Find all Cloud Blockers for PayPal in Networking PST area without including Distributed Cloud items"
+  expectations: "The agent should resolve PayPal via vector-customers, apply strict --pst-area Networking matching PST hierarchy fields (excluding cr_title/cb_title fuzzy matches), verifying that items from Distributed and Sovereign Cloud (DSC) are excluded."
+}
+
+cases {
+  name: "preflight_account_resolution_ask_question"
+  prompt: "Find Cloud Blockers for PayPal"
+  expectations: "The agent should execute pre-flight resolution against vector-customers using account_details struct fields, present the ask_question modal if multiple accounts match, and query PLX F1 for the selected reporting ID."
+}
+
+cases {
+  name: "email_html_card_generation"
+  prompt: "Generate an email-friendly HTML report for Cloud Armor CDN blockers"
+  expectations: "The agent should query PLX F1 for Cloud Armor for Cloud CDN, render a 33-column Markdown report artifact, and convert it into a responsive 12-column HTML card using render_email.py with hyperlinked <a> anchors."
+}

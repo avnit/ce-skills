@@ -23,6 +23,7 @@ class CatalogCache:
                 cache_dir = os.path.join(env_dir, "sku_cache")
             else:
                 import tempfile
+
                 cache_dir = os.path.join(tempfile.gettempdir(), "sku_cache")
         self.cache_dir = cache_dir
         self.cache_file = os.path.join(self.cache_dir, "gcp_catalog.json")
@@ -42,7 +43,9 @@ class CatalogCache:
                     self.lookup_time_ms = (time.perf_counter() - start_time) * 1000.0
                     return data.get("catalog")
             except Exception as e:
-                sys.stderr.write(f"⚠️ Warning: Failed reading cache file {self.cache_file}: {e}\n")
+                sys.stderr.write(
+                    f"⚠️ Warning: Failed reading cache file {self.cache_file}: {e}\n"
+                )
         self.cache_status = "MISS"
         self.lookup_time_ms = (time.perf_counter() - start_time) * 1000.0
         return None
@@ -58,4 +61,6 @@ class CatalogCache:
             with open(self.cache_file, "w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=2)
         except Exception as e:
-            sys.stderr.write(f"⚠️ Warning: Failed saving cache to {self.cache_file}: {e}\n")
+            sys.stderr.write(
+                f"⚠️ Warning: Failed saving cache to {self.cache_file}: {e}\n"
+            )

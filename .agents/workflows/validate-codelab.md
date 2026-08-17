@@ -11,13 +11,19 @@ Required parameters from the user:
 
 Steering Workflow:
 
+0. **Phase 0: Pre-Flight Authentication Verification**
+   - Consult and enforce the global auth validation standard: [gcloud_auth.md](../rules/gcloud_auth.md).
+   - Execute the **gcloud-auth-verification** skill (`python3 .agents/skills/gcloud-auth-verification/scripts/verify_auth.py`).
+   - If active account matches target environment, log active identity and proceed automatically.
+   - If an account switch or user decision is required, invoke the `ask_question` tool modal to let the user select or confirm the active account.
+
 1. **Phase 1: Intake & Verification**
+
    - Confirm that the source parameter is provided.
    - If the source is a URL, the workflow will download and extract the relevant commands automatically.
    - Initialize/update the `task.md` table inside your conversation's brain directory.
 
 2. **Phase 2: Project Setup Choice**
-   - Present an active gcloud identity and credential verification modal using the **`gcloud-auth-verification`** skill.
    - Present an option to the user via `ask_question` or a prompt:
      - Option A: Provision a brand-new isolated GCP project automatically (using the folder and billing ID set in `gcp_config.txt`).
      - Option B: Provide an existing active GCP project ID.

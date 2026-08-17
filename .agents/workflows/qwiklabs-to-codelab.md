@@ -11,10 +11,12 @@ Required parameters from the user:
 Overall Orchestration Lifecycle:
 
 1. **Phase 0: Interactive Parameter Elicitation Gate**
+
    - **Interactive Parameter Inquiry**: Before initiating the capture or parser, the orchestrator MUST invoke the **`ask_question`** tool to present a parameter configuration modal to the user:
      - **Authors**: Prompt the user to specify the author list (propose `Practice CE` as the recommended choice).
      - **Codelab ID & Suggested Folder Name**: Proactively suggest a clean, lowercase hyphenated directory name and identifier based on the source lab title, and allow the user to modify or accept it.
      - **Suggested Keywords**: Proactively suggest a set of technical keywords based on the lab technology, and allow the user to modify or accept them.
+
 2. **Phase 1: Source Intake & Ingestion Sequence**
    - Consult the **qwiklabs-to-codelab** skill instructions alongside core repository formatting standards.
    - **Live Browser Extraction**: If the user provides a specific hosted web URL, immediately invoke the **`browser_subagent`** tool to retrieve target content using these explicit parameters:
