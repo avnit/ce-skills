@@ -41,6 +41,7 @@ def handle_onboard():
     try:
         folder_id = input(f"{BOLD}Enter Target Google Cloud Folder ID (12-digit number): {RESET}").strip()
         billing_account = input(f"{BOLD}Enter Target Billing Account ID (e.g. 010101-A1A1A1-B2B2B2): {RESET}").strip()
+        billing_project = input(f"{BOLD}Enter BigQuery Billing Project ID [default: billing-350700]: {RESET}").strip() or "billing-350700"
         cloudtop_host = input(f"{BOLD}Enter Cloudtop Hostname (optional, e.g. user-dev-glinux.c.googlers.com): {RESET}").strip()
         
         if not folder_id or not billing_account:
@@ -53,8 +54,15 @@ def handle_onboard():
             f.write(f"# Generated dynamically via ce-scale onboarding\n")
             f.write(f"folder_id={folder_id}\n")
             f.write(f"billing_account={billing_account}\n")
+            f.write(f"billing_project={billing_project}\n")
+            f.write(f"bug_scan_dir={os.path.expanduser('~/.gemini/jetski/bugs')}\n")
             if cloudtop_host:
                 f.write(f"cloudtop_host={cloudtop_host}\n")
+                
+        # Auto-sync sidecars
+        sync_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".agents", "scripts", "sync_sidecars.sh")
+        if os.path.exists(sync_script):
+            subprocess.run(["bash", sync_script], check=False)
                 
         print(f"\n{BOLD}{GREEN}✅ Success! Dynamic credentials written to {config_path}{RESET}")
         print("You can now validate your configuration using: `./ce-scale validate`")
@@ -93,6 +101,16 @@ Available Subcommands:
         run_script(".agents/skills/codelab-cleanup/scripts/sweeper.py", extra)
     elif sub == "cleanup":
         run_script(".agents/skills/codelab-cleanup/scripts/cleanup_projects.py", extra)
+    elif sub == "open-bug":
+        run_script(".agents/skills/open-bug/scripts/open_bug.py", extra)
+    elif sub == "create-project":
+        run_script(".agents/skills/create-project/scripts/create_project.py", extra)    
+    elif sub == "adr":
+        run_script(".agents/skills/generate-adr/scripts/generate_adr.py", extra)    
+    elif sub == "diagram":
+        run_script(".agents/skills/generate-diagram/scripts/generate_diagram.py", extra)    
+    elif sub == "lab":
+        run_script(".agents/skills/generate-lab/scripts/generate_lab.py", extra)    
     else:
         print(f"{BOLD}{RED}❌ Unknown Subcommand: '{sub}'{RESET}")
         parser.print_help()
