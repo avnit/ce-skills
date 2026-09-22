@@ -9,9 +9,9 @@ def get_untracked_root_files():
     
     findings = []
     # Core directories that represent valid structural namespaces
-    valid_dirs = [".agents", ".agents", "prompts", "scripts", "resources", "labs", "meeting", "artifacts", "node_modules", "agent_src", "user_deploy"]
+    valid_dirs = [".agents", "prompts", "scripts", "resources", "labs", "meeting", "artifacts", "node_modules", "agent_src", "user_deploy", "bin", "references"]
     # Standard repository dotfiles or baseline configuration files
-    valid_files = [".gitignore", "README.md", "package.json", "package-lock.json", "gcp_config.txt", "agent_metadata.txt"]
+    valid_files = [".gitignore", ".gitmodules", "README.md", "package.json", "package-lock.json", "gcp_config.txt", "agent_metadata.txt", "requirements.txt", "ruff.toml", "ce-scale"]
     
     for item in sorted(all_items):
         path = os.path.join(root_dir, item)
