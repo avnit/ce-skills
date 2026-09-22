@@ -31,7 +31,7 @@ jobs:
     steps:
       # issue_comment workflows run from the default branch — the allowlist read here is the
       # protected main-branch copy; a PR cannot substitute its own.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Gate 2 — allowlist + author association (H3)
         id: allow
         env:
