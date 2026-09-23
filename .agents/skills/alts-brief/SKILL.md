@@ -11,7 +11,7 @@ Give an advisor a clear, meeting-ready read on a household's alternative investm
 
 Required: **client/household name**. Optional: an as-of/cutoff date if the advisor wants the "recent activity" portion of the brief anchored to a specific date rather than "latest available" (default: since the last brief, or trailing 12 months if this is the first one), and a specific fund or manager to focus on if they only want part of the book.
 
-**Identity grain:** alts are frequently held at a level *below* the household — an IRA, a trust, a single person, or one named account. Take the advisor's grain literally: "the Harrington IRA," "the Whitmore Trust," "Robert Harrington," or "the Northgate account" each mean that entity, not the whole household. Don't silently widen a named account up to its household, and don't narrow a household down to one account.
+**Identity grain:** alts are frequently held at a level _below_ the household — an IRA, a trust, a single person, or one named account. Take the advisor's grain literally: "the Harrington IRA," "the Whitmore Trust," "Robert Harrington," or "the Northgate account" each mean that entity, not the whole household. Don't silently widen a named account up to its household, and don't narrow a household down to one account.
 
 **Disambiguation rule:** confirm identity before pulling anything, the same as every other skill in this plugin — if more than one client, household, or account matches the name, show the candidates and ask which one before proceeding. Never proceed on a name match alone. When nothing is connected there is no match to confirm: take the name and grain as the advisor gave them, say so in the brief, and go.
 
@@ -37,6 +37,7 @@ Alts can come from either platform, and some households have both, so the Step 1
 If both are connected, **label each figure with the platform it came from** rather than merging them into one undifferentiated list — the advisor needs to know which system to open to act on a row, and the two are not reconciled to each other. Where the two overlap, prefer whichever platform actually returns the field: Addepar can supply a fund name and a computed paid-in percentage for positions iCapital returns only as an internal identifier. Say so when you do it ("fund name per Addepar"), and never present a figure from one platform as though it came from the other. (This is a deliberate exception to the Ask-Once, Then Route Convention: the two platforms aren't reconciled to each other, so labeling both preserves information a single pick would lose.) That exception covers which fields each platform supplies, not a genuine conflict: if the two ever disagree on a material fact for the same position (a valuation, a commitment amount, a date), labeling both isn't enough — stop and surface it to the advisor as a blocking question before the brief is finalized.
 
 Query the connected platform(s) for the client's alternative investment positions:
+
 - Fund/product name, manager, strategy (PE, private credit, real estate, hedge fund, etc.), and structure (drawdown commitment vs. evergreen/interval fund) — Addepar returns fund name, strategy and vintage; iCapital may return none of it, in which case take it from the advisor, an uploaded statement, or a Drive document rather than inferring it
 - Commitment amount, called-to-date, and NAV, with the as-of date for each
 - Unfunded commitment remaining
@@ -57,11 +58,12 @@ Report performance metrics **as the platform computed them** — IRR, TVPI, DPI,
 - **Report commitment, called, and unfunded as three separate figures.** Don't derive a "% funded" from them or reconcile them against each other — they're reported independently and aren't meant to tie, and dividing them can produce a figure over 100%. If a platform reports a paid-in percentage itself, use that and cite it; otherwise leave it out rather than calculating one. Same for two different value figures on one position: show one, say which.
 - **Lifetime figures need lifetime windows.** On some platforms, columns like called-to-date, paid-in, and total commitment are computed over the query window — a trailing-12-month pull can understate called-to-date or return commitments as zero. Pull cumulative figures with an inception-wide window, prefer a field that stores the lifetime total over one computed across a window, and when two sources both carry the figure, cross-check them and surface a disagreement rather than picking one silently. State the window behind any windowed figure.
 
-> **Connector Placeholder Convention:** if neither iCapital nor Addepar shows as connected, say: *"This is where I'd make a call out to [platform] to pull [client]'s alts positions once that connector is available."* Then offer the fallback: the advisor can upload a statement/export (PDF/CSV) or paste position details. Don't wait for it — write the brief now (Step 6): the position table carries one row of "— pending [source]" cells in place of the positions you couldn't pull (never an invented fund or figure), each flag is named with what it's missing, and the questions you owe the advisor sit in the close *after* the file exists. A brief that is all pending rows is still the deliverable; a question with no brief behind it is a stall. Anything the advisor provides afterwards is a fresh pass over the same brief.
+> **Connector Placeholder Convention:** if neither iCapital nor Addepar shows as connected, say: _"This is where I'd make a call out to [platform] to pull [client]'s alts positions once that connector is available."_ Then offer the fallback: the advisor can upload a statement/export (PDF/CSV) or paste position details. Don't wait for it — write the brief now (Step 6): the position table carries one row of "— pending [source]" cells in place of the positions you couldn't pull (never an invented fund or figure), each flag is named with what it's missing, and the questions you owe the advisor sit in the close _after_ the file exists. A brief that is all pending rows is still the deliverable; a question with no brief behind it is a stall. Anything the advisor provides afterwards is a fresh pass over the same brief.
 
 ## Step 2: Liquid Book & IPS Target — Orion Connect, Addepar, or Envestnet
 
 Pull the rest of the household picture so alts can be sized in context:
+
 - Total liquid/investable assets and current cash balance
 - IPS or model target allocation to alternatives (%) — **check the connected platform for it first.** If a platform exposes target allocations or IPS bands, use them and cite the platform. Not every platform surfaces targets even when it holds them, so if nothing comes back, ask the advisor for the target or accept a pasted IPS — and say which of the two the number came from, since a target the advisor supplied from memory carries different weight than one read from the system of record.
 - Household AUM for sizing alts against the total. If the connected platform reports allocation or exposure percentages itself, use those and cite them rather than summing an alts NAV onto a liquid balance by hand — the two may be valued as of different dates, and a platform-computed percentage is the defensible number. If you do have to combine figures, say which values and as-of dates you combined, and present the result as approximate.
@@ -69,6 +71,7 @@ Pull the rest of the household picture so alts can be sized in context:
 Follow the same **Connector Placeholder Convention** as Step 1 — if none of the three is available, fail gracefully: say so, then offer the manual fallback (paste, upload, or skip) and continue to the brief with the liquid/IPS figures marked "— pending [source]".
 
 **When Addepar is connected**, it answers the capital-call and cash questions directly, and these feed the flags in Step 4:
+
 - **Upcoming capital activity** — future-dated calls by fund and date, returned alongside the household's cash balances so coverage is assessed against real cash rather than an estimate. Forward-looking only: it does not return calls that already happened.
 - **Private-fund cash movements** — recent calls, contributions and distributions matched against actual cash-account activity, which answers "did that call clear?" rather than only "was it announced?" Use the platform's own matches; report an unmatched item as unmatched rather than pairing it yourself.
 
@@ -79,7 +82,7 @@ A call that is upcoming has not cleared — don't describe it as funded, and don
 ## Step 3: Assemble the Position Table
 
 | Fund | Manager/Strategy | Commitment | Called-to-Date | NAV | Unfunded | Recent Activity | Lockup/Liquidity | As-of Date |
-|------|------------------|-----------|-----------------|-----|----------|-----------------|-------------------|-----------|
+| ---- | ---------------- | ---------- | -------------- | --- | -------- | --------------- | ---------------- | ---------- |
 
 One row per position. If a field is unavailable for a given fund, mark that cell "— pending [source]" rather than guessing — [source] names what would supply it (iCapital, Addepar, a fund document, the advisor). That is the one sentinel this skill uses, everywhere a value is missing.
 
@@ -108,6 +111,7 @@ Take them from whatever the source actually provides: text returned alongside th
 ## Step 6: Output
 
 Write the brief to a markdown file first:
+
 - A meeting-ready brief: the position table first, then the flags — the flags cite rows in the table, so the table belongs above them. Give the flags their own heading so an advisor short on time can go straight to it.
 - Cite the source platform for the alts data — iCapital, Addepar, or both, naming which one each figure came from when the book spans two — and reproduce the disclosures/disclaimers identified in Step 5 on the page as provided; don't paraphrase or drop them.
 - Close with a 2-3 sentence plain-English summary of the household's alts picture, including how it sits against the IPS target.

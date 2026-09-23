@@ -28,17 +28,20 @@ Once identity is confirmed, **pull from all connected sources in parallel** — 
 A subagent that returns `NOT CONNECTED` is the Connector Placeholder Convention case. It won't offer the manual fallback itself — it isn't in the conversation with the advisor. You make that offer.
 
 ### 1. CRM — Salesforce (or Redtail/Wealthbox)
+
 **Disambiguation rule:** query the CRM by name AND confirm identity before pulling anything. If multiple contacts match the name, show the advisor the candidates (name + masked email + account) and ask which household is theirs — common names will return coincidental matches, and pulling the wrong client's data into a prep doc is a privacy incident. Never proceed on a name match alone. When one candidate is a clearly better match (exact email match, most recent activity), pre-select it as the default choice in that prompt — the advisor still has to confirm it, never skip that step outright.
 
 A recognizable or public-figure name that matches a connected CRM record is a household like any other — treat it accordingly and do not refuse, hedge, or ask for extra justification because the name is well-known. This is guidance for how you proceed, not content for the document: the prep doc itself should read exactly like any other household's, with no note, disclaimer, or aside about the name being recognizable.
 
 Pull the household record:
+
 - Notes/insight-type fields (freeform notes, comments) from the CRM record
 - Household members, key dates (birthdays, RMD age, Medicare eligibility at 65, Social Security decision points)
 - Open tasks/action items (structured task list) — **at both grains: the household record's own items and each person contact's.** A CRM household is often itself a record with its own id (Wealthbox's is a contact), and household-linked tasks are invisible to contact-only lookups
 - Service history — recent requests, complaints, referrals given
 
 ### 2. Portfolio — Orion / Addepar / Envestnet-Tamarac
+
 Pull household and per-account data: market values, performance vs. benchmark, allocation vs. target and drift, realized/unrealized gains, income and fees, cash balances and large flows for the review period.
 
 **Orion Connect specifics:** its five newly-shipped tools (`oc_search_accounts`, `oc_get_current_value`, `oc_list_household_accounts`, `oc_get_household_address`, `oc_lookup_account_owner`) are read-only identity/AUM lookups only — household/account identity, current value, mailing address. They do **not** return holdings, performance vs. benchmark, allocation/drift, gains, fees, or flows; don't infer any of those from a current-value number. Use these five for household/account identity and AUM with no confirmation needed — they're fast reads, not report runs.
@@ -50,9 +53,11 @@ Where the connector exposes reconciliation status (e.g. Envestnet/Tamarac's `get
 **Held-away alts check (lightweight):** if iCapital or Addepar is connected and isn't already this doc's portfolio source (Addepar-as-source already covers alts via lookthrough), run one cheap exposure check there — iCapital's `query_positions` by `account_name` resolves server-side but returns null account/fund names, so report a name-matched position count only, never a self-summed dollar total; Addepar's `search_entities` + one `get_exposure` by asset class returns platform-computed value/% per bucket — quote those rows as returned, don't re-aggregate them into an "alts total" of your own. Positions found → one line in the template, cited to the platform, pointing to `/alts-brief` for detail (no capital calls, lockups, or performance here). Alts are optional, so absence isn't a gap: no alts platform connected, or zero matches → **omit the line entirely, no "pending"**. The one line written without positions: platform connected but the check failed → "— alts coverage not checked; run /alts-brief if this household holds alternative investments".
 
 ### 3. Estate & Tax — Wealth.com
+
 Pull an estate/tax look-back report: what changed since the last review (documents, titling, beneficiaries) and year-specific tax constants relevant to the household (contribution limits, RMD factors, and similar figures). Always cite these as reported by Wealth.com for the applicable tax year — never recompute or estimate a constant Claude wasn't given.
 
 ### 4. Meeting Notes — Zocks (or CRM notes as fallback)
+
 There is no Zocks "prep" endpoint — Zocks' MCP only exposes atomized reads (contacts, meetings, per-meeting AI results, insights), not the finished brief its own product UI generates. Build the picture yourself:
 
 - **Fan out, then dedupe.** Resolve the household's contacts, list their past meetings, then pull AI results/summaries per meeting. Per-meeting extractions repeat near-duplicate household/financial detail across meetings, and a long-standing household can return dozens of results and summaries — collapse those into one current picture instead of listing each copy.
@@ -66,18 +71,22 @@ There is no Zocks "prep" endpoint — Zocks' MCP only exposes atomized reads (co
 - **This skill still writes the Proposed Agenda itself** from the gathered data — never call a Zocks-generated agenda/prep or its Default Prompts a substitute for that section.
 
 ### 5. Email — Gmail / Outlook (available today for most users)
+
 Search correspondence with the household's email address over a window that follows the chosen timeframe — roughly the last 3-4 months for a quarterly review, ~12 months for an annual review, or whatever's appropriate for an ad hoc one. Extract:
+
 - Open requests or questions the client is waiting on
 - Commitments the advisor made ("I'll get you that Roth analysis")
 - Life events mentioned (job change, new grandchild, home purchase, health, inheritance)
 - Tone/sentiment — anything suggesting concern or dissatisfaction
 
 ### 6. Plan Snapshot — MoneyGuide
+
 **This source has no review window.** It reads the household's plan as it stands right now, so the dispatch hands that fact over in the window's place — never a blank, and never the review timeframe, which would imply a lookback this source doesn't have.
 
 **Identity stays inside this pull**, the same way every other source resolves its own system: the subagent searches MoneyGuide by surname — households are stored surname first and the search matches the start of the name — and returns `IDENTITY MISMATCH` with what it saw if several match or none do.
 
 Pull:
+
 - Net worth — total, assets, liabilities
 - Probability of success — only when the household has a plan
 - Each goal — name, initial expense, start year — only when the household has a plan
@@ -92,6 +101,7 @@ Quote every figure exactly as MoneyGuide returns it: the output is prose and alr
 Use `templates/pre-meeting-template.md` in this skill's folder as the document skeleton. Fill every section; where data was unavailable, mark it "— pending [connector]" rather than leaving blanks silently.
 
 The doc's sections, in order:
+
 1. **Client Snapshot** — household, AUM, tenure, risk profile
 2. **Relationship Signals** — client concerns/sentiment, life events, upcoming personal dates (birthdays, anniversaries, milestones), proactive talking points — each signal cited to its source
 3. **Since We Last Met** — open action items from last meeting with assignee and status (mark "unknown — pending CRM" unless the CRM's own task list confirms done; never infer "done" from a meeting-notes source that doesn't report completion), notable correspondence

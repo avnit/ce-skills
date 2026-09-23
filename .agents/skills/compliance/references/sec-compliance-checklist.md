@@ -1,5 +1,6 @@
 # SEC Compliance Checklist for Client-Facing Content
-*Reference for the Claude for Financial Advisors compliance skill. First pass drafted July 2026 — verify against current SEC guidance (sec.gov Marketing Rule FAQ, Division of Examinations Risk Alerts) for high-stakes reviews.*
+
+_Reference for the Claude for Financial Advisors compliance skill. First pass drafted July 2026 — verify against current SEC guidance (sec.gov Marketing Rule FAQ, Division of Examinations Risk Alerts) for high-stakes reviews._
 
 ## 1. Scope Determination
 
@@ -14,6 +15,7 @@
 ## 2. Seven General Prohibitions — 206(4)-1(a)
 
 Flag any content that:
+
 1. [ ] Includes an untrue statement of a material fact, or omits a material fact necessary to make the statement not misleading
 2. [ ] Includes a material statement of fact the adviser has no reasonable basis to believe it can **substantiate upon SEC demand**
 3. [ ] Includes information that would reasonably be likely to cause an **untrue or misleading implication or inference** about a material fact
@@ -41,6 +43,7 @@ Flag any content that:
 ## 5. Language Red Flags (any audience, any channel)
 
 Flag these words/patterns for rework:
+
 - "Guaranteed," "assure," "promise," "no risk," "risk-free," "can't lose," "safe" (as absolute)
 - "Will" + outcome ("will outperform," "will grow") → prefer "designed to," "seeks to," "historically has"
 - "Best," "top," "#1," "leading" without substantiation and source
@@ -53,6 +56,7 @@ Flag these words/patterns for rework:
 ## 6. Required/Typical Disclosures Library
 
 Adapt to the firm's approved language:
+
 - **General advisory**: "Advisory services offered through [Firm], an SEC-registered investment adviser. Registration does not imply a certain level of skill or training."
 - **Performance**: "Past performance is not a guarantee of future results. All investing involves risk, including possible loss of principal. Performance shown is net of fees unless otherwise stated. [Benchmark] shown for comparison; you cannot invest directly in an index."
 - **Forward-looking**: "Projections and forward-looking statements are hypothetical in nature, do not reflect actual results, and are not guarantees of future results."

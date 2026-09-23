@@ -15,7 +15,7 @@ Required: the **prospect's name**. Their files are needed too — either found i
 
 ## Step 1: Find the Files
 
-Ask the advisor a single question up front: *do you want me to look for [prospect]'s files in your connected tools, or would you rather upload them here?* Get the prospect's name either way — it's needed for both paths.
+Ask the advisor a single question up front: _do you want me to look for [prospect]'s files in your connected tools, or would you rather upload them here?_ Get the prospect's name either way — it's needed for both paths.
 
 **A. Look in connected tools**
 
@@ -42,6 +42,7 @@ Wait for the advisor to provide files — PDF/CSV/screenshot, or pasted text. Do
 Consolidation stays with you: the subagents each see one file and cannot tell that an account in file 3 is the same account as one in file 7. Duplicate detection across the set, and the single consolidated view, are yours to assemble from their records.
 
 The extraction schema each subagent works to, which is also what to do by hand if the subagent is unavailable — per account:
+
 - Account type/registration (401(k), IRA, brokerage, etc.) and custodian/provider if shown
 - Holdings: ticker/fund name, shares or units, current value, cost basis if present
 - Fees visible on the statement
@@ -49,6 +50,7 @@ The extraction schema each subagent works to, which is also what to do by hand i
 - Any restrictions noted (e.g., employer plan in-service withdrawal rules, vesting)
 
 Normalize everything into one consolidated view across all files/accounts. Flag data-quality problems as you go rather than silently working around them:
+
 - Illegible or partial scans
 - Missing cost basis
 - Stale statement dates
@@ -63,7 +65,9 @@ Use the templates in this skill's `templates/` folder as the skeleton for each. 
 **Inferred vs. Read applies to every figure in all three outputs**, not just the Analyst Handoff below — any number in the Prospect Summary or What-to-Expect memo that was computed or assumed rather than read directly off a file needs the same flag.
 
 ### A. Prospect Summary
+
 Template: `templates/prospect-summary-template.md`. Plain-English, prospect-facing. Sections:
+
 1. **Accounts in Scope** — account types/registrations reviewed (no account numbers, no custodian internals beyond what's needed to identify the account type)
 2. **Holdings Snapshot** — a high-level view of what's held, by account
 3. **Total Assets Under Review** — the sum across all accounts
@@ -71,13 +75,17 @@ Template: `templates/prospect-summary-template.md`. Plain-English, prospect-faci
 **No asset mix/allocation commentary, no fees, no performance or return claims** — this confirms "here's what we received and understood," nothing more.
 
 ### B. Analyst Handoff
+
 Template: `templates/analyst-handoff-template.md`. Internal, for the firm's analyst team — this one stays internal (see Step 4). Sections:
+
 1. **Per-Account Line Items** — the full consolidated detail from Step 2: account type/custodian, each holding with shares/units, value, cost basis, fees, statement date, restrictions
 2. **Data Quality Flags** — illegible/partial scans, missing cost basis, stale statement dates, duplicate accounts across files, called out per account/line item
 3. **Inferred vs. Read** — for every figure that required inference (e.g., computed from other numbers, assumed from context) rather than being read directly off a file, mark it as inferred; everything else is read-off-file by default
 
 ### C. What-to-Expect Memo
+
 Template: `templates/what-to-expect-template.md`. Brief, friendly, prospect-facing. Sections:
+
 1. **What We Received** — the files/accounts reviewed
 2. **What Happens Next** — the firm's analysts are building the full proposal from this intake
 3. **Who You'll Hear From, and When** — ask the advisor for the actual next point of contact and timeline; never invent a turnaround time, a name, or promise a specific outcome. If the advisor hasn't given you these yet, ask before finalizing this section rather than leaving a guess in place.

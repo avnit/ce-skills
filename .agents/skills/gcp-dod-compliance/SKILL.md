@@ -18,6 +18,7 @@ description: >-
 This skill provides an authoritative, specialized architectural review for Department of Defense (DoD), combatant commands, military services, defense agencies, and defense industrial base (DIB) partners building mission systems on Google Cloud Platform under the **DoD Cloud Computing Security Requirements Guide (CC SRG)**.
 
 It focuses on three distinct mission tiers:
+
 1. **DoD Impact Level 2 (IL2)**: Non-Controlled Unclassified Information (Non-CUI) and publicly releasable defense data.
 2. **DoD Impact Level 4 (IL4)**: Controlled Unclassified Information (CUI), For Official Use Only (FOUO), defense health data (ePHI), and mission-critical unclassified systems.
 3. **DoD Impact Level 5 (IL5)**: Higher-sensitivity CUI, National Security Systems (NSS) unclassified data, and mission-essential warfighter solutions.
@@ -55,10 +56,11 @@ Phase 4: Synthesis & DoD SRG Compliance Report Generation
 ## Phase 0: DoD Impact Level Scoping
 
 If not specified, prompt the user via `ask_question`:
+
 - **Target DoD Categorization**:
-  - *DoD IL2*: Non-CUI / Public defense data (Commercial GCP regions).
-  - *DoD IL4*: CUI, FOUO, PII, PHI in defense context, mission-critical systems (Assured Workloads IL4 regime mandatory).
-  - *DoD IL5*: High-sensitivity CUI, NSS unclassified, mission-critical defense operations (Assured Workloads IL5 regime mandatory).
+  - _DoD IL2_: Non-CUI / Public defense data (Commercial GCP regions).
+  - _DoD IL4_: CUI, FOUO, PII, PHI in defense context, mission-critical systems (Assured Workloads IL4 regime mandatory).
+  - _DoD IL5_: High-sensitivity CUI, NSS unclassified, mission-critical defense operations (Assured Workloads IL5 regime mandatory).
 - **Assured Workloads Status**: Is the workload initialized within an Assured Workloads folder with the target DoD regime?
 
 ---
@@ -66,6 +68,7 @@ If not specified, prompt the user via `ask_question`:
 ## Phase 1: Mission Architecture Ingestion
 
 Extract and classify all system components:
+
 1. **Compute & Containers**: Compute Engine, Google Kubernetes Engine (GKE), Cloud Run, Cloud Functions.
 2. **Databases & Data Storage**: Cloud SQL, AlloyDB, BigQuery, Spanner, Cloud Storage.
 3. **Hybrid Connectivity & Boundaries**: Dedicated Interconnect / Partner Interconnect to DISA CAP, VPC Service Controls, Cloud Armor.
@@ -77,11 +80,13 @@ Extract and classify all system components:
 ## Phase 2: DISA Provisional Authorization (PA) Services Audit
 
 Verify every product against:
+
 - Reference: [dod-srg-levels.md](references/dod-srg-levels.md)
 - Official Documentation: `https://cloud.google.com/security/compliance/dod`
 - DISA DoD CC SRG Portal: `https://cyber.mil/devsecops/cloud-computing-srg/`
 
 ### Strict Evaluation Rules:
+
 1. **Mandatory Assured Workloads (IL4/IL5)**: Unmanaged commercial projects are strictly prohibited for IL4/IL5 data.
 2. **CONUS Soil Only**: All resources must be provisioned in approved US continental regions (`us-central1`, `us-east4`, `us-west1`).
 3. **No Unaccredited Marketplace / Third-Party Software**: Any third-party software deployed on VMs or GKE must hold independent DISA authorization or reciprocity.
@@ -94,24 +99,29 @@ Verify every product against:
 Audit the 5 foundational mission safeguards:
 
 ### 1. Network Perimeter & DISA CAP Connectivity
+
 - For IL4 & IL5, interconnect directly with the **DISA Cloud Access Point (CAP / BCAP / ICAP)**.
 - Deploy **VPC Service Controls (VPC-SC)** security perimeters around all managed data projects.
 - Enforce private IPs only on all databases, GKE nodes, and compute instances; eliminate direct public IPv4 exposure.
 
 ### 2. Cryptographic Security & FIPS 140-2 Level 3
+
 - Mandate **Customer-Managed Encryption Keys (CMEK)** generated exclusively within **Cloud HSM** (FIPS 140-2 Level 3 validated).
 - Enforce TLS 1.2+ with approved FIPS ciphers on Cloud Load Balancing SSL policies.
 
 ### 3. Identity, Credential & Access Management (ICAM)
+
 - Enforce DoD Common Access Card (CAC) / PKI hardware token MFA on all console and administrative sessions via Cloud Identity.
 - Eliminate primitive IAM roles (`Owner`, `Editor`).
 - Enforce **Workload Identity**; disable service account JSON key creation via organization policy `iam.disableServiceAccountKeyCreation`.
 
 ### 4. Personnel Security & Access Transparency
+
 - Verify Assured Workloads constraints for **US Persons** (IL4) and **US Citizens** (IL5) Google support personnel.
 - Enforce **Access Approval** for any Google operator access and monitor via **Access Transparency** logs.
 
 ### 5. Audit Logging & DoD CSSP Integration
+
 - Enable comprehensive **Data Access audit logs** (`DATA_READ`, `DATA_WRITE`, `ADMIN_READ`).
 - Export audit logs in real time to the designated **DoD Cybersecurity Service Provider (CSSP)** / SIEM.
 - Enforce immutable archive storage using Cloud Storage **Bucket Lock (Object Retention)** in compliance mode.
@@ -124,6 +134,7 @@ Audit the 5 foundational mission safeguards:
 Generate the review report using [dod-review-report-template.md](templates/dod-review-report-template.md).
 
 Provide:
+
 1. Clear Verdict (🟢 **Compliant**, 🟡 **Conditional**, 🔴 **Non-Compliant**).
 2. DISA PA Services Matrix mapping services to IL2, IL4, and IL5.
 3. DoD CC SRG Technical Controls Assessment.

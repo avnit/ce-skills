@@ -24,18 +24,21 @@ Official Google Cloud PCI DSS Guidance: [https://cloud.google.com/security/compl
 Google Cloud certifies most core services under its annual Level 1 audit, including:
 
 ### Compute & Containers
+
 - Compute Engine
 - Google Kubernetes Engine (GKE)
 - Cloud Run & Cloud Functions
 - App Engine
 
 ### Storage & Data Warehousing
+
 - Cloud Storage
 - Cloud SQL (MySQL, PostgreSQL, SQL Server)
 - Cloud Spanner, Cloud Bigtable, Firestore
 - BigQuery & BigLake
 
 ### Networking & Security
+
 - Virtual Private Cloud (VPC) & Cloud Load Balancing
 - Cloud Armor (WAF & DDoS - mandatory for Requirement 6.4.2)
 - Cloud KMS / Cloud HSM (meets Requirement 3 cryptographic requirements)
@@ -45,6 +48,7 @@ Google Cloud certifies most core services under its annual Level 1 audit, includ
 - Security Command Center (SCC)
 
 ### Operations & Monitoring
+
 - Cloud Logging & Cloud Monitoring (Requirement 10 audit trails)
 - Artifact Registry (Container scanning for Requirement 11/6)
 
@@ -52,13 +56,13 @@ Google Cloud certifies most core services under its annual Level 1 audit, includ
 
 ## 3. High-Risk / Ineligible Components for PCI DSS
 
-| Risk Area | Architectural Anti-Pattern | Required Mitigation |
-| :--- | :--- | :--- |
-| **Direct Card Storage** | Storing Primary Account Numbers (PAN) unencrypted in standard database tables or flat files | Use Cloud KMS / Sensitive Data Protection (DLP) tokenization, or offload to 3rd-party payment gateway |
-| **Flat Network Topology** | Hosting web applications, APIs, and CDE databases in a single unsegmented VPC | Strict multi-project or VPC subnet isolation; CDE behind internal load balancers with no direct Internet ingress |
-| **Missing WAF** | Public endpoints receiving payment data without a Web Application Firewall | Deploy **Cloud Armor** with OWASP Top 10 rules and WAF inspection on all public payment paths |
-| **Weak Audit Logging** | Audit logs kept under 1 year or not tamper-resistant | Fulfill Requirement 10: Retain logs for at least 1 year (3 months immediately available) using locked Cloud Storage buckets |
-| **Shared Bastions / SSH** | Direct SSH/RDP access using open public IP ports | Enforce Zero Trust access via **Identity-Aware Proxy (IAP)**; enforce MFA for all administrative access |
+| Risk Area                 | Architectural Anti-Pattern                                                                  | Required Mitigation                                                                                                         |
+| :------------------------ | :------------------------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------- |
+| **Direct Card Storage**   | Storing Primary Account Numbers (PAN) unencrypted in standard database tables or flat files | Use Cloud KMS / Sensitive Data Protection (DLP) tokenization, or offload to 3rd-party payment gateway                       |
+| **Flat Network Topology** | Hosting web applications, APIs, and CDE databases in a single unsegmented VPC               | Strict multi-project or VPC subnet isolation; CDE behind internal load balancers with no direct Internet ingress            |
+| **Missing WAF**           | Public endpoints receiving payment data without a Web Application Firewall                  | Deploy **Cloud Armor** with OWASP Top 10 rules and WAF inspection on all public payment paths                               |
+| **Weak Audit Logging**    | Audit logs kept under 1 year or not tamper-resistant                                        | Fulfill Requirement 10: Retain logs for at least 1 year (3 months immediately available) using locked Cloud Storage buckets |
+| **Shared Bastions / SSH** | Direct SSH/RDP access using open public IP ports                                            | Enforce Zero Trust access via **Identity-Aware Proxy (IAP)**; enforce MFA for all administrative access                     |
 
 ---
 

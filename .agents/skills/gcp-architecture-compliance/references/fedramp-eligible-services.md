@@ -14,10 +14,11 @@ Official Google Cloud FedRAMP Guidance: [https://cloud.google.com/security/compl
 
 > [!IMPORTANT]
 > **Primary Recommendation**: Federal government and public sector workloads should always be provisioned using **Google Cloud Assured Workloads** configured with the appropriate regime:
+>
 > - **FedRAMP Moderate**
 > - **FedRAMP High**
 > - **DoD Impact Level 4 (IL4) / IL5** (if defense sector)
-> 
+>
 > Assured Workloads automatically enforces organizational policy constraints that restrict service usage exclusively to FedRAMP-authorized products, mandates US-only data locations, and restricts Google support personnel access to screened US persons.
 
 ---
@@ -36,9 +37,9 @@ FedRAMP High / Moderate authorization covers major Google Cloud services includi
 
 ## 3. High-Risk / Ineligible Components for FedRAMP
 
-| High-Risk Item | Architectural Hazard | Mandatory Remediation |
-| :--- | :--- | :--- |
-| **Non-US Data Locations** | Storing federal data in global or non-US regions | Restrict resource creation to `us-central1`, `us-east4`, `us-west1`, etc. via Assured Workloads Resource Location Restriction policy |
-| **Non-FIPS Cryptography** | Utilizing cryptographic modules that lack FIPS 140 validation | Enforce **Cloud HSM** (FIPS 140-2 Level 3) for CMEK keys; enforce TLS 1.2+ with approved FIPS cipher suites |
-| **Unauthorized Services** | Attempting to deploy beta, preview, or third-party marketplace tools within the boundary | Assured Workloads automatically blocks unauthorized service creation; use only FedRAMP High/Moderate authorized GA services |
-| **Unrestricted Support Access** | Allowing global Google technical support personnel access to systems | Enable **Access Transparency** and **Access Approval** to verify and approve any Google operator access |
+| High-Risk Item                  | Architectural Hazard                                                                     | Mandatory Remediation                                                                                                                |
+| :------------------------------ | :--------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
+| **Non-US Data Locations**       | Storing federal data in global or non-US regions                                         | Restrict resource creation to `us-central1`, `us-east4`, `us-west1`, etc. via Assured Workloads Resource Location Restriction policy |
+| **Non-FIPS Cryptography**       | Utilizing cryptographic modules that lack FIPS 140 validation                            | Enforce **Cloud HSM** (FIPS 140-2 Level 3) for CMEK keys; enforce TLS 1.2+ with approved FIPS cipher suites                          |
+| **Unauthorized Services**       | Attempting to deploy beta, preview, or third-party marketplace tools within the boundary | Assured Workloads automatically blocks unauthorized service creation; use only FedRAMP High/Moderate authorized GA services          |
+| **Unrestricted Support Access** | Allowing global Google technical support personnel access to systems                     | Enable **Access Transparency** and **Access Approval** to verify and approve any Google operator access                              |

@@ -29,17 +29,18 @@ Query the household's CRM for the household's most recent meeting notes and open
 
 For each one, note whether it's been acted on: done, not done, or no update since it was logged — beside the item, in the section itself, so every action item carries its own status. One line at the end saying no updates are available is not that: the advisor reads the list item by item, and "no update" is a status each item gets on its own line. This becomes the opening section of the brief, so the advisor sees what's changed (or hasn't) before diving into the current comparison.
 
-> **Connector Placeholder Convention:** if the CRM's tools aren't available in this session, say "This is where I'd pull [household]'s last meeting notes and action items from [system] once that connector is built," and put that sentence, with a "— pending [system]" marker, where the Since We Last Met content would go. Then carry on to Steps 2–4 and write the brief (Step 7) with the section in that state. Ask the advisor to summarize the last meeting manually *after* the file is written, not before — a brief with one pending section is the deliverable, while a question with no brief behind it is a stall, and in a single exchange the advisor may never see a file at all. If they've already handed you a summary or their own notes, that is the section's source: build the recap from it and write.
+> **Connector Placeholder Convention:** if the CRM's tools aren't available in this session, say "This is where I'd pull [household]'s last meeting notes and action items from [system] once that connector is built," and put that sentence, with a "— pending [system]" marker, where the Since We Last Met content would go. Then carry on to Steps 2–4 and write the brief (Step 7) with the section in that state. Ask the advisor to summarize the last meeting manually _after_ the file is written, not before — a brief with one pending section is the deliverable, while a question with no brief behind it is a stall, and in a single exchange the advisor may never see a file at all. If they've already handed you a summary or their own notes, that is the section's source: build the recap from it and write.
 
 ## Step 2: The Estate Plan — What It Intends (Wealth.com)
 
 Pull the household's estate plan from Wealth.com:
+
 - Plan structure: trusts (name, type — e.g., revocable living trust, ILIT — and what each is supposed to hold)
 - Key documents (will, trust agreements, powers of attorney, healthcare directives) — and for each, **whether it is actually signed and executed, not merely on file**. Take each document's status from the document inventory as the source reports it; never infer execution status from the document's type or its presence in the file.
 - Document-internal problems that keep a document from doing its job — not executed, unsigned, missing pages. These are the estate insights Wealth.com records per document; present them as observations to discuss, not as findings or a legal review, and note that they can change as documents are re-examined.
 - The plan's balance sheet: intended owner/beneficiary for each major asset or account
 
-> **Connector Placeholder Convention:** if the Wealth.com connector isn't available in this session, say: *"This is where I'd pull [household]'s estate plan from Wealth.com once that connector is built."* Then offer the fallback: the advisor can paste or upload a trust/estate summary (e.g., a trust schedule of assets, attorney letter, or their own notes on what the plan intends). Don't wait for it — write the brief with this section marked "— pending estate documents" rather than guessing at what the plan says, and fold in anything they provide afterwards as a fresh pass.
+> **Connector Placeholder Convention:** if the Wealth.com connector isn't available in this session, say: _"This is where I'd pull [household]'s estate plan from Wealth.com once that connector is built."_ Then offer the fallback: the advisor can paste or upload a trust/estate summary (e.g., a trust schedule of assets, attorney letter, or their own notes on what the plan intends). Don't wait for it — write the brief with this section marked "— pending estate documents" rather than guessing at what the plan says, and fold in anything they provide afterwards as a fresh pass.
 
 ## Step 3: Prior-Year Tax Look-Back (Wealth.com)
 
@@ -56,11 +57,12 @@ The look-back report covers **filed tax returns only** — it does not exist for
 
 Keep this section's job narrow: it is context the advisor brings into the estate conversation (what the household's tax picture actually looked like), not a tax plan or a recommendation. Tax strategy is out of scope — see Out of Scope.
 
-> **Connector Placeholder Convention:** if the Wealth.com connector isn't available in this session, say: *"This is where I'd pull [household]'s prior-year tax look-back and the year's tax constants from Wealth.com once that connector is built."* Then offer the fallback: the advisor can paste or upload a prior-year return or tax summary. Don't wait for it — write the brief with this section marked "— pending tax documents" rather than estimating it, and fold in anything they provide afterwards.
+> **Connector Placeholder Convention:** if the Wealth.com connector isn't available in this session, say: _"This is where I'd pull [household]'s prior-year tax look-back and the year's tax constants from Wealth.com once that connector is built."_ Then offer the fallback: the advisor can paste or upload a prior-year return or tax summary. Don't wait for it — write the brief with this section marked "— pending tax documents" rather than estimating it, and fold in anything they provide afterwards.
 
 ## Step 4: The Accounts — What They Actually Show (Schwab, Orion/Addepar, iCapital)
 
 Pull the household's actual titling and beneficiary data from wherever it lives:
+
 - **Schwab** (custodian): each account's actual registration/titling (individual, joint, IRA/Roth, trust — and if trust, which one) and named beneficiary(ies) on file
 - **Orion Connect or Addepar** (portfolio platform): consolidated titling across held-away and multi-custodian accounts beyond what Schwab alone shows
 - **iCapital**: titling and beneficiary on alternative investment positions — these are often held in a different entity or trust than the liquid book, so don't assume they match
@@ -78,6 +80,7 @@ Dispatch this to the `Antigravity-for-financial-advisors:titling-compare` subage
 It categorizes but does not order within a tier; Step 6's ranking by dollar size and consequence is yours. It also never states that a mismatch is legally deficient or suggests a fix, which is the same boundary this skill has.
 
 The comparison it runs, and the one to run by hand if the subagent is unavailable — for each account and position, check it against what the estate plan intends:
+
 - **Titling match?** Is the account titled the way the plan calls for (e.g., plan says "held in the Smith Family Trust," but the account is still titled individually)?
 - **Beneficiary match?** Does the named beneficiary line up with the plan's intent (e.g., an ex-spouse still listed, a minor named directly with no trust/UTMA wrapper, no beneficiary on file at all where one is expected)?
 
@@ -95,7 +98,8 @@ Every flagged mismatch — whatever its tier — ends by recommending that the a
 
 ## Step 7: Output
 
-Write a meeting-ready brief to a markdown file first — and write it whether or not every source was reachable. A section whose source was missing carries its placeholder sentence and its pending marker in place of content; a missing source is never a reason to hold the file. (An unconfirmed identity, or two systems contradicting each other about present-day fact in Step 4, still is — those are the blocking questions above, and they are asked before the pull, not after the file.) The questions you owe the advisor about what was missing — a manual summary of the last meeting, a document to upload — go in the chat *after* the file exists, not instead of it. The order inside the file:
+Write a meeting-ready brief to a markdown file first — and write it whether or not every source was reachable. A section whose source was missing carries its placeholder sentence and its pending marker in place of content; a missing source is never a reason to hold the file. (An unconfirmed identity, or two systems contradicting each other about present-day fact in Step 4, still is — those are the blocking questions above, and they are asked before the pull, not after the file.) The questions you owe the advisor about what was missing — a manual summary of the last meeting, a document to upload — go in the chat _after_ the file exists, not instead of it. The order inside the file:
+
 1. **Since We Last Met** — the Step 1 recap (what was discussed, what's been actioned)
 2. **Document status** — key estate documents and whether each is signed/executed, with any document-internal observations from Step 2
 3. **Prior-year tax look-back** — the Step 3 figures, each attributed to the return or report it came from, with rates shown alongside their tax dollars and income basis

@@ -16,6 +16,7 @@ Required: **client/household name**. Optional: which accounts to include, the mo
 **Disambiguation rule:** confirm which household before pulling anything, the same as every other skill in this plugin — if a name search returns more than one match, show the advisor the candidates and ask which one before proceeding. Never proceed on a name match alone.
 
 Query the household's connected portfolio-data system for:
+
 - Accounts with registrations (taxable, IRA, Roth, 401k, trust) and market values
 - Holdings with quantity, market value, cost basis, and unrealized gain/loss
 - Performance: QTD/YTD/1yr/3yr vs. assigned benchmark, net of fees
@@ -25,7 +26,8 @@ Query the household's connected portfolio-data system for:
 **Which system to query:** this data can live in Orion, Addepar, or Envestnet/Tamarac depending on the firm. Check `ListConnectors` (load via `ToolSearch` if not already available) to see which is actually connected — don't guess at tool-name prefixes, use `ToolSearch` by system name once you know which is live.
 
 **Look for the tools before you trust the registry.** `ToolSearch` by the system's own name is the check that decides: if its tools come back, that system is connected and callable — use them. `ListConnectors` can answer "No installed connectors found" even in a session with several live, working connectors, and in some clients it renders a user-facing card rather than returning data at all. So it explains a gap, it never establishes one, and an empty result means **unknown**, never "nothing is connected". When it does return entries, read `enabledInChat`, not `connected`: `connected: true` with `enabledInChat: false` is authenticated but switched off for this chat, so tell the advisor they can enable it here rather than reporting it as unconnected; a missing or `null` `connected` is unknown, not disconnected.
-- **If none is connected**: follow the Connector Placeholder Convention — say *"This is where I'd make a call out to [system] to pull [holdings/performance] once that connector is built,"* then offer the fallback. Before asking for a manual upload, offer to search Google Drive (if connected) for an existing export or statement. If nothing turns up there either, ask the advisor to upload an export (CSV/PDF), a custodian statement, or paste holdings. Continue with whatever's provided, and mark anything still missing "— pending [connector]" rather than leaving it blank — a missing source degrades only the section that depends on it, not the whole review.
+
+- **If none is connected**: follow the Connector Placeholder Convention — say _"This is where I'd make a call out to [system] to pull [holdings/performance] once that connector is built,"_ then offer the fallback. Before asking for a manual upload, offer to search Google Drive (if connected) for an existing export or statement. If nothing turns up there either, ask the advisor to upload an export (CSV/PDF), a custodian statement, or paste holdings. Continue with whatever's provided, and mark anything still missing "— pending [connector]" rather than leaving it blank — a missing source degrades only the section that depends on it, not the whole review.
 - **If more than one connected tool could try to solve this for the household**, ask the advisor once which is the book of record — per the Ask-Once, Then Route Convention — rather than guessing or merging both, and use that system for the rest of this review. This applies even when the household name hasn't resolved against either system yet: ask before searching further, not after finding out neither recognizes the name — an unresolved household is not an exception to this rule. Offer to help the advisor save the choice using the Personalization Convention so they aren't asked again next session. This check runs for the rest of the review, not just once up front — if the advisor brings up another source mid-review, ask before pulling from it too. And if a second system's figures get pulled anyway and disagree with the routed one on a material fact (a balance, a drift percentage), that's a blocking question for the advisor, not a note in the output.
 
 **Held-away accounts:** ask the advisor whether the household has accounts held away from this system (a spouse's 401k, assets at another custodian) relevant to wash-sale coordination or the overall allocation picture. If yes, request those holdings manually — there's no connector for outside accounts.
@@ -41,6 +43,7 @@ Query the household's connected portfolio-data system for:
 Act on what comes back before touching Step 2. A `BLOCKING` verdict means a flag would corrupt the drift table itself — resolve it with the advisor first. `FLAGS` means the review continues with the caveats carried into the output. The subagent never repairs data, drops a position, or estimates a missing field, so anything it raises is still yours to decide about.
 
 The seven checks it runs, which are also the checks to run by hand if the subagent is unavailable:
+
 - **Temporal:** flag any position whose valuation date precedes its first funding/contribution transaction.
 - **Magnitude:** flag any position whose gain looks implausible for the asset type and time held (e.g. a private fund up several multiples within months of being funded) and confirm the mark with the advisor before using it.
 - **Aggregation:** flag any sleeve or household-level return that's materially inconsistent with the sum of its parts (one position driving the whole household return while everything else is flat/negative is a signal, not a fact).
@@ -56,20 +59,20 @@ Compare current allocation to the IPS targets / assigned model. **Sourcing the t
 
 - **IPS on file — the IPS governs.** Prefer pulling it from the connected system of record if one exposes it as structured data; today no connected system does (Addepar has IPS/target bands in-product but doesn't expose them over MCP yet), so ask the advisor for target bands or accept a pasted IPS — this instruction upgrades automatically once a connector exposes IPS data. A BlackRock model is comparison material for Step 3 here, never a substitute target.
 - **Household managed to an assigned model** (per Step 1's pull or the advisor naming one): if BlackRock Advisor Center is connected (Step 3's connection check) and the assignment matches its lineup (`list_models` — which also carries the firm's entitled third-party models), hydrate the target from `get_model`: roll its holdings up by their `asset_class` tags into sleeve targets and carry the model's `as_of` date into the drift table. The model supplies point targets only, never bands — bands stay firm/IPS policy; ask if unknown.
-- **No target on file:** if Advisor Center is connected, offer its lineup rather than improvising — show candidate families and risk profiles and let the advisor pick; never select a model or a risk profile for them. Label the drift table and every figure derived from it *"vs. advisor-selected illustrative model [name] — not a client IPS"*, and carry that label into the memo and the client-facing summary. If they decline, or it isn't connected, ask for target bands as above.
+- **No target on file:** if Advisor Center is connected, offer its lineup rather than improvising — show candidate families and risk profiles and let the advisor pick; never select a model or a risk profile for them. Label the drift table and every figure derived from it _"vs. advisor-selected illustrative model [name] — not a client IPS"_, and carry that label into the memo and the client-facing summary. If they decline, or it isn't connected, ask for target bands as above.
 
 Source sleeve names, targets, and bands from whatever IPS/model you end up with — don't assume a fixed set of asset classes. Fall back to the table below only when no IPS/model sleeve structure is on file:
 
-| Asset Class | Target % | Current % | Drift | $ Over/Under |
-|------------|----------|-----------|-------|-------------|
-| US Large Cap Equity | | | | |
-| US Small/Mid Cap | | | | |
-| International Developed | | | | |
-| Emerging Markets | | | | |
-| Investment Grade Bonds | | | | |
-| High Yield / Credit | | | | |
-| Alternatives | | | | |
-| Cash | | | | |
+| Asset Class             | Target % | Current % | Drift | $ Over/Under |
+| ----------------------- | -------- | --------- | ----- | ------------ |
+| US Large Cap Equity     |          |           |       |              |
+| US Small/Mid Cap        |          |           |       |              |
+| International Developed |          |           |       |              |
+| Emerging Markets        |          |           |       |              |
+| Investment Grade Bonds  |          |           |       |              |
+| High Yield / Credit     |          |           |       |              |
+| Alternatives            |          |           |       |              |
+| Cash                    |          |           |       |              |
 
 Flag positions exceeding the rebalancing band (default ±5% absolute or the firm's stated band — ask if unknown). **Bands may differ by liquidity tier** — illiquid sleeves (private equity, venture, real assets) typically carry a wider band than liquid ones; use what the IPS specifies, ask if it doesn't distinguish. A breach in an illiquid sleeve is a commitment-pacing signal, not a trade instruction — it can't be traded back — so surface it as context rather than generating a change against it.
 
@@ -117,6 +120,7 @@ actual refusal, or if the advisor asks about terms directly.
 ## Step 4: Rebalance Prep
 
 Identify the adjustments that would bring the household back to target, tax-aware:
+
 - Rebalance in tax-advantaged accounts first (no tax consequences). If the household has none, say so explicitly in the options list and memo rather than silently skipping this.
 - In taxable accounts: avoid realizing large short-term gains; harvest available losses while rebalancing; watch wash sales (30-day window, across every household account whose holdings and transaction history you **actually gathered** — being connected is not the same as being gathered: a held-away account the advisor confirmed exists but never supplied holdings for sits outside that check, and so does a connected account whose feed returned no cost basis or tax-lot detail, the gap Step 1's Addepar note and Completeness check already record). Where the check couldn't reach the whole household, say so plainly: name the accounts it covered and the ones it didn't, and carry that same scope into the memo's wash-sale line rather than a bare "yes".
 - Check RMD status before an IRA sell appears in the options — don't create a distribution shortfall, and prefer using an already-required RMD as the funding source for a needed sale over an unrelated one.
@@ -129,6 +133,7 @@ Identify the adjustments that would bring the household back to target, tax-awar
 **Zocks AI results as a rebalance-rationale input:** if Zocks is connected, pull its AI results/insights for the household and check whether the potential changes line up with what the client has actually expressed — stated risk tolerance, life events — and with the IPS on file. Flag a mismatch inline against the specific change it bears on (e.g. a risky change against an explicitly stated low risk tolerance, or a life event suggesting the IPS itself may be stale), not as a general blurb at the top of the output. Zocks is a sentiment/context source, never a portfolio book of record.
 
 **Execution feasibility check** before finalizing the options list — flag, don't silently assume:
+
 - Odd lots: if a computed share count isn't a round lot, note it and suggest rounding to the nearest round lot or a dollar-based order.
 - Mutual funds: flag that the order is subject to the fund's minimum and daily NAV cutoff — tell the advisor to confirm both with the custodian/fund company, don't assume a number.
 - Less-liquid ETFs (international, high-yield, muni): flag that premium/discount to NAV should be checked at time of trade.
@@ -137,11 +142,11 @@ Identify the adjustments that would bring the household back to target, tax-awar
 **Rebalancing options:**
 
 | Account | Action | Security | Shares/$ | Reason | Est. Tax Impact |
-|---------|--------|----------|----------|--------|-----------------|
+| ------- | ------ | -------- | -------- | ------ | --------------- |
 
 Include totals: estimated realized gains/losses, transaction costs, and before/after drift.
 
-**Execution note:** this skill *lays out rebalancing options*; it never executes anything. Once custodian connectors (e.g., Schwab) support order staging, offer to stage the order file — until then say: *"This is where I'd stage these orders to [Schwab/custodian] once that connector is built"* and output the options list in the custodian's upload format if known.
+**Execution note:** this skill _lays out rebalancing options_; it never executes anything. Once custodian connectors (e.g., Schwab) support order staging, offer to stage the order file — until then say: _"This is where I'd stage these orders to [Schwab/custodian] once that connector is built"_ and output the options list in the custodian's upload format if known.
 
 ## Step 5: Rebalance Rationale Memo
 
@@ -150,6 +155,7 @@ Every rebalance gets a memo for the compliance file. Use `templates/rebalance-ra
 ## Step 6: Output
 
 Write everything to a markdown file first:
+
 - Drift analysis table + before/after allocation comparison
 - Rebalancing options with tax impact summary
 - Model mapping table (if Step 3 ran)

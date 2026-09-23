@@ -4,15 +4,15 @@
 
 This table summarizes key compliance frameworks, the governing agreement or audit artifact on Google Cloud, whether Assured Workloads is available, and primary architectural control focus.
 
-| Framework | Governing Document / Artifact | Assured Workloads Regime? | Primary Regulated Data | Key Architectural Controls |
-| :--- | :--- | :--- | :--- | :--- |
-| **HIPAA** | Business Associate Agreement (BAA) | Yes (`HIPAA`) | Protected Health Information (PHI) | Signed BAA, Data Access Audit Logs, CMEK, VPC-SC, Private IPs, Cloud DLP |
-| **PCI DSS 4.0** | Attestation of Compliance (AoC), Shared Responsibility Matrix | Yes (`PCI-DSS`) | Cardholder Data (CHD), Sensitive Auth Data (SAD) | Scope reduction, Tokenization, Cloud Armor WAF, isolated CDE VPC, TLS 1.2+, MFA |
-| **FedRAMP** | FedRAMP High / Moderate ATO | Yes (`FedRAMP High`, `FedRAMP Moderate`) | Federal Information, CUI | Assured Workloads, US data residency, FIPS 140-2 Level 3 (Cloud HSM), Access Transparency |
-| **SOC 2 Type II** | SOC 2 Report (Security, Availability, Confidentiality, Privacy) | Baseline | Customer Data across all cloud services | IAM least privilege, Cloud Audit Logs, Disaster Recovery, encryption at rest/transit |
-| **ISO/IEC 27001** | ISO/IEC 27001:2022 Certificate | Baseline | Information Security Management System (ISMS) | Asset classification, change management, continuous vulnerability scanning |
-| **HITRUST CSF** | HITRUST Letter of Certification | Aligns with HIPAA regime | Healthcare & Highly Regulated Data | Prescriptive security controls mapped to NIST, ISO, HIPAA |
-| **GDPR** | Data Processing Addendum (DPA) | Yes (EU Regions / Sovereignty controls) | Personal Data of EU Data Subjects | EU Data Residency, Cloud KMS / External Key Manager (EKM), Data subject rights processes |
+| Framework         | Governing Document / Artifact                                   | Assured Workloads Regime?                | Primary Regulated Data                           | Key Architectural Controls                                                                |
+| :---------------- | :-------------------------------------------------------------- | :--------------------------------------- | :----------------------------------------------- | :---------------------------------------------------------------------------------------- |
+| **HIPAA**         | Business Associate Agreement (BAA)                              | Yes (`HIPAA`)                            | Protected Health Information (PHI)               | Signed BAA, Data Access Audit Logs, CMEK, VPC-SC, Private IPs, Cloud DLP                  |
+| **PCI DSS 4.0**   | Attestation of Compliance (AoC), Shared Responsibility Matrix   | Yes (`PCI-DSS`)                          | Cardholder Data (CHD), Sensitive Auth Data (SAD) | Scope reduction, Tokenization, Cloud Armor WAF, isolated CDE VPC, TLS 1.2+, MFA           |
+| **FedRAMP**       | FedRAMP High / Moderate ATO                                     | Yes (`FedRAMP High`, `FedRAMP Moderate`) | Federal Information, CUI                         | Assured Workloads, US data residency, FIPS 140-2 Level 3 (Cloud HSM), Access Transparency |
+| **SOC 2 Type II** | SOC 2 Report (Security, Availability, Confidentiality, Privacy) | Baseline                                 | Customer Data across all cloud services          | IAM least privilege, Cloud Audit Logs, Disaster Recovery, encryption at rest/transit      |
+| **ISO/IEC 27001** | ISO/IEC 27001:2022 Certificate                                  | Baseline                                 | Information Security Management System (ISMS)    | Asset classification, change management, continuous vulnerability scanning                |
+| **HITRUST CSF**   | HITRUST Letter of Certification                                 | Aligns with HIPAA regime                 | Healthcare & Highly Regulated Data               | Prescriptive security controls mapped to NIST, ISO, HIPAA                                 |
+| **GDPR**          | Data Processing Addendum (DPA)                                  | Yes (EU Regions / Sovereignty controls)  | Personal Data of EU Data Subjects                | EU Data Residency, Cloud KMS / External Key Manager (EKM), Data subject rights processes  |
 
 ---
 

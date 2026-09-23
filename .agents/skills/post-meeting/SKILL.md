@@ -31,7 +31,7 @@ Query the household's CRM by the client/household name. **If more than one conne
 
 Follow the **Connector Placeholder Convention**: if the CRM's tools aren't available in this session, say "This is where I'd search [system] for this household once that connector is built," then ask the advisor to confirm the household manually and continue.
 
-Whatever the CRM record turns up here — prior notes, open tasks, past meetings — is auxiliary context for identifying the household and spotting duplicates in Step 3. It is never the source of *this* meeting's content; that always comes from the waterfall in Inputs above, with Zocks AI results as the primary source when connected.
+Whatever the CRM record turns up here — prior notes, open tasks, past meetings — is auxiliary context for identifying the household and spotting duplicates in Step 3. It is never the source of _this_ meeting's content; that always comes from the waterfall in Inputs above, with Zocks AI results as the primary source when connected.
 
 ### 2. Draft the meeting note
 
@@ -42,7 +42,7 @@ Draft the note (the meeting content pulled via the Inputs waterfall, plus the in
 Read the meeting content for two distinct things and list them back to the advisor separately:
 
 - **Action items** — commitments the advisor made or next steps that were agreed to (e.g., "I'll send the updated plan," "let's set up a call about the 529").
-- **Opportunities** — things mentioned in passing that could grow or protect the relationship (e.g., "a CD maturing next month," "mentioned an inheritance," "unhappy with a held-away account"). These are signals from *this meeting only*, not a full CRM opportunity review — call out that a deeper look (a dedicated opportunity-review pass) is a separate step if the advisor wants one.
+- **Opportunities** — things mentioned in passing that could grow or protect the relationship (e.g., "a CD maturing next month," "mentioned an inheritance," "unhappy with a held-away account"). These are signals from _this meeting only_, not a full CRM opportunity review — call out that a deeper look (a dedicated opportunity-review pass) is a separate step if the advisor wants one.
 
 Only include things actually said in the meeting content — never infer a commitment or opportunity that isn't there, and label anything uncertain as a possibility rather than a fact.
 
@@ -52,11 +52,11 @@ Only include things actually said in the meeting content — never infer a commi
 
 Present everything from Steps 2–3 as **one schema-shaped table**, not prose, and ask for a single confirmation on the whole batch rather than approving items one by one:
 
-| Type | What | When | Who | Notes |
-|---|---|---|---|---|
-| Note | (note preview, with inferred date) | meeting date | household | — |
-| Task | action item text | due/target date if known | owner (usually the advisor) | — |
-| Opportunity | opportunity description | — | — | any metadata the connected CRM exposes (e.g. estimated size, stage) |
+| Type        | What                               | When                     | Who                         | Notes                                                               |
+| ----------- | ---------------------------------- | ------------------------ | --------------------------- | ------------------------------------------------------------------- |
+| Note        | (note preview, with inferred date) | meeting date             | household                   | —                                                                   |
+| Task        | action item text                   | due/target date if known | owner (usually the advisor) | —                                                                   |
+| Opportunity | opportunity description            | —                        | —                           | any metadata the connected CRM exposes (e.g. estimated size, stage) |
 
 The advisor can approve all, some, or edited versions of any row.
 

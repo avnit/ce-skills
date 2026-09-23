@@ -12,12 +12,12 @@ This reference provides a mapping between **HIPAA Security Rule § 164.312 Techn
 
 A covered entity or business associate must implement technical policies and procedures for electronic information systems that maintain ePHI to allow access only to those persons or software programs that have been granted access rights.
 
-| HIPAA Specification | Requirement Level | Google Cloud Technical Implementation |
-| :--- | :--- | :--- |
-| **Unique User Identification** (§ 164.312(a)(2)(i)) | **Required** | • Enforce Google Cloud Identity / Workspace corporate user accounts.<br>• Ban shared generic accounts (`admin@company.com`).<br>• Enforce Multi-Factor Authentication (MFA) on all admin accounts.<br>• Leverage GKE Workload Identity / Cloud Run Service Accounts rather than static API keys. |
-| **Emergency Access Procedure ("Break-Glass")** (§ 164.312(a)(2)(ii)) | **Required** | • Pre-stage dedicated break-glass service accounts with elevated permissions stored in Secret Manager.<br>• Alert instantly on break-glass invocation via Cloud Monitoring & Security Command Center (SCC). |
-| **Automatic Logoff** (§ 164.312(a)(2)(iii)) | **Addressable** | • Configure session timeouts on Google Cloud Console and web apps via Identity-Aware Proxy (IAP) session lifetime controls (e.g., 15-30 minutes). |
-| **Encryption and Decryption** (§ 164.312(a)(2)(iv)) | **Addressable** | • All data at rest is encrypted by default with AES-256.<br>• For customer control and key revocation, enforce **Customer-Managed Encryption Keys (CMEK)** via Cloud KMS or Cloud HSM. |
+| HIPAA Specification                                                  | Requirement Level | Google Cloud Technical Implementation                                                                                                                                                                                                                                                            |
+| :------------------------------------------------------------------- | :---------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unique User Identification** (§ 164.312(a)(2)(i))                  | **Required**      | • Enforce Google Cloud Identity / Workspace corporate user accounts.<br>• Ban shared generic accounts (`admin@company.com`).<br>• Enforce Multi-Factor Authentication (MFA) on all admin accounts.<br>• Leverage GKE Workload Identity / Cloud Run Service Accounts rather than static API keys. |
+| **Emergency Access Procedure ("Break-Glass")** (§ 164.312(a)(2)(ii)) | **Required**      | • Pre-stage dedicated break-glass service accounts with elevated permissions stored in Secret Manager.<br>• Alert instantly on break-glass invocation via Cloud Monitoring & Security Command Center (SCC).                                                                                      |
+| **Automatic Logoff** (§ 164.312(a)(2)(iii))                          | **Addressable**   | • Configure session timeouts on Google Cloud Console and web apps via Identity-Aware Proxy (IAP) session lifetime controls (e.g., 15-30 minutes).                                                                                                                                                |
+| **Encryption and Decryption** (§ 164.312(a)(2)(iv))                  | **Addressable**   | • All data at rest is encrypted by default with AES-256.<br>• For customer control and key revocation, enforce **Customer-Managed Encryption Keys (CMEK)** via Cloud KMS or Cloud HSM.                                                                                                           |
 
 ---
 
@@ -29,10 +29,11 @@ Implement hardware, software, and/or procedural mechanisms that record and exami
 > **CRITICAL GCP DEFAULT CONFIGURATION ALERT**:
 > In Google Cloud, **Admin Activity** audit logs are enabled by default and cannot be disabled.
 > However, **Data Access audit logs** (`DATA_READ`, `DATA_WRITE`, `ADMIN_READ`) are **DISABLED BY DEFAULT** for almost all services (except BigQuery).
-> 
+>
 > **Failing to explicitly enable Data Access audit logs on Cloud Storage, Cloud SQL, AlloyDB, and Cloud Healthcare API constitutes an automatic failure of HIPAA § 164.312(b).**
 
 ### Required Logging Configuration:
+
 1. **Enable Data Access Logs**:
    In IAM & Admin > Audit Logs, enable `DATA_READ`, `DATA_WRITE`, and `ADMIN_READ` for:
    - `storage.googleapis.com` (Cloud Storage)
@@ -51,9 +52,9 @@ Implement hardware, software, and/or procedural mechanisms that record and exami
 
 Implement policies and procedures to protect electronic protected health information from improper alteration or destruction.
 
-| HIPAA Specification | Requirement Level | Google Cloud Technical Implementation |
-| :--- | :--- | :--- |
-| **Mechanism to Authenticate ePHI** (§ 164.312(c)(2)) | **Addressable** | • Cloud Storage Object Versioning and Object Retention (Bucket Lock).<br>• MD5 / CRC32c automatic checksum verification on all Cloud Storage uploads and downloads.<br>• Database point-in-time recovery (PITR) and automated daily snapshots on Cloud SQL / AlloyDB. |
+| HIPAA Specification                                  | Requirement Level | Google Cloud Technical Implementation                                                                                                                                                                                                                                 |
+| :--------------------------------------------------- | :---------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mechanism to Authenticate ePHI** (§ 164.312(c)(2)) | **Addressable**   | • Cloud Storage Object Versioning and Object Retention (Bucket Lock).<br>• MD5 / CRC32c automatic checksum verification on all Cloud Storage uploads and downloads.<br>• Database point-in-time recovery (PITR) and automated daily snapshots on Cloud SQL / AlloyDB. |
 
 ---
 
@@ -70,10 +71,10 @@ Implement procedures to verify that a person or entity seeking access to electro
 
 Implement technical security measures to guard against unauthorized access to electronic protected health information that is being transmitted over an electronic communications network.
 
-| HIPAA Specification | Requirement Level | Google Cloud Technical Implementation |
-| :--- | :--- | :--- |
-| **Integrity Controls** (§ 164.312(e)(2)(i)) | **Addressable** | • TLS 1.2 or TLS 1.3 enforced on Cloud Load Balancing SSL Policies (disable TLS 1.0, 1.1, and CBC ciphers).<br>• Cloud VPN with IPsec (IKEv2) or Cloud Interconnect with MACsec for on-premises hybrid traffic. |
-| **Encryption** (§ 164.312(e)(2)(ii)) | **Addressable** | • Zero Public IPs on database and application worker tiers.<br>• Use **Private Service Connect (PSC)** or Private Google Access for accessing Google APIs privately.<br>• Deploy **VPC Service Controls (VPC-SC)** perimeter around all data lake and analytics projects containing ePHI. |
+| HIPAA Specification                         | Requirement Level | Google Cloud Technical Implementation                                                                                                                                                                                                                                                     |
+| :------------------------------------------ | :---------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Integrity Controls** (§ 164.312(e)(2)(i)) | **Addressable**   | • TLS 1.2 or TLS 1.3 enforced on Cloud Load Balancing SSL Policies (disable TLS 1.0, 1.1, and CBC ciphers).<br>• Cloud VPN with IPsec (IKEv2) or Cloud Interconnect with MACsec for on-premises hybrid traffic.                                                                           |
+| **Encryption** (§ 164.312(e)(2)(ii))        | **Addressable**   | • Zero Public IPs on database and application worker tiers.<br>• Use **Private Service Connect (PSC)** or Private Google Access for accessing Google APIs privately.<br>• Deploy **VPC Service Controls (VPC-SC)** perimeter around all data lake and analytics projects containing ePHI. |
 
 ---
 

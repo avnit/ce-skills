@@ -17,6 +17,7 @@ description: >-
 This skill provides an authoritative, specialized architectural review for payment applications and financial workloads storing, processing, or transmitting **Cardholder Data (CHD)** or **Sensitive Authentication Data (SAD)** on Google Cloud Platform under **PCI DSS v4.0**.
 
 It structures evaluation around the two fundamental tenets of cloud payment architecture:
+
 1. **Scope Minimization & Isolation**: Architecting to shrink or isolate the Cardholder Data Environment (CDE) boundary through tokenization, hosted fields, and strict VPC perimeter segmentation.
 2. **PCI DSS 4.0 Technical Requirements Compliance**: Auditing Google Cloud services and configurations against Requirements 1 through 12.
 
@@ -54,10 +55,11 @@ Phase 4: Synthesis & PCI DSS Audit Report Generation
 ## Phase 0: Scope Intake & SAQ Classification
 
 If not specified, prompt the user via `ask_question` to determine:
+
 - **Payment Handling Method**:
-  - *Option 1 (SAQ A)*: Fully outsourced / hosted fields (Stripe/Adyen iframe). Zero card data touches GCP servers.
-  - *Option 2 (SAQ A-EP)*: Merchant website generates payment page and transmits card data via direct API calls to payment processor.
-  - *Option 3 (SAQ D / Level 1 Service Provider)*: Direct ingestion, storage, or tokenization of Primary Account Numbers (PAN).
+  - _Option 1 (SAQ A)_: Fully outsourced / hosted fields (Stripe/Adyen iframe). Zero card data touches GCP servers.
+  - _Option 2 (SAQ A-EP)_: Merchant website generates payment page and transmits card data via direct API calls to payment processor.
+  - _Option 3 (SAQ D / Level 1 Service Provider)_: Direct ingestion, storage, or tokenization of Primary Account Numbers (PAN).
 
 ---
 
@@ -77,6 +79,7 @@ If not specified, prompt the user via `ask_question` to determine:
 ## Phase 2: Google Cloud PCI DSS Level 1 Verification
 
 Cross-reference services against:
+
 - Reference: [pci-dss-4-checklist.md](references/pci-dss-4-checklist.md)
 - Official Documentation: `https://cloud.google.com/security/compliance/pci-dss`
 - Artifact Repository: Google Cloud Attestation of Compliance (AoC) via [Compliance Reports Manager](https://cloud.google.com/compliance/reports-manager).
@@ -86,11 +89,13 @@ Cross-reference services against:
 ## Phase 3: PCI DSS 4.0 Technical Requirements Audit
 
 ### 1. Req 1 & 2: Network Security Controls
+
 - **CDE Isolation**: CDE must reside in an isolated VPC or standalone GCP project, segmented from general corporate networks.
 - **Cloud Armor WAF**: Mandatory for Requirement 6.4.2 on public-facing web applications.
 - **Zero Public IPs**: Databases and backend APIs must be private-only via Private Service Connect.
 
 ### 2. Req 3 & 4: Account Data Protection & Cryptography
+
 - > [!CAUTION]
   > **Strict PCI Prohibition**: **NEVER store Sensitive Authentication Data (SAD / CVV / PIN)** after authorization, even if encrypted. Storing post-authorization CVV is an automatic, non-negotiable audit failure.
 - **PAN Encryption**: If PAN is stored, enforce AES-256 via **Cloud HSM** (FIPS 140-2 Level 3 validated).
@@ -98,11 +103,13 @@ Cross-reference services against:
 - **Transmission**: Enforce TLS 1.2+ with modern cipher suites; block legacy TLS 1.0/1.1.
 
 ### 3. Req 7 & 8: Access Control & MFA
+
 - Enforce Multi-Factor Authentication (MFA) on all administrative access into the CDE.
 - Gated terminal access via **Identity-Aware Proxy (IAP)**; eliminate direct public SSH/RDP.
 - Disable service account key downloads via organization policy.
 
 ### 4. Req 10 & 11: Audit Trails & Threat Detection
+
 - Enable Cloud Audit Logs (Admin Activity + Data Access logs for CDE data stores).
 - Retain audit logs for at least **1 year** (at least **3 months immediately available**).
 - Enable **Security Command Center (SCC)** and **VPC Flow Logs** for traffic anomaly detection.
@@ -114,6 +121,7 @@ Cross-reference services against:
 Generate a structured audit report based on [pci-review-report-template.md](templates/pci-review-report-template.md).
 
 Include:
+
 - Clear Verdict (🟢 **Compliant**, 🟡 **Conditional**, 🔴 **Non-Compliant**).
 - CDE Scope Reduction recommendations.
 - PCI DSS 4.0 Requirements evaluation grid.

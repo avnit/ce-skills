@@ -16,14 +16,14 @@ review that's been open since spring.
 
 ## 1. Client Snapshot
 
-*On a real client: pulled from your CRM (Redtail, Wealthbox, or Salesforce).*
+_On a real client: pulled from your CRM (Redtail, Wealthbox, or Salesforce)._
 
-| | |
-|---|---|
-| Household | Jordan (61) & Casey (58) Miller, married |
-| Clients since | 2016 |
-| AUM | $2.41M across 4 accounts |
-| Risk profile | Moderate (60/35/5 target) |
+|                |                                                                  |
+| -------------- | ---------------------------------------------------------------- |
+| Household      | Jordan (61) & Casey (58) Miller, married                         |
+| Clients since  | 2016                                                             |
+| AUM            | $2.41M across 4 accounts                                         |
+| Risk profile   | Moderate (60/35/5 target)                                        |
 | Upcoming dates | Jordan turns 62 in March — Social Security election window opens |
 
 Accounts: joint brokerage ($1.12M), Jordan rollover IRA ($870K), Casey Roth
@@ -31,41 +31,41 @@ IRA ($310K), cash management ($110K).
 
 ## 2. Relationship Signals
 
-*On a real client: sourced from meeting notes (Zocks) and CRM notes fields, each signal cited.*
+_On a real client: sourced from meeting notes (Zocks) and CRM notes fields, each signal cited._
 
 - Casey mentioned in the June review that her firm may offer early-retirement
-  packages this fall — revisit. *(per meeting notes, 6/11)*
-- New grandchild arrived in July; the Millers asked about 529s. *(per CRM notes)*
+  packages this fall — revisit. _(per meeting notes, 6/11)_
+- New grandchild arrived in July; the Millers asked about 529s. _(per CRM notes)_
 - Jordan has sounded anxious about market headlines twice this quarter — lead
-  with the plan, not the portfolio. *(per meeting notes, 8/02)*
+  with the plan, not the portfolio. _(per meeting notes, 8/02)_
 
 ## 3. Since We Last Met
 
-*On a real client: open items from your CRM task list, correspondence from email.*
+_On a real client: open items from your CRM task list, correspondence from email._
 
-| Item | Owner | Status |
-|---|---|---|
-| Umbrella liability quote | Advisor | Open — carrier quote received, needs review |
-| Update beneficiaries on rollover IRA | Millers | Done (7/18) |
-| 529 options for new grandchild | Advisor | Open — draft comparison ready |
+| Item                                 | Owner   | Status                                      |
+| ------------------------------------ | ------- | ------------------------------------------- |
+| Umbrella liability quote             | Advisor | Open — carrier quote received, needs review |
+| Update beneficiaries on rollover IRA | Millers | Done (7/18)                                 |
+| 529 options for new grandchild       | Advisor | Open — draft comparison ready               |
 
 ## 4. Portfolio Review
 
-*On a real client: performance, drift, and flows pulled from your portfolio platform (Orion, Addepar, or Tamarac).*
+_On a real client: performance, drift, and flows pulled from your portfolio platform (Orion, Addepar, or Tamarac)._
 
-| | QTD | YTD |
-|---|---|---|
-| Portfolio | +3.8% | +9.2% |
+|                             | QTD   | YTD   |
+| --------------------------- | ----- | ----- |
+| Portfolio                   | +3.8% | +9.2% |
 | Blended benchmark (60/35/5) | +4.1% | +9.6% |
 
 Trailing the benchmark slightly — driven by the cash position and an
 underweight in international equity. Say so plainly; don't bury it.
 
-| Asset class | Target | Actual | Drift |
-|---|---|---|---|
-| Equities | 60% | 65% | +5% |
-| Fixed income | 35% | 30% | −5% |
-| Cash | 5% | 5% | — |
+| Asset class  | Target | Actual | Drift |
+| ------------ | ------ | ------ | ----- |
+| Equities     | 60%    | 65%    | +5%   |
+| Fixed income | 35%    | 30%    | −5%   |
+| Cash         | 5%     | 5%     | —     |
 
 Cash: $110K (4.6% of AUM including the cash management account). No large
 flows this quarter.
@@ -81,11 +81,11 @@ flows this quarter.
 
 ## 6. Proposed Agenda (45 min)
 
-1. How you're both feeling — Casey's work news, the new grandchild *(10 min)*
-2. Portfolio and rebalance recommendation *(15 min)*
-3. Roth conversion opportunity *(10 min)*
-4. Open items: umbrella policy, 529 *(5 min)*
-5. Next steps *(5 min)*
+1. How you're both feeling — Casey's work news, the new grandchild _(10 min)_
+2. Portfolio and rebalance recommendation _(15 min)_
+3. Roth conversion opportunity _(10 min)_
+4. Open items: umbrella policy, 529 _(5 min)_
+5. Next steps _(5 min)_
 
 ## 7. Talking Points & Anticipated Questions
 
