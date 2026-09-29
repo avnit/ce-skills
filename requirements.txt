@@ -1,5 +1,5 @@
 mcp>=2.2.0
 jsonschema>=4.26.0
-google-auth>=2.58.0
+google-auth>=2.58.1
 requests>=2.34.2
 httpx>=0.28.1
