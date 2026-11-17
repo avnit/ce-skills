@@ -1,4 +1,4 @@
-pydantic>=2.14.1
-playwright>=1.64.0
-google-auth>=2.62.0
-google-cloud-aiplatform>=2.5.0
+pydantic>=2.14.3
+playwright>=1.65.2
+google-auth>=2.62.2
+google-cloud-aiplatform>=2.9.0
