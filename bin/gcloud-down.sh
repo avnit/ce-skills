@@ -214,8 +214,7 @@ main() {
         gcloud --version
         echo ""
         log_success "Setup complete! Run 'gcloud init' to authenticate your account and configure defaults."
-        gcloud auth application-default login --login-config=auth.json --project tf-ai-host-project-tf-state --output=$HOME/.config/g
-cloud/application_default_credentials.json
+        gcloud auth application-default login --login-config=auth.json --project tf-ai-host-project-tf-state --output="$HOME/.config/gcloud/application_default_credentials.json"
     else
         log_warn "Installation succeeded, but 'gcloud' is not immediately accessible in this shell's PATH."
         log_warn "Please open a new terminal session or manually run: source ~/.bashrc"

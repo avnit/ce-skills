@@ -167,6 +167,41 @@ EOF
     log_success "Login configuration ready at $LOGIN_CONFIG"
 }
 
+# --- Step 0: Network Preflight (STS reachability) ---
+# gcloud (code exchange) and agy (token refresh) both call sts.googleapis.com.
+# Fail fast with a clear layer-specific error instead of a urllib3 retry trace.
+preflight_network() {
+    local host="sts.googleapis.com"
+    local code
+
+    log_info "Step 0: Checking reachability of https://${host}..."
+
+    if ! command -v curl &>/dev/null; then
+        log_warn "curl not found; skipping network preflight."
+        return 0
+    fi
+
+    if ! getent ahosts "$host" >/dev/null 2>&1; then
+        log_error "DNS: cannot resolve ${host}."
+        log_error "Check /etc/resolv.conf or your Private Google Access DNS zone (*.googleapis.com)."
+        exit 1
+    fi
+
+    code=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 10 \
+        "https://${host}/v1/introspect" || true)
+
+    if [[ -z "$code" || "$code" == "000" ]]; then
+        log_error "Cannot reach ${host}:443 (timeout / TLS / proxy)."
+        log_error "HTTPS_PROXY='${HTTPS_PROXY:-${https_proxy:-<unset>}}'"
+        log_error "Debug: curl -v https://${host}/v1/introspect"
+        log_error "If behind a proxy: gcloud config set proxy/type http; proxy/address <host>; proxy/port <port>"
+        log_error "If TLS inspection: gcloud config set core/custom_ca_certs_file <corp-ca.pem>"
+        exit 1
+    fi
+
+    log_success "${host} reachable (HTTP ${code})"
+}
+
 # --- Step 2: Generate Application Default Credentials ---
 generate_adc() {
     if [[ "$SKIP_LOGIN" == "true" ]]; then
@@ -221,13 +256,15 @@ generate_adc() {
         source_adc="/tmp/$TEMP_DIR/application_default_credentials.json"
     elif [[ -n "${CLOUDSDK_CONFIG:-}" && -f "$CLOUDSDK_CONFIG/application_default_credentials.json" ]]; then
         source_adc="$CLOUDSDK_CONFIG/application_default_credentials.json"
-    else
-        # Check if gcloud wrote a newer ADC file under /tmp/<TEMP_DIR>/application_default_credentials.json
-        local latest_tmp_adc
-        latest_tmp_adc=$(find /tmp -maxdepth 2 -name "application_default_credentials.json" -print 2>/dev/null | head -n 1 || true)
-        if [[ -n "$latest_tmp_adc" && -f "$latest_tmp_adc" ]]; then
-            source_adc="$latest_tmp_adc"
-        fi
+    fi
+    # NOTE: no blind `find /tmp` fallback. /tmp is world-writable; picking up the
+    # first ADC file found could import another user's, a stale, or a planted
+    # credential. Pass --temp-dir explicitly if gcloud wrote ADC under /tmp.
+
+    # Refuse to import an ADC file not owned by the current user.
+    if [[ -n "$source_adc" && ! -O "$source_adc" ]]; then
+        log_error "Refusing to import $source_adc: not owned by $(id -un)."
+        exit 1
     fi
 
     if [[ -n "$source_adc" && "$source_adc" != "$default_adc_file" ]]; then
@@ -243,9 +280,9 @@ generate_adc() {
         if [[ -t 0 ]]; then
             read -rp "If gcloud saved credentials to /tmp/<TEMP_DIR>/application_default_credentials.json, enter <TEMP_DIR> (or full path): " user_temp
             if [[ -n "$user_temp" ]]; then
-                if [[ -f "$user_temp" ]]; then
+                if [[ -f "$user_temp" && -O "$user_temp" ]]; then
                     cp "$user_temp" "$default_adc_file"
-                elif [[ -f "/tmp/$user_temp/application_default_credentials.json" ]]; then
+                elif [[ -f "/tmp/$user_temp/application_default_credentials.json" && -O "/tmp/$user_temp/application_default_credentials.json" ]]; then
                     cp "/tmp/$user_temp/application_default_credentials.json" "$default_adc_file"
                 else
                     log_error "Could not find credentials file at '$user_temp' or '/tmp/$user_temp/application_default_credentials.json'."
@@ -266,6 +303,19 @@ launch_agy() {
     export AGY_ADC_AUTH=true
     log_success "Exported AGY_ADC_AUTH=true"
 
+    # agy refreshes tokens against sts.googleapis.com itself and may not read
+    # gcloud's proxy config. Propagate gcloud proxy settings to env if unset.
+    if [[ -z "${HTTPS_PROXY:-${https_proxy:-}}" ]] && command -v gcloud &>/dev/null; then
+        local p_addr p_port
+        p_addr=$(gcloud config get-value proxy/address 2>/dev/null || true)
+        p_port=$(gcloud config get-value proxy/port 2>/dev/null || true)
+        if [[ -n "$p_addr" && "$p_addr" != "(unset)" && -n "$p_port" && "$p_port" != "(unset)" ]]; then
+            export HTTPS_PROXY="http://${p_addr}:${p_port}"
+            export NO_PROXY="${NO_PROXY:-localhost,127.0.0.1,metadata.google.internal}"
+            log_info "Exported HTTPS_PROXY from gcloud config for agy."
+        fi
+    fi
+
     export PATH="$HOME/.local/bin:$PATH"
     if ! command -v agy &>/dev/null; then
         log_error "'agy' CLI not found in PATH. Please ensure Antigravity CLI is installed."
@@ -283,6 +333,7 @@ launch_agy() {
 main() {
     parse_args "$@"
     setup_login_config
+    preflight_network
     generate_adc
     launch_agy
 }
