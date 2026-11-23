@@ -214,7 +214,15 @@ main() {
         gcloud --version
         echo ""
         log_success "Setup complete! Run 'gcloud init' to authenticate your account and configure defaults."
-        gcloud auth application-default login --login-config=auth.json --project tf-ai-host-project-tf-state --output="$HOME/.config/gcloud/application_default_credentials.json"
+        # ADC is written to ${CLOUDSDK_CONFIG:-$HOME/.config/gcloud}/application_default_credentials.json
+        # (there is no --output flag on `application-default login`).
+        local script_dir login_config project_id
+        script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        login_config="${LOGIN_CONFIG:-$script_dir/auth.json}"
+        project_id="${PROJECT_ID:-tf-ai-host-project-tf-state}"
+        gcloud auth application-default login \
+            --login-config="$login_config" \
+            --project="$project_id"
     else
         log_warn "Installation succeeded, but 'gcloud' is not immediately accessible in this shell's PATH."
         log_warn "Please open a new terminal session or manually run: source ~/.bashrc"
